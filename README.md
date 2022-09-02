@@ -12,6 +12,10 @@ The MVP working group works in two tracks, Data and Architecture, to produce the
 - Develop ensemble model for predictors and prescriptors
 - Build API for third parties to submit models
 
+The collaboration between XPRIZE, Cognizant, ITU, and Oxford University via the [Pandemic Response Challenge](https://www.xprize.org/challenge/pandemicresponse) demonstrated how we could convene a group of experts – data scientists, epidemiologists, public health officials, to build a useful set of tools to advise us on how to cope with and plan around a health disruption to society. Have a look at the competition's [GitHub repo](https://github.com/cognizant-ai-labs/covid-xprize) for an example of APIs and architecture that were used for the challenge.
+
+Find us on Slack at: [bit.ly/project-resilience](http://bit.ly/project-resilience)
+
 ## Data
 
 The UN currently has 17 [Sustainable Development Goals](https://sdgs.un.org/). The goal of the MVP track is to focus on a few of them to demonstrate how AI models can help.

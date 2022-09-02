@@ -20,11 +20,15 @@ Find us on Slack at: [bit.ly/project-resilience](http://bit.ly/project-resilienc
 
 The UN currently has 17 [Sustainable Development Goals](https://sdgs.un.org/). The goal of the MVP track is to focus on a few of them to demonstrate how AI models can help.
 
+Please read [Project Resilience Data Requirements and Tips](data/data_requirements.md) for a description of how to assemble a Project Resilience dataset.
+
 ### Climate Action
 
 [Goal 13 - Climate Action](https://sdgs.un.org/goals/goal13) - Take urgent action to combat climate change and its impacts
 
 One approach can be: what can countries, or regions, do to transition to clean energy?
+
+A draft dataset description is available [here](https://docs.google.com/spreadsheets/d/1L-92tVtGtek4cxyoTSwZaSMNO4LHQRxDN0mjRmoflQw).
 
 ## Architecture
 

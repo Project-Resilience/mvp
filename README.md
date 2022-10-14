@@ -28,10 +28,10 @@ Please read [Project Resilience Data Requirements and Tips](data/data_requiremen
 
 One approach can be: what can countries, or regions, do to transition to clean energy?
 
-A draft dataset description is available [here](https://docs.google.com/spreadsheets/d/1L-92tVtGtek4cxyoTSwZaSMNO4LHQRxDN0mjRmoflQw).
+Please have a look at the [draft dataset description](https://docs.google.com/spreadsheets/d/1L-92tVtGtek4cxyoTSwZaSMNO4LHQRxDN0mjRmoflQw) and help gather the data.
 
 ## Architecture
 
-Project Resilience Architecture (TODO: add link to pdf)
+Proposed architecture for Project Resilience: [PDF](./project_resilience_conceptual_architecture.pdf)
 
 

@@ -1,6 +1,17 @@
 import pandas as pd
 import numpy as np
 
+"""
+
+Data is available from:
+
+Coal: https://globalenergymonitor.org/projects/global-coal-plant-tracker/
+Gas: https://globalenergymonitor.org/projects/global-gas-plant-tracker/
+Solar: https://globalenergymonitor.org/projects/global-solar-power-tracker/
+Wind: https://globalenergymonitor.org/projects/global-wind-power-tracker/
+
+"""
+
 solar_data = pd.read_excel("Global-Solar-Power-Tracker-May-2022.xlsx", sheet_name=None)
 solar_data = solar_data['Data']
 wind_data = pd.read_excel("Global-Wind-Power-Tracker-May-2022.xlsx", sheet_name=None)
@@ -69,13 +80,13 @@ def extract_and_format_wind_solar(solar, wind):
     ).reset_index()
     return solar, grouped_solar, wind, grouped_wind
 
-solar, groupd_solar, wind, grouped_wind = extract_and_format_wind_solar(solar_data, wind_data)
+solar, grouped_solar, wind, grouped_wind = extract_and_format_wind_solar(solar_data, wind_data)
 gas, grouped_gas = extract_and_format_gas(gas_data)
 coal, grouped_coal = extract_and_format_coal(coal_data)
 
 # Combine on region name the MW generation by type
 from functools import reduce
-combined_grouped = reduce(lambda x,y: pd.merge(x,y, on=['State/Province', 'Status', 'Start year'], how='outer'), [groupd_solar, grouped_wind, grouped_coal, grouped_gas])
+combined_grouped = reduce(lambda x,y: pd.merge(x,y, on=['State/Province', 'Status', 'Start year'], how='outer'), [grouped_solar, grouped_wind, grouped_coal, grouped_gas])
 combined_grouped["sum_capacity_mw"] = combined_grouped['sum_gas_capacity_mw'].fillna(0.) + combined_grouped['sum_coal_capacity_mw'].fillna(0.) + combined_grouped['sum_solar_capacity_mw'].fillna(0.) + combined_grouped['sum_wind_capacity_mw'].fillna(0.)
 
 # Now need to know per year what the percentage is, not the start year, but for all ones after start year, and operational, what is percentage then

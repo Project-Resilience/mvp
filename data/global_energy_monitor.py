@@ -10,6 +10,8 @@ Gas: https://globalenergymonitor.org/projects/global-gas-plant-tracker/
 Solar: https://globalenergymonitor.org/projects/global-solar-power-tracker/
 Wind: https://globalenergymonitor.org/projects/global-wind-power-tracker/
 
+Changes in Coal Tracker: https://drive.google.com/drive/folders/1kbLck8dEWlqUifv98AHNgL3KA_wMf1nL?usp=sharing
+
 """
 
 solar_data = pd.read_excel("Global-Solar-Power-Tracker-May-2022.xlsx", sheet_name=None)

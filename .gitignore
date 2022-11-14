@@ -1,5 +1,8 @@
-# Ignore the data folder
-data/
+# Data folder
+# Ignore dowloaded data
+data/worldbank/raw/
+# Ignore generated data
+data/worldbank/processed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

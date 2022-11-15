@@ -1,0 +1,221 @@
+country_code,wb_country_name,oecd_country_name
+ABW,Aruba,
+AFG,Afghanistan,
+AGO,Angola,
+ALB,Albania,Albania
+AND,Andorra,
+ARE,United Arab Emirates,
+ARG,Argentina,Argentina
+ARM,Armenia,Armenia
+ASM,American Samoa,
+ATG,Antigua and Barbuda,
+AUS,Australia,Australia
+AUT,Austria,Austria
+AZE,Azerbaijan,
+BDI,Burundi,
+BEL,Belgium,Belgium
+BEN,Benin,
+BFA,Burkina Faso,
+BGD,Bangladesh,
+BGR,Bulgaria,Bulgaria
+BHR,Bahrain,
+BHS,"Bahamas, The",
+BIH,Bosnia and Herzegovina,Bosnia and Herzegovina
+BLR,Belarus,Belarus
+BLZ,Belize,
+BMU,Bermuda,
+BOL,Bolivia,
+BRA,Brazil,Brazil
+BRB,Barbados,
+BRN,Brunei Darussalam,
+BTN,Bhutan,
+BWA,Botswana,
+CAF,Central African Republic,
+CAN,Canada,Canada
+CHE,Switzerland,Switzerland
+CHI,Channel Islands,
+CHL,Chile,Chile
+CHN,China,China (People's Republic of)
+CIV,Cote d'Ivoire,
+CMR,Cameroon,
+COD,"Congo, Dem. Rep.",
+COG,"Congo, Rep.",
+COK,Cook Islands,
+COL,Colombia,
+COM,Comoros,
+CPV,Cabo Verde,
+CRI,Costa Rica,
+CUB,Cuba,
+CUW,Curacao,
+CYM,Cayman Islands,
+CYP,Cyprus,Cyprus
+CZE,Czech Republic,Czech Republic
+DEU,Germany,Germany
+DJI,Djibouti,
+DMA,Dominica,
+DNK,Denmark,Denmark
+DOM,Dominican Republic,Dominican Republic
+DZA,Algeria,Algeria
+ECU,Ecuador,Ecuador
+EGY,"Egypt, Arab Rep.",Egypt
+ERI,Eritrea,
+ESP,Spain,Spain
+EST,Estonia,Estonia
+ETH,Ethiopia,
+FIN,Finland,Finland
+FJI,Fiji,
+FRA,France,France
+FRO,Faroe Islands,
+FSM,"Micronesia, Fed. Sts.",
+GAB,Gabon,
+GBR,United Kingdom,United Kingdom
+GEO,Georgia,
+GHA,Ghana,Ghana
+GIB,Gibraltar,
+GIN,Guinea,
+GMB,"Gambia, The",
+GNB,Guinea-Bissau,
+GNQ,Equatorial Guinea,
+GRC,Greece,Greece
+GRD,Grenada,
+GRL,Greenland,
+GTM,Guatemala,
+GUM,Guam,
+GUY,Guyana,
+HKG,"Hong Kong SAR, China",
+HND,Honduras,
+HRV,Croatia,Croatia
+HTI,Haiti,
+HUN,Hungary,Hungary
+IDN,Indonesia,Indonesia
+IMN,Isle of Man,
+IND,India,India
+IRL,Ireland,Ireland
+IRN,"Iran, Islamic Rep.",Iran
+IRQ,Iraq,
+ISL,Iceland,Iceland
+ISR,Israel,Israel
+ITA,Italy,Italy
+JAM,Jamaica,
+JOR,Jordan,Jordan
+JPN,Japan,Japan
+KAZ,Kazakhstan,Kazakhstan
+KEN,Kenya,Kenya
+KGZ,Kyrgyz Republic,
+KHM,Cambodia,
+KIR,Kiribati,
+KNA,St. Kitts and Nevis,
+KOR,"Korea, Rep.",Korea
+KWT,Kuwait,
+LAO,Lao PDR,
+LBN,Lebanon,
+LBR,Liberia,
+LBY,Libya,
+LCA,St. Lucia,
+LIE,Liechtenstein,Liechtenstein
+LKA,Sri Lanka,
+LSO,Lesotho,
+LTU,Lithuania,Lithuania
+LUX,Luxembourg,Luxembourg
+LVA,Latvia,Latvia
+MAC,"Macao SAR, China",
+MAF,St. Martin (French part),
+MAR,Morocco,Morocco
+MCO,Monaco,
+MDA,Moldova,Moldova
+MDG,Madagascar,
+MDV,Maldives,
+MEX,Mexico,Mexico
+MHL,Marshall Islands,
+MKD,North Macedonia,North Macedonia
+MLI,Mali,
+MLT,Malta,Malta
+MMR,Myanmar,
+MNE,Montenegro,
+MNG,Mongolia,Mongolia
+MNP,Northern Mariana Islands,
+MOZ,Mozambique,
+MRT,Mauritania,
+MUS,Mauritius,Mauritius
+MWI,Malawi,
+MYS,Malaysia,Malaysia
+NAM,Namibia,
+NCL,New Caledonia,
+NER,Niger,
+NGA,Nigeria,
+NIC,Nicaragua,
+NIU,Niue,
+NLD,Netherlands,Netherlands
+NOR,Norway,Norway
+NPL,Nepal,
+NRU,Nauru,
+NZL,New Zealand,New Zealand
+OMN,Oman,
+PAK,Pakistan,
+PAN,Panama,
+PER,Peru,
+PHL,Philippines,
+PLW,Palau,
+PNG,Papua New Guinea,
+POL,Poland,Poland
+PRI,Puerto Rico,
+PRK,"Korea, Dem. People's Rep.",
+PRT,Portugal,Portugal
+PRY,Paraguay,
+PSE,West Bank and Gaza,
+PYF,French Polynesia,
+QAT,Qatar,
+ROU,Romania,Romania
+RUS,Russian Federation,Russia
+RWA,Rwanda,
+SAU,Saudi Arabia,Saudi Arabia
+SDN,Sudan,
+SEN,Senegal,
+SGP,Singapore,
+SLB,Solomon Islands,
+SLE,Sierra Leone,
+SLV,El Salvador,
+SMR,San Marino,
+SOM,Somalia,
+SRB,Serbia,
+SSD,South Sudan,
+STP,Sao Tome and Principe,
+SUR,Suriname,
+SVK,Slovak Republic,Slovak Republic
+SVN,Slovenia,Slovenia
+SWE,Sweden,Sweden
+SWZ,Eswatini,
+SXM,Sint Maarten (Dutch part),
+SYC,Seychelles,
+SYR,Syrian Arab Republic,
+TCA,Turks and Caicos Islands,
+TCD,Chad,
+TGO,Togo,
+THA,Thailand,
+TJK,Tajikistan,
+TKM,Turkmenistan,
+TLS,Timor-Leste,
+TON,Tonga,
+TTO,Trinidad and Tobago,
+TUN,Tunisia,
+TUR,Turkiye,Türkiye
+TUV,Tuvalu,
+TWN,"Taiwan, China",
+TZA,Tanzania,
+UGA,Uganda,
+UKR,Ukraine,
+URY,Uruguay,
+USA,United States,United States
+UZB,Uzbekistan,
+VCT,St. Vincent and the Grenadines,
+VEN,"Venezuela, RB",
+VGB,British Virgin Islands,
+VIR,Virgin Islands (U.S.),
+VNM,Vietnam,
+VUT,Vanuatu,
+WSM,Samoa,
+XKX,Kosovo,
+YEM,"Yemen, Rep.",
+ZAF,South Africa,South Africa
+ZMB,Zambia,
+ZWE,Zimbabwe,

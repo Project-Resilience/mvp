@@ -3,6 +3,7 @@
 data/worldbank/raw/
 # Ignore generated data
 data/worldbank/processed/
+data/oecd/processed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

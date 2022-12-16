@@ -13,16 +13,15 @@ Wind: https://globalenergymonitor.org/projects/global-wind-power-tracker/
 Changes in Coal Tracker: https://drive.google.com/drive/folders/1kbLck8dEWlqUifv98AHNgL3KA_wMf1nL?usp=sharing
 
 """
-
+coal_changes = pd.read_excel("July 2022 GCPT Status Changes - 2014 - 2022.xlsx", sheet_name=None)
+coal_changes = coal_changes['Sheet1']
 solar_data = pd.read_excel("Global-Solar-Power-Tracker-May-2022.xlsx", sheet_name=None)
 solar_data = solar_data['Data']
 wind_data = pd.read_excel("Global-Wind-Power-Tracker-May-2022.xlsx", sheet_name=None)
 wind_data = wind_data['Data']
 gas_data = pd.read_excel("Global-Gas-Plant-Tracker-Aug-2022.xlsx", sheet_name=None)
 coal_data = pd.read_excel("Global-Coal-Plant-Tracker-July-2022.xlsx", sheet_name=None)
-coal_changes = pd.read_excel("July 2022 GCPT Status Changes - 2014 - 2022.xlsx", sheet_name=None)
-print(coal_changes)
-exit()
+
 """
 Things to extract and put in database:
 Context: 

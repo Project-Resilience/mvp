@@ -20,7 +20,9 @@ wind_data = pd.read_excel("Global-Wind-Power-Tracker-May-2022.xlsx", sheet_name=
 wind_data = wind_data['Data']
 gas_data = pd.read_excel("Global-Gas-Plant-Tracker-Aug-2022.xlsx", sheet_name=None)
 coal_data = pd.read_excel("Global-Coal-Plant-Tracker-July-2022.xlsx", sheet_name=None)
-
+coal_changes = pd.read_excel("July 2022 GCPT Status Changes - 2014 - 2022.xlsx", sheet_name=None)
+print(coal_changes)
+exit()
 """
 Things to extract and put in database:
 Context: 

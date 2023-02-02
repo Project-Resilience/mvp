@@ -117,3 +117,5 @@ grouped_production["percentage_mw_wind"] = grouped_production['region_mw_wind_to
 grouped_production["percentage_mw_solar"] = grouped_production['region_mw_solar_total'].fillna(0.) / grouped_production["region_total_mw"]
 
 selected_production = grouped_production[(grouped_production['percentage_mw_wind'] > 0) & (grouped_production['percentage_mw_solar'] > 0) & (grouped_production['percentage_mw_gas'] > 0)].dropna()
+
+print(selected_production)

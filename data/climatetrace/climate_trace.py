@@ -87,7 +87,7 @@ for i, pt in enumerate(coal_positions):
 
 coal_matches = np.asarray(coal_matches)
 #print(coal_matches)
-print(f"There is a {len(coal_matches)/len(coal_positions) * 100}% ({len(coal_matches)}/{len(coal_positions)}) overlap between ClimateTrace and Global Energy Monitor Coal Tracker")
+print(f"There is {len(coal_matches)/len(coal_positions) * 100}% ({len(coal_matches)}/{len(coal_positions)}) overlap between ClimateTrace and Global Energy Monitor Coal Tracker")
 
 
 gas_matches = []
@@ -98,4 +98,7 @@ for i, pt in enumerate(gas_positions):
 
 gas_matches = np.asarray(gas_matches)
 #print(gas_matches)
-print(f"There is a {len(gas_matches)/len(gas_positions) * 100}% ({len(gas_matches)}/{len(gas_positions)}) overlap between ClimateTrace and Global Energy Monitor Gas Tracker")
+print(f"There is {len(gas_matches)/len(gas_positions) * 100}% ({len(gas_matches)}/{len(gas_positions)}) overlap between ClimateTrace and Global Energy Monitor Gas Tracker")
+
+print(f"There is {(len(gas_matches)+len(coal_matches))/len(positions) * 100}% ({(len(gas_matches)+len(coal_matches))}/{len(positions)}) of ClimateTrace in the Global Energy Monitor Coal and Gas Trackers")
+

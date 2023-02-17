@@ -1,12 +1,12 @@
 # Data folder
 # Ignore dowloaded data
 data/worldbank/raw/
-data/BLUE/raw/
+data/gcb/raw/
 # Ignore generated data
 data/worldbank/processed/
 data/oecd/processed/
 data/composite/processed/
-data/BLUE/processed/
+data/gcb/processed/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

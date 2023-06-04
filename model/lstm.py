@@ -11,6 +11,7 @@ import xbatcher
 import regionmask
 import os
 import einops
+from huggingface_hub import PyTorchModelHubMixin
 
 
 #f = "zip:///::https://huggingface.co/datasets/jacobbieker/project-resilience/resolve/main/merged_aggregated_dataset.zarr.zip"
@@ -34,18 +35,21 @@ LAND_DIFF_FEATURES = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff','c4ann_diff', 'c4
 FEATURES = LAND_FEATURES + LAND_DIFF_FEATURES
 
 LABEL = 'ELUC'
+
+ALL_FEATURES = FEATURES + [LABEL]
+dataset = dataset[ALL_FEATURES]
 #print(country_mask)
 
 #print(train_da)
 #print(test_da)
 
 # Simple LSTM model
-class LSTMModel(torch.nn.Module):
-    def __init__(self):
+class LSTMModel(torch.nn.Module, PyTorchModelHubMixin):
+    def __init__(self, layers=2, hidden_dim=128, input_dim=26, output_dim=1):
         super().__init__()
-        self.lstm = torch.nn.LSTM(28, 128, num_layers=2, batch_first=True)
+        self.lstm = torch.nn.LSTM(input_dim, hidden_dim, num_layers=layers, batch_first=True)
         self.average = torch.nn.AdaptiveAvgPool1d(1)
-        self.linear = torch.nn.Linear(128, 1)
+        self.linear = torch.nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
         x, _ = self.lstm(x)
@@ -57,16 +61,23 @@ class LSTMModel(torch.nn.Module):
         return x
 
 
+model_config = {"layers": 2, "hidden_dim": 128, "input_dim": 26, "output_dim": 1}
 def train_country_lstm(country_code):
-    test_da = dataset.where(country_mask == country_code, drop=True).where(dataset.time > 2007, drop=True).load()
-    train_da = dataset.where(country_mask == country_code, drop=True).where(dataset.time <= 2007, drop=True).load() # 143 is the code for the UK
-    model = LSTMModel().cuda()
+    if len(country_code) == 1:
+        test_da = dataset.where(country_mask == country_code[0], drop=True).where(dataset.time > 2007, drop=True).load()
+        train_da = dataset.where(country_mask == country_code[0], drop=True).where(dataset.time <= 2007, drop=True).load() # 143 is the code for the UK
+    else:
+        c_mask = xr.DataArray(np.in1d(country_mask, country_code).reshape(country_mask.shape),
+                              dims=country_mask.dims, coords=country_mask.coords)
+        test_da = dataset.where(c_mask, drop=True).where(dataset.time > 2007, drop=True).load()
+        train_da = dataset.where(c_mask, drop=True).where(dataset.time <= 2007, drop=True).load() # 143 is the code for the UK
+    model = LSTMModel(**model_config).cuda()
     crit = torch.nn.MSELoss()
     stat = torch.nn.L1Loss()
     optim = torch.optim.Adam(model.parameters(), lr=0.001)
 
     train_times = train_da.time.values[11:]
-    for epoch in range(25):
+    for epoch in range(50):
         np.random.shuffle(train_times)
         for time in train_times:
             # Select random lat/lons ones in batch
@@ -137,7 +148,15 @@ def train_country_lstm(country_code):
                     num += 1
         print(f"Test  {country_code} MSE: {test_mse/num}")
         print(f"Test {country_code} MAE: {test_mae/num}")
-        torch.save(model, f"lstm_model_{country_code}.pt")
+        names = [f'{c}_' for c in country_code]
+        # Join the names together
+        name = ''.join(names)
+        torch.save(model, f"lstm_model_{name}.pt")
+        # Save the weights to huggingface
+        model.save_pretrained(f"lstm_model_{name}", push_to_hub=True, repo_name=f"project_resilience_lstm_model_{name}", use_auth_token=None, config=model_config)
 
-train_country_lstm(143) # UK
-train_country_lstm(29) # Brazil
+train_country_lstm([143, 29]) # UK and India
+train_country_lstm([143]) # UK
+train_country_lstm([29]) # Brazil
+# Check ELUC when no change
+# Send over weights, put them on HF and integrate that as well as config options

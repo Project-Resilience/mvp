@@ -153,7 +153,7 @@ def train_country_lstm(country_code):
         name = ''.join(names)
         torch.save(model, f"lstm_model_{name}.pt")
         # Save the weights to huggingface
-        model.save_pretrained(f"lstm_model_{name}", push_to_hub=True, repo_name=f"project_resilience_lstm_model_{name}", use_auth_token=None, config=model_config)
+        model.save_pretrained(f"project_resilience_lstm_model_{name}", push_to_hub=True, config=model_config)
 
 train_country_lstm([143, 29]) # UK and India
 train_country_lstm([143]) # UK

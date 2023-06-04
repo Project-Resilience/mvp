@@ -156,8 +156,7 @@ def train_country_lstm(country_code):
         # Save the weights to huggingface
         model.save_pretrained(f"project_resilience_lstm_model_{name}", push_to_hub=True, config=model_config)
 
-train_country_lstm([143, 29]) # UK and India
+train_country_lstm([143, 29]) # UK and Brazil
 train_country_lstm([143]) # UK
 train_country_lstm([29]) # Brazil
 # Check ELUC when no change
-# Send over weights, put them on HF and integrate that as well as config options

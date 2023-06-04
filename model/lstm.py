@@ -62,6 +62,7 @@ class LSTMModel(torch.nn.Module, PyTorchModelHubMixin):
 
 
 model_config = {"layers": 2, "hidden_dim": 128, "input_dim": 26, "output_dim": 1}
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def train_country_lstm(country_code):
     if len(country_code) == 1:
         test_da = dataset.where(country_mask == country_code[0], drop=True).where(dataset.time > 2007, drop=True).load()
@@ -71,7 +72,7 @@ def train_country_lstm(country_code):
                               dims=country_mask.dims, coords=country_mask.coords)
         test_da = dataset.where(c_mask, drop=True).where(dataset.time > 2007, drop=True).load()
         train_da = dataset.where(c_mask, drop=True).where(dataset.time <= 2007, drop=True).load() # 143 is the code for the UK
-    model = LSTMModel(**model_config).cuda()
+    model = LSTMModel(**model_config).to(device)
     crit = torch.nn.MSELoss()
     stat = torch.nn.L1Loss()
     optim = torch.optim.Adam(model.parameters(), lr=0.001)
@@ -105,8 +106,8 @@ def train_country_lstm(country_code):
             # zero the parameter gradients
             optim.zero_grad()
             # forward + backward + optimize
-            outputs = model(torch_example.cuda())
-            loss = crit(outputs, torch_target.cuda())
+            outputs = model(torch_example.to(device))
+            loss = crit(outputs, torch_target.to(device))
             loss.backward()
             optim.step()
             #print(loss.item())
@@ -138,7 +139,7 @@ def train_country_lstm(country_code):
                     # Flatten with einops to get the shape (batch_size, time, features)
                     torch_target = einops.rearrange(torch_target, 'lat lon features -> (lat lon) features')
                     num += torch_target.shape[0]
-                    outputs = model(torch_example.cuda())
+                    outputs = model(torch_example.to(device))
                     loss = crit(outputs.cpu(), torch_target)
                     mae_loss = stat(outputs.cpu(), torch_target)
                     #print(loss.item())

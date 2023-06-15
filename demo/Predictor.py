@@ -6,17 +6,27 @@ from data_encoder import DataEncoder
 from constants import fields, cao_mapping, LAND_USE_COLS, COLS_MAP, DIFF_LAND_USE_COLS, XGBOOST_FILE_PATH
 
 class Predictor():
-
+    """
+    Wraps XGBoost model and DataEncoder.
+    To be updated later to handle LSTM/other models.
+    """
 
     def __init__(self, model_path=XGBOOST_FILE_PATH):
-
+        """
+        :param model_path: Path to XGBoost model file
+        """
         self.predictor_model = XGBRegressor()
         self.predictor_model.load_model(model_path)
 
         self.encoder = DataEncoder(fields, cao_mapping)
 
 
-    def __compute_percent_changed(self, encoded_context_actions_df):
+    def __compute_percent_changed(self, encoded_context_actions_df: pd.DataFrame):
+        """
+        Computes percentage of land use changed.
+        :param encoded_context_actions_df: Encoded DataFrame of context and diffs.
+        :return: DataFrame of percentage of land use changed.
+        """
         # Sum the absolute values, but divide by 2 to avoid double counting
         # Because positive diff is offset by negative diff
         # context_action_df[DIFF_LAND_USE_COLS].abs().sum(axis=1) / 2
@@ -37,6 +47,12 @@ class Predictor():
 
 
     def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> tuple:
+        """
+        Runs predictor model.
+        :param context: DataFrame of context.
+        :param prescribed: DataFrame of prescribed land usage to be diffed.
+        :return: Tuple of predicted ELUC and percentage of land use changed.
+        """
         encoded_sample_context_df = self.encoder.encode_as_df(context)
 
         prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)

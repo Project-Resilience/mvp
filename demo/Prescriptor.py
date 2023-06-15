@@ -8,9 +8,14 @@ from data_encoder import DataEncoder
 from constants import fields, cao_mapping, LAND_USE_COLS
 
 class Prescriptor():
-
+    """
+    Wrapper for Keras prescriptor and encoder.
+    """
 
     def __init__(self, prescriptor_id: str):
+        """
+        :param prescriptor_id: ID of Keras prescriptor to load.
+        """
         prescriptor_model_filename = os.path.join("prescriptors",
                                                 prescriptor_id + '.h5')
 
@@ -91,9 +96,7 @@ class Prescriptor():
         use to match how much was used in the sample.
 
         :param sample_context_df: a DataFrame containing the context
-        :type sample_context_df: pd.DataFrame
         :return: DataFrame of prescribed land use
-        :rtype: pd.DataFrame
         """
         encoded_sample_context_df = self.encoder.encode_as_df(sample_context_df)
         prescribed_actions_df = self.__prescribe_from_model(encoded_sample_context_df)

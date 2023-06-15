@@ -25,15 +25,40 @@ fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Initial", row=1, col=1)
 fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Prescribed", row=1, col=2)
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
-sliders = [
-    dcc.Slider(
-        min=0, 
-        max=1, 
-        step=SLIDER_PRECISION,
-        value=0,
-        marks=None,
-        tooltip={"placement": "bottom", "always_visible": False}, 
-        id={"type": "presc-slider", "index": f"{col}-slider"}) for col in LAND_USE_COLS]
+context_div = html.Div([
+                html.Div([
+                    html.Div([
+                        html.P("Lat", style={"display": "table-cell"}), 
+                        dcc.Input(id="lat-input", type="number", value=51.625, style={"display": "table-cell"})
+                    ], style={"display": "table-row"}),
+                    html.Div([
+                        html.P("Lon", style={"display": "table-cell"}), 
+                        dcc.Input(id="lon-input", type="number", value=-3.375, style={"display": "table-cell"})
+                    ], style={"display": "table-row"}),
+                    html.Div([
+                        html.P("Time", style={"display": "table-cell"}), 
+                        dcc.Input(id="time-input", type="number", value=2021, style={"display": "table-cell"})
+                    ], style={"display": "table-row"})
+                ], style={"display": "table"}),
+                html.Button("Submit Context", id='context-button', n_clicks=0)
+            ])
+
+sliders_div = html.Div([
+    html.Div([
+        html.P(col, style={"float": "left"}),
+        html.Div([
+            dcc.Slider(
+                min=0,
+                max=1,
+                step=SLIDER_PRECISION,
+                value=0,
+                marks=None,
+                tooltip={"placement": "bottom", "always_visible": False},
+                id={"type": "presc-slider", "index": f"{col}-slider"}
+            )
+        ])
+    ], style={"display": "table-row"}) for col in LAND_USE_COLS
+], style={"display": "table", "width": "30%"})
 
 locked_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
 locked_inputs = [
@@ -56,6 +81,14 @@ locked_inputs = [
     prevent_initial_call=True
 )
 def select_context(n_clicks, lat, lon, time):
+    """
+    Loads context in from lon/lat/time. Updates pie chart, context data store, and locked inputs.
+    :param n_clicks: Unused number of times button has been clicked.
+    :param lat: Latitude to search.
+    :param lon: Longitude to search.
+    :param time: Time to search.
+    :return: Updated pie data, context data to store, and locked slider values.
+    """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == time)]
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
@@ -74,6 +107,13 @@ def select_context(n_clicks, lat, lon, time):
     prevent_initial_call=True
 )
 def select_prescriptor(n_clicks, presc_id, context):
+    """
+    Selects prescriptor, runs on context, updates sliders.
+    :param n_clicks: Unused number of times button has been clicked.
+    :param presc_id: Prescriptor id to load.
+    :param context: Context data from store to run prescriptor on.
+    :return: Updated slider values.
+    """
     # TODO: this is pretty lazy. We should cache used prescriptors
     prescriptor = Prescriptor(presc_id)
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
@@ -86,6 +126,11 @@ def select_prescriptor(n_clicks, presc_id, context):
     prevent_initial_call=True
 )
 def store_prescription(sliders):
+    """
+    Stores slider values in store.
+    :param sliders: Slider values to store.
+    :return: Stored slider values.
+    """
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
     return presc.to_dict("records")
 
@@ -96,6 +141,12 @@ def store_prescription(sliders):
     prevent_initial_call=True
 )
 def update_chart(presc, context):
+    """
+    Updates prescription pie from store.
+    :param presc: Prescription data from store.
+    :param context: Context data from store.
+    :return: Updated prescription pie data.
+    """
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc_df["primf"] = context_df["primf"]
@@ -115,6 +166,13 @@ def update_chart(presc, context):
     prevent_initial_call=True
 )
 def sum_to_1(n_clicks, presc, context):
+    """
+    Sets slider values to sum to how much land was used in context.
+    :param n_clicks: Unused number of times button has been clicked.
+    :param presc: Prescription data from store.
+    :param context: Context data from store.
+    :return: Slider values scaled down to fit percentage of land used in context.
+    """
     context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     new_sum = presc_df.sum(axis=1)
@@ -129,6 +187,13 @@ def sum_to_1(n_clicks, presc, context):
     prevent_initial_call=True
 )
 def predict(n_clicks, context, presc):
+    """
+    Predicts ELUC from context and prescription stores.
+    :param n_clicks: Unused number of times button has been clicked.
+    :param context: Context data from store.
+    :param presc: Prescription data from store.
+    :return: Predicted ELUC and percent change.
+    """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     predictor = Predictor()
@@ -148,19 +213,14 @@ def predict(n_clicks, context, presc):
 app.layout = html.Div([
     dcc.Store(id='context-store'),
     dcc.Store(id='presc-store'),
-    html.Div(
-        [dcc.Input(id='lat-input', type='number', value=51.625),
-        dcc.Input(id='lon-input', type='number', value=-3.375),
-        dcc.Input(id='time-input', type='number', value=2021),
-        html.Button("Submit Context", id='context-button', n_clicks=0)
-    ]),
+    context_div,
     html.Div([
         dcc.Dropdown(id='presc-dropdown', options=PRESCRIPTOR_LIST, placeholder="Select a Prescriptor"),
         html.Button("Prescribe", id='presc-button', n_clicks=0)
     ]),
     dcc.Graph(id='pies', figure=fig),
     html.Div([
-        html.Div(sliders),
+        html.Div(sliders_div),
         html.Div(locked_inputs),
         html.Button("Sum to 1", id='sum-button', n_clicks=0)
     ]),

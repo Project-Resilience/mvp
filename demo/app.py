@@ -1,21 +1,37 @@
-from dash import Dash, html, dash_table, dcc, Input, Output, State, MATCH, ALL
-import plotly.express as px
-import plotly.graph_objs as go
-from plotly.subplots import make_subplots
-
-import pandas as pd
 from math import isclose
 
-from constants import LAND_USE_COLS, CONTEXT_COLUMNS, PRESCRIPTOR_LIST, CHART_COLS, ALL_LAND_USE_COLS, SLIDER_PRECISION
-from Prescriptor import Prescriptor
+import pandas as pd
+from dash import ALL
+from dash import Dash
+from dash import Input
+from dash import Output
+from dash import State
+from dash import dcc
+from dash import html
+from plotly.subplots import make_subplots
+
 from Predictor import Predictor
+from Prescriptor import Prescriptor
+from constants import ALL_LAND_USE_COLS
+from constants import CHART_COLS
+from constants import CONTEXT_COLUMNS
+from constants import LAND_USE_COLS
+from constants import PRESCRIPTOR_LIST
+from constants import SLIDER_PRECISION
 from utils import add_nonland
+
 
 app = Dash(__name__)
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
 df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+min_lat = df["i_lat"].min()
+max_lat = df["i_lat"].max()
+min_lon = df["i_lon"].min()
+max_lon = df["i_lon"].max()
+min_time = df["time"].min()
+max_time = df["time"].max()
 
 PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
 PIE_DATA.append(1)
@@ -26,18 +42,25 @@ fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Prescribed", row=1, col=2
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
+                html.H2('Context', id='context_title'),
                 html.Div([
                     html.Div([
                         html.P("Lat", style={"display": "table-cell"}), 
-                        dcc.Input(id="lat-input", type="number", value=51.625, style={"display": "table-cell"})
+                        dcc.Input(id="lat-input", type="number", value=51.625, style={"display": "table-cell"}),
+                        html.P(f"Latitude must be between {min_lat} and {max_lat}, in 0.250 increments.",
+                               style={"display": "table-cell"})
                     ], style={"display": "table-row"}),
                     html.Div([
                         html.P("Lon", style={"display": "table-cell"}), 
-                        dcc.Input(id="lon-input", type="number", value=-3.375, style={"display": "table-cell"})
+                        dcc.Input(id="lon-input", type="number", value=-3.375, style={"display": "table-cell"}),
+                        html.P(f"Longitude must be between {min_lon} and {max_lon}, in 0.250 increments.",
+                               style={"display": "table-cell"})
                     ], style={"display": "table-row"}),
                     html.Div([
-                        html.P("Time", style={"display": "table-cell"}), 
-                        dcc.Input(id="time-input", type="number", value=2021, style={"display": "table-cell"})
+                        html.P("Time ", style={"display": "table-cell"}),
+                        dcc.Input(id="time-input", type="number", value=2021, style={"display": "table-cell"}),
+                        html.P(f"Year must be between {min_time} and {max_time}.",
+                               style={"display": "table-cell"})
                     ], style={"display": "table-row"})
                 ], style={"display": "table"}),
                 html.Button("Submit Context", id='context-button', n_clicks=0)
@@ -99,6 +122,7 @@ def select_context(n_clicks, lat, lon, time):
     ]
     return new_data, context.to_dict("records"), chart_df[locked_cols].iloc[0].tolist()
 
+
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("presc-button", "n_clicks"),
@@ -120,6 +144,7 @@ def select_prescriptor(n_clicks, presc_id, context):
     prescribed = prescriptor.run_prescriptor(context_df)
     return prescribed[LAND_USE_COLS].iloc[0].tolist()
 
+
 @app.callback(
     Output("presc-store", "data"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
@@ -133,6 +158,7 @@ def store_prescription(sliders):
     """
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
     return presc.to_dict("records")
+
 
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
@@ -158,6 +184,7 @@ def update_chart(presc, context):
         [1], len(CHART_COLS)
     ]
 
+
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("sum-button", "n_clicks"),
@@ -178,6 +205,7 @@ def sum_to_1(n_clicks, presc, context):
     new_sum = presc_df.sum(axis=1)
     old_sum = context_df.sum(axis=1)
     return presc_df.div(new_sum, axis=0).mul(old_sum, axis=0).iloc[0].tolist()
+
 
 @app.callback(
     Output("prediction", "children"),
@@ -210,25 +238,52 @@ def predict(n_clicks, context, presc):
     return out
 
 
-app.layout = html.Div([
-    dcc.Store(id='context-store'),
-    dcc.Store(id='presc-store'),
-    context_div,
-    html.Div([
-        dcc.Dropdown(id='presc-dropdown', options=PRESCRIPTOR_LIST, placeholder="Select a Prescriptor"),
-        html.Button("Prescribe", id='presc-button', n_clicks=0)
-    ]),
-    dcc.Graph(id='pies', figure=fig),
-    html.Div([
-        html.Div(sliders_div),
-        html.Div(locked_inputs),
-        html.Button("Sum to 1", id='sum-button', n_clicks=0)
-    ]),
-    html.Div([
-        html.Button("Predict", id='predict-button', n_clicks=0),
-        html.Div(id='prediction')
+def main():
+    global app
+    app.title = 'Land Use Optimization'
+    app.css.config.serve_locally = False
+    # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
+    # These two allow us to dim the screen while loading.
+    # See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
+    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
+
+    app.layout = html.Div([
+        dcc.Store(id='context-store'),
+        dcc.Store(id='presc-store'),
+        html.Div([
+            html.H1(children='Land Use Optimization'),
+            html.Div(children="This site is for demonstration purposes only."),
+            html.Br(),
+            html.Div("For a given context cell representing a portion of the earth,"
+                     " identified by its latitude and longitude coordinates:"),
+            html.Br(),
+            html.Ul([
+                html.Li("How can I change the land"),
+                html.Li("In order to minimize the resulting estimated CO2 emissions (ELUC)?")
+            ]),
+        ]),
+        context_div,
+        html.H2('Actions', id='actions_title'),
+        html.Div([
+            dcc.Dropdown(id='presc-dropdown', options=PRESCRIPTOR_LIST, placeholder="Select a Prescriptor"),
+            html.Button("Prescribe", id='presc-button', n_clicks=0)
+        ]),
+        dcc.Graph(id='pies', figure=fig),
+        html.Div([
+            html.Div(sliders_div),
+            html.Div(locked_inputs),
+            html.Button("Sum to 1", id='sum-button', n_clicks=0)
+        ]),
+        html.H2('Outcomes', id='outcomes_title'),
+        html.Div([
+            html.Button("Predict", id='predict-button', n_clicks=0),
+            html.Div(id='prediction')
+        ])
     ])
-])
+
+    app.run_server(debug=True)
+
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    main()

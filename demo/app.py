@@ -241,6 +241,12 @@ def predict(n_clicks, context, presc):
 def main():
     global app
     app.title = 'Land Use Optimization'
+    app.css.config.serve_locally = False
+    # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
+    # These two allow us to dim the screen while loading.
+    # See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
+    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
     app.layout = html.Div([
         dcc.Store(id='context-store'),

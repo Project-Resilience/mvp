@@ -1,5 +1,6 @@
 from math import isclose
 
+import numpy as np
 import pandas as pd
 from dash import ALL
 from dash import Dash
@@ -26,12 +27,18 @@ app = Dash(__name__)
 # TODO: should we load all our data into a store?
 # This seems more secure.
 df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+
+# Cells
+GRID_STEP = 0.25
 min_lat = df["i_lat"].min()
 max_lat = df["i_lat"].max()
 min_lon = df["i_lon"].min()
 max_lon = df["i_lon"].max()
-min_time = df["time"].min()
-max_time = df["time"].max()
+min_year = df["time"].min()
+max_year = df["time"].max()
+
+lat_list = [lat for lat in np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP)]
+lon_list = [lon for lon in np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP)]
 
 PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
 PIE_DATA.append(1)
@@ -45,22 +52,26 @@ context_div = html.Div([
                 dcc.Markdown('''## Context'''),
                 html.Div([
                     html.Div([
-                        html.P("Lat", style={"display": "table-cell"}), 
-                        dcc.Input(id="lat-input", type="number", value=51.625, style={"display": "table-cell"}),
-                        html.P(f"Latitude must be between {min_lat} and {max_lat}, in 0.250 increments.",
-                               style={"display": "table-cell"})
+                        html.P("Lat", style={"display": "table-cell"}),
+                        dcc.Dropdown(id='lat-dropdown',
+                                     options=lat_list,
+                                     placeholder="Select a latitude",
+                                     value=51.625),
                     ], style={"display": "table-row"}),
                     html.Div([
-                        html.P("Lon", style={"display": "table-cell"}), 
-                        dcc.Input(id="lon-input", type="number", value=-3.375, style={"display": "table-cell"}),
-                        html.P(f"Longitude must be between {min_lon} and {max_lon}, in 0.250 increments.",
-                               style={"display": "table-cell"})
+                        html.P("Lon", style={"display": "table-cell"}),
+                        dcc.Dropdown(id='lon-dropdown',
+                                     options=lon_list,
+                                     placeholder="Select a longitude",
+                                     value=-3.375),
                     ], style={"display": "table-row"}),
                     html.Div([
-                        html.P("Time ", style={"display": "table-cell"}),
-                        dcc.Input(id="time-input", type="number", value=2021, style={"display": "table-cell"}),
-                        html.P(f"Year must be between {min_time} and {max_time}.",
-                               style={"display": "table-cell"})
+                        html.P("Year ", style={"display": "table-cell"}),
+                        dcc.Input(id="year-input",
+                                  type="number",
+                                  value=2021,
+                                  style={"display": "table-cell"}),
+                        dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
                     ], style={"display": "table-row"})
                 ], style={"display": "table"}),
                 html.Button("Submit Context", id='context-button', n_clicks=0)
@@ -98,21 +109,21 @@ locked_inputs = [
     Output("context-store", "data"),
     Output({"type": "locked-input", "index": ALL}, "value"),
     Input("context-button", "n_clicks"),
-    State("lat-input", "value"),
-    State("lon-input", "value"),
-    State("time-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
+    State("year-input", "value"),
     prevent_initial_call=True
 )
-def select_context(n_clicks, lat, lon, time):
+def select_context(n_clicks, lat, lon, year):
     """
     Loads context in from lon/lat/time. Updates pie chart, context data store, and locked inputs.
     :param n_clicks: Unused number of times button has been clicked.
     :param lat: Latitude to search.
     :param lon: Longitude to search.
-    :param time: Time to search.
+    :param year: Year to search.
     :return: Updated pie data, context data to store, and locked slider values.
     """
-    context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == time)]
+    context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{
@@ -257,8 +268,8 @@ This site is for demonstration purposes only.
 
 For a given context cell representing a portion of the earth,
 identified by its latitude and longitude coordinates:
-* How can I change the land
-* In order to minimize the resulting estimated CO2 emissions (ELUC)?
+* what changes can we make to the land use
+* in order to minimize the resulting estimated CO2 emissions (ELUC)?
 '''),
         context_div,
         dcc.Markdown('''## Actions'''),

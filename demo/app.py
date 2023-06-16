@@ -76,6 +76,18 @@ context_div = html.Div([
                     ])
             ])
 
+presc_select_div = html.Div([
+    html.P("Minimize change", style={"grid-column": "1"}),
+    html.Div([
+        dcc.Slider(id='presc-select',
+                min=0, max=len(PRESCRIPTOR_LIST)-1, step=1, 
+                value=0,
+                marks={i: PRESCRIPTOR_LIST[i] for i in range(len(PRESCRIPTOR_LIST))})
+    ], style={"grid-column": "2", "width": "100%"}),
+    html.P("Minimize ELUC", style={"grid-column": "3"}),
+    html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "2", "grid-row": "2", "justify-self": "center"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr 1fr", "grid-template-rows": "auto auto", "width": "50%"})
+
 sliders_div = html.Div([
     html.Div([
         html.P(col, style={"float": "left"}),
@@ -94,13 +106,13 @@ sliders_div = html.Div([
 ], style={"display": "table", "width": "30%"})
 
 locked_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
-locked_inputs = [
+locked_div = html.Div([
     dcc.Input(
         value=0,
         type="number",
         disabled=True,
         id={"type": "locked-input", "index": f"{col}-locked"}) for col in locked_cols
-]
+])
 
 
 @app.callback(
@@ -136,11 +148,11 @@ def select_context(n_clicks, lat, lon, year):
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("presc-button", "n_clicks"),
-    State("presc-dropdown", "value"),
+    State("presc-select", "value"),
     State("context-store", "data"),
     prevent_initial_call=True
 )
-def select_prescriptor(n_clicks, presc_id, context):
+def select_prescriptor(n_clicks, presc_idx, context):
     """
     Selects prescriptor, runs on context, updates sliders.
     :param n_clicks: Unused number of times button has been clicked.
@@ -149,6 +161,7 @@ def select_prescriptor(n_clicks, presc_id, context):
     :return: Updated slider values.
     """
     # TODO: this is pretty lazy. We should cache used prescriptors
+    presc_id = PRESCRIPTOR_LIST[presc_idx]
     prescriptor = Prescriptor(presc_id)
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     prescribed = prescriptor.run_prescriptor(context_df)
@@ -272,14 +285,11 @@ identified by its latitude and longitude coordinates:
 '''),
         context_div,
         dcc.Markdown('''## Actions'''),
-        html.Div([
-            dcc.Dropdown(id='presc-dropdown', options=PRESCRIPTOR_LIST, placeholder="Select a Prescriptor"),
-            html.Button("Prescribe", id='presc-button', n_clicks=0)
-        ]),
+        presc_select_div,
         dcc.Graph(id='pies', figure=fig),
         html.Div([
-            html.Div(sliders_div),
-            html.Div(locked_inputs),
+            sliders_div,
+            locked_div,
             html.Button("Sum to 1", id='sum-button', n_clicks=0)
         ]),
         dcc.Markdown('''## Outcomes'''),

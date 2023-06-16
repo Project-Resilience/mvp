@@ -50,31 +50,30 @@ fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
                 dcc.Markdown('''## Context'''),
-                html.Div([
-                    html.Div([
+                html.Div(
+                    style={'display': 'flex'},
+                    children=[
                         html.P("Lat", style={"display": "table-cell"}),
                         dcc.Dropdown(id='lat-dropdown',
                                      options=lat_list,
                                      placeholder="Select a latitude",
-                                     value=51.625),
-                    ], style={"display": "table-row"}),
-                    html.Div([
+                                     value=51.625,
+                                     style=dict(width='75%')
+                                     ),
                         html.P("Lon", style={"display": "table-cell"}),
                         dcc.Dropdown(id='lon-dropdown',
                                      options=lon_list,
                                      placeholder="Select a longitude",
-                                     value=-3.375),
-                    ], style={"display": "table-row"}),
-                    html.Div([
+                                     value=-3.375,
+                                     style=dict(width='75%')),
                         html.P("Year ", style={"display": "table-cell"}),
                         dcc.Input(id="year-input",
                                   type="number",
                                   value=2021,
                                   style={"display": "table-cell"}),
                         dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
-                    ], style={"display": "table-row"})
-                ], style={"display": "table"}),
-                html.Button("Submit Context", id='context-button', n_clicks=0)
+                        html.Button("Submit Context", id='context-button', n_clicks=0)
+                    ])
             ])
 
 sliders_div = html.Div([

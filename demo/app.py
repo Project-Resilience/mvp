@@ -42,7 +42,7 @@ fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Prescribed", row=1, col=2
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
-                html.H2('Context', id='context_title'),
+                dcc.Markdown('''## Context'''),
                 html.Div([
                     html.Div([
                         html.P("Lat", style={"display": "table-cell"}), 
@@ -241,30 +241,21 @@ def predict(n_clicks, context, presc):
 def main():
     global app
     app.title = 'Land Use Optimization'
-    app.css.config.serve_locally = False
-    # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
-    # These two allow us to dim the screen while loading.
-    # See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
     app.layout = html.Div([
         dcc.Store(id='context-store'),
         dcc.Store(id='presc-store'),
-        html.Div([
-            html.H1(children='Land Use Optimization'),
-            html.Div(children="This site is for demonstration purposes only."),
-            html.Br(),
-            html.Div("For a given context cell representing a portion of the earth,"
-                     " identified by its latitude and longitude coordinates:"),
-            html.Br(),
-            html.Ul([
-                html.Li("How can I change the land"),
-                html.Li("In order to minimize the resulting estimated CO2 emissions (ELUC)?")
-            ]),
-        ]),
+        dcc.Markdown('''
+# Land Use Optimization
+This site is for demonstration purposes only.
+
+For a given context cell representing a portion of the earth,
+identified by its latitude and longitude coordinates:
+* How can I change the land
+* In order to minimize the resulting estimated CO2 emissions (ELUC)?
+'''),
         context_div,
-        html.H2('Actions', id='actions_title'),
+        dcc.Markdown('''## Actions'''),
         html.Div([
             dcc.Dropdown(id='presc-dropdown', options=PRESCRIPTOR_LIST, placeholder="Select a Prescriptor"),
             html.Button("Prescribe", id='presc-button', n_clicks=0)
@@ -275,7 +266,7 @@ def main():
             html.Div(locked_inputs),
             html.Button("Sum to 1", id='sum-button', n_clicks=0)
         ]),
-        html.H2('Outcomes', id='outcomes_title'),
+        dcc.Markdown('''## Outcomes'''),
         html.Div([
             html.Button("Predict", id='predict-button', n_clicks=0),
             html.Div(id='prediction')

@@ -1,8 +1,9 @@
-from math import isclose
+from math import isclose, log10
 
 import numpy as np
 import pandas as pd
 from dash import ALL
+from dash import MATCH
 from dash import Dash
 from dash import Input
 from dash import Output
@@ -20,6 +21,7 @@ from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
 from constants import SLIDER_PRECISION
 from utils import add_nonland
+from utils import round_list
 
 
 app = Dash(__name__)
@@ -46,6 +48,7 @@ PIE_DATA.append(1)
 fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
 fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Initial", row=1, col=1)
 fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Prescribed", row=1, col=2)
+fig.update_traces(textposition='inside')
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
@@ -81,16 +84,17 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(PRESCRIPTOR_LIST)-1, step=1, 
-                value=0,
-                marks={i: PRESCRIPTOR_LIST[i] for i in range(len(PRESCRIPTOR_LIST))})
-    ], style={"grid-column": "2", "width": "100%"}),
-    html.P("Minimize ELUC", style={"grid-column": "3"}),
-    html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "2", "grid-row": "2", "justify-self": "center"})
-], style={"display": "grid", "grid-template-columns": "auto 1fr 1fr", "grid-template-rows": "auto auto", "width": "50%"})
+                value=len(PRESCRIPTOR_LIST)//2,
+                included=False,
+                marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
+    ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
+    html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
+    html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "35%", "align-content": "center"})
 
 sliders_div = html.Div([
     html.Div([
-        html.P(col, style={"float": "left"}),
+        html.P(col, style={"grid-column": "1"}),
         html.Div([
             dcc.Slider(
                 min=0,
@@ -101,18 +105,38 @@ sliders_div = html.Div([
                 tooltip={"placement": "bottom", "always_visible": False},
                 id={"type": "presc-slider", "index": f"{col}-slider"}
             )
-        ])
-    ], style={"display": "table-row"}) for col in LAND_USE_COLS
-], style={"display": "table", "width": "30%"})
+        ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
+        html.Div("0", id={"type": "slider-value", "index": f"{col}-value"}, style={"grid-column": "3"}),
+    ], style={"display": "grid", "grid-template-columns": "8% 1fr 20%"}) for col in LAND_USE_COLS]
+)
 
 locked_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
 locked_div = html.Div([
     dcc.Input(
-        value=0,
-        type="number",
+        value=f"{col}: 0",
+        type="text",
         disabled=True,
         id={"type": "locked-input", "index": f"{col}-locked"}) for col in locked_cols
 ])
+
+predict_div = html.Div([
+    html.Button("Predict", id='predict-button', n_clicks=0, style={"grid-column": "1"}),
+    html.P("Predicted ELUC: ", style={"grid-column": "2"}),
+    dcc.Input(
+        type="number",
+        disabled=True,
+        id="predict-eluc",
+        style={"grid-column": "3"}
+    ),
+    html.P("Land Change: ", style={"grid-column": "4"}),
+    dcc.Input(
+        type="number",
+        disabled=True,
+        id="predict-change",
+        style={"grid-column": "5"}
+    ),
+], style={"display": "grid", "grid-template-columns": "auto auto 1fr auto 1fr"})
+
 
 
 @app.callback(
@@ -135,6 +159,11 @@ def select_context(n_clicks, lat, lon, year):
     :return: Updated pie data, context data to store, and locked slider values.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
+    # For testing purposes:
+    # context["primf"].iloc[0] = 0.2
+    # context["primn"].iloc[0] = 0.1
+    # context["pastr"].iloc[0] -= 0.3
+    # context["secdf"].iloc[0] -= 0.1
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{
@@ -142,7 +171,11 @@ def select_context(n_clicks, lat, lon, year):
             "values": [chart_data]},
         [0], len(CHART_COLS)
     ]
-    return new_data, context.to_dict("records"), chart_df[locked_cols].iloc[0].tolist()
+    locked = chart_df[locked_cols].iloc[0].tolist()
+    locked = round_list(locked)
+    locked = [f"{locked_cols[i]}: {locked[i]}" for i in range(len(locked_cols))]
+
+    return new_data, context.to_dict("records"), locked
 
 
 @app.callback(
@@ -170,17 +203,32 @@ def select_prescriptor(n_clicks, presc_idx, context):
 
 @app.callback(
     Output("presc-store", "data"),
+    Output({"type": "slider-value", "index": ALL}, "children"),
+    Output("sum-warning", "children"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
+    State("context-store", "data"),
     prevent_initial_call=True
 )
-def store_prescription(sliders):
+def store_prescription(sliders, context):
     """
-    Stores slider values in store.
+    Stores slider values in store and displays them next to sliders.
+    Warns user if values don't sum to 1.
     :param sliders: Slider values to store.
-    :return: Stored slider values.
+    :return: Stored slider values, slider values to display, warning if necessary.
     """
+    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
-    return presc.to_dict("records")
+    rounded = round_list(presc.iloc[0].tolist())
+
+    warning = ""
+    # Check if prescriptions sum to 1
+    # TODO: Are we being precise enough?
+    new_sum = presc.sum(axis=1).iloc[0]
+    old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
+    if not isclose(new_sum, old_sum, rel_tol=1e-7):
+        warning = "WARNING: prescriptions sum to " + str(new_sum) + " instead of " + str(old_sum)
+
+    return presc.to_dict("records"), rounded, warning
 
 
 @app.callback(
@@ -231,7 +279,8 @@ def sum_to_1(n_clicks, presc, context):
 
 
 @app.callback(
-    Output("prediction", "children"),
+    Output("predict-eluc", "value"),
+    Output("predict-change", "value"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
     State("presc-store", "data"),
@@ -249,16 +298,8 @@ def predict(n_clicks, context, presc):
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     predictor = Predictor()
     prediction, change = predictor.run_predictor(context_df, presc_df)
-    out = f"Prediction: {prediction} ELUC; Change: {change}"
-
-    # Check if prescriptions sum to 1
-    # TODO: Are we being precise enough?
-    new_sum = presc_df.sum(axis=1).iloc[0]
-    old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
-    if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        out = "WARNING: prescriptions sum to " + str(new_sum) + " instead of " + str(old_sum) + " " + out
     
-    return out
+    return prediction, change
 
 
 def main():
@@ -286,17 +327,19 @@ identified by its latitude and longitude coordinates:
         context_div,
         dcc.Markdown('''## Actions'''),
         presc_select_div,
-        dcc.Graph(id='pies', figure=fig),
         html.Div([
-            sliders_div,
+            html.Div(sliders_div, style={'grid-column': '1'}),
+            dcc.Graph(id='pies', figure=fig, style={'grid-column': '2'})
+        ], style={'display': 'grid', 'grid-template-columns': '40% 1fr'}),
+        
+        html.Div([
+            #sliders_div,
             locked_div,
-            html.Button("Sum to 1", id='sum-button', n_clicks=0)
+            html.Button("Sum to 1", id='sum-button', n_clicks=0),
+            html.Div(id='sum-warning')
         ]),
         dcc.Markdown('''## Outcomes'''),
-        html.Div([
-            html.Button("Predict", id='predict-button', n_clicks=0),
-            html.Div(id='prediction')
-        ])
+        predict_div
     ])
 
     app.run_server(debug=True)

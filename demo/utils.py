@@ -1,6 +1,7 @@
+from math import log10
 import pandas as pd
 
-from constants import ALL_LAND_USE_COLS, CHART_COLS
+from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -16,3 +17,14 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     assert((nonland >= 0).all())
     data['nonland'] = nonland
     return data[CHART_COLS]
+
+def round_list(vals: list) -> list:
+    """
+    Rounds all the values of a list to the number of decimals that gets it
+    to within SLIDER_PRECISION.
+    :param vals: List of values to round.
+    :return: List of rounded values.
+    """
+    decimals = int(-1 * log10(SLIDER_PRECISION))
+    rounded = [round(val, decimals) for val in vals]
+    return rounded

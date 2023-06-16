@@ -1,11 +1,16 @@
+import warnings
+
 import pandas as pd
 
+# Silence xgboost warnings
+warnings.filterwarnings("ignore")
 from xgboost import XGBRegressor
 from data_encoder import DataEncoder
 
 from constants import fields, cao_mapping, LAND_USE_COLS, COLS_MAP, DIFF_LAND_USE_COLS, XGBOOST_FILE_PATH
 
-class Predictor():
+
+class Predictor:
     """
     Wraps XGBoost model and DataEncoder.
     To be updated later to handle LSTM/other models.
@@ -19,7 +24,6 @@ class Predictor():
         self.predictor_model.load_model(model_path)
 
         self.encoder = DataEncoder(fields, cao_mapping)
-
 
     def __compute_percent_changed(self, encoded_context_actions_df: pd.DataFrame):
         """
@@ -45,7 +49,6 @@ class Predictor():
         df = pd.DataFrame(percent_changed, columns=['Change'])
         return df
 
-
     def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> tuple:
         """
         Runs predictor model.
@@ -55,14 +58,15 @@ class Predictor():
         """
         encoded_sample_context_df = self.encoder.encode_as_df(context)
 
-        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
+        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) - \
+            context[LAND_USE_COLS].reset_index(drop=True)
         prescribed_actions_df.rename(COLS_MAP, axis=1, inplace=True)
 
         encoded_prescribed_actions_df = self.encoder.encode_as_df(prescribed_actions_df)
 
         encoded_context_actions_df = pd.concat([encoded_sample_context_df,
-                                            encoded_prescribed_actions_df],
-                                        axis=1)
+                                                encoded_prescribed_actions_df],
+                                               axis=1)
         
         change_df = self.__compute_percent_changed(encoded_context_actions_df)
         

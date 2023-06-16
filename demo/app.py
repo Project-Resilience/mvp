@@ -90,7 +90,7 @@ presc_select_div = html.Div([
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
-], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "35%", "align-content": "center"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "45%", "align-content": "center"})
 
 sliders_div = html.Div([
     html.Div([

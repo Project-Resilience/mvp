@@ -52,30 +52,32 @@ fig.update_traces(textposition='inside')
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
-                dcc.Markdown('''## Context'''),
-                html.Div(
-                    style={'display': 'flex'},
-                    children=[
-                        html.P("Lat", style={"display": "table-cell"}),
-                        dcc.Dropdown(id='lat-dropdown',
-                                     options=lat_list,
-                                     placeholder="Select a latitude",
-                                     value=51.625,
-                                     style=dict(width='75%')
-                                     ),
-                        html.P("Lon", style={"display": "table-cell"}),
-                        dcc.Dropdown(id='lon-dropdown',
-                                     options=lon_list,
-                                     placeholder="Select a longitude",
-                                     value=-3.375,
-                                     style=dict(width='75%')),
-                        html.P("Year ", style={"display": "table-cell"}),
-                        dcc.Input(id="year-input",
-                                  type="number",
-                                  value=2021,
-                                  style={"display": "table-cell"}),
-                        dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
-                        html.Button("Submit Context", id='context-button', n_clicks=0)
+    dcc.Markdown('''## Context'''),
+    html.Div(
+        style={'display': 'grid', 'grid-template-columns': 'auto 1fr auto 1fr auto 1fr auto', 'width': '75%'},
+        children=[
+            html.P("Lat", style={'grid-column': '1', 'padding-right': '10px'}),
+            dcc.Dropdown(id='lat-dropdown',
+                            options=lat_list,
+                            placeholder="Select a latitude",
+                            value=51.625,
+                            style={'grid-column': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
+                            ),
+            html.P("Lon", style={'grid-column': '3', 'padding-right': '10px'}),
+            dcc.Dropdown(id='lon-dropdown',
+                            options=lon_list,
+                            placeholder="Select a longitude",
+                            value=-3.375,
+                            style={'grid-column': '4', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+            html.P("Year ", style={'grid-column': '5', 'margin-right': '10px'}),
+            html.Div([
+                dcc.Input(id="year-input",
+                        type="number",
+                        value=2021,
+                        ),
+                dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
+            ], style={'grid-column': '6', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+            html.Button("Submit Context", id='context-button', n_clicks=0, style={'grid-column': '7', 'margin-top': '-3px'})
                     ])
             ])
 
@@ -90,7 +92,7 @@ presc_select_div = html.Div([
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
-], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "45%", "align-content": "center"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "75%", "align-content": "center"})
 
 sliders_div = html.Div([
     html.Div([
@@ -121,21 +123,21 @@ locked_div = html.Div([
 
 predict_div = html.Div([
     html.Button("Predict", id='predict-button', n_clicks=0, style={"grid-column": "1"}),
-    html.P("Predicted ELUC: ", style={"grid-column": "2"}),
     dcc.Input(
-        type="number",
+        value="Predicted ELUC:",
+        type="text",
         disabled=True,
         id="predict-eluc",
-        style={"grid-column": "3"}
+        style={"grid-column": "2"}
     ),
-    html.P("Land Change: ", style={"grid-column": "4"}),
     dcc.Input(
-        type="number",
+        value="Land Change:",
+        type="text",
         disabled=True,
         id="predict-change",
-        style={"grid-column": "5"}
+        style={"grid-column": "3"}
     ),
-], style={"display": "grid", "grid-template-columns": "auto auto 1fr auto 1fr"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr 1fr", "width": "75%"})
 
 
 
@@ -194,11 +196,12 @@ def select_prescriptor(n_clicks, presc_idx, context):
     :return: Updated slider values.
     """
     # TODO: this is pretty lazy. We should cache used prescriptors
-    presc_id = PRESCRIPTOR_LIST[presc_idx]
-    prescriptor = Prescriptor(presc_id)
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    prescribed = prescriptor.run_prescriptor(context_df)
-    return prescribed[LAND_USE_COLS].iloc[0].tolist()
+    if context != None:
+        presc_id = PRESCRIPTOR_LIST[presc_idx]
+        prescriptor = Prescriptor(presc_id)
+        context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+        prescribed = prescriptor.run_prescriptor(context_df)
+        return prescribed[LAND_USE_COLS].iloc[0].tolist()
 
 
 @app.callback(
@@ -299,7 +302,7 @@ def predict(n_clicks, context, presc):
     predictor = Predictor()
     prediction, change = predictor.run_predictor(context_df, presc_df)
     
-    return prediction, change
+    return f"Predicted ELUC: {prediction}", f"Land Change: {change}"
 
 
 def main():

@@ -55,35 +55,39 @@ fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", s
 fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Prescribed", row=1, col=2)
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
+present = df[df["time"] == 2021]
+map_fig = px.scatter_geo(present, lat="lat", lon="lon", scope="europe", center={"lat": 54.5, "lon": -1.5}, size_max=10)
+map_fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=7))
+
+
 context_div = html.Div([
-    dcc.Markdown('''## Context'''),
     html.Div(
-        style={'display': 'grid', 'grid-template-columns': 'auto 1fr auto 1fr auto 1fr auto', 'width': '75%'},
+        style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto'},
         children=[
-            html.P("Lat", style={'grid-column': '1', 'padding-right': '10px'}),
+            html.P("Lat", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
             dcc.Dropdown(id='lat-dropdown',
                             options=lat_list,
                             placeholder="Select a latitude",
                             value=51.625,
-                            style={'grid-column': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
+                            style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
                             ),
-            html.P("Lon", style={'grid-column': '3', 'padding-right': '10px'}),
+            html.P("Lon", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
             dcc.Dropdown(id='lon-dropdown',
                             options=lon_list,
                             placeholder="Select a longitude",
                             value=-3.375,
-                            style={'grid-column': '4', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
-            html.P("Year ", style={'grid-column': '5', 'margin-right': '10px'}),
+                            style={'grid-column': '2', 'grid-row': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+            html.P("Year ", style={'grid-column': '1', 'grid-row': '3', 'margin-right': '10px'}),
             html.Div([
                 dcc.Input(id="year-input",
                         type="number",
                         value=2021,
                         ),
                 dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
-            ], style={'grid-column': '6', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
-            html.Button("Submit Context", id='context-button', n_clicks=0, style={'grid-column': '7', 'margin-top': '-3px'})
-                    ])
-            ])
+            ], style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+        ]
+    )
+])
 
 presc_select_div = html.Div([
     html.P("Minimize change", style={"grid-column": "1"}),
@@ -144,7 +148,25 @@ predict_div = html.Div([
     ),
 ], style={"display": "grid", "grid-template-columns": "1fr auto 1fr 1fr", "width": "75%"})
 
+@app.callback(
+    Output("lat-dropdown", "value"),
+    Output("lon-dropdown", "value"),
+    Input("map", "clickData"),
+    prevent_initial_call=True
+)
+def click_map(clickData):
+    return clickData["points"][0]["lat"], clickData["points"][0]["lon"]
 
+@app.callback(
+    Output("map", "figure"),
+    Input("year-input", "value"),
+    prevent_initial_call=True
+)
+def update_map_year(year):
+    data = df[df["time"] == year]
+    f = px.scatter_geo(data, lat="lat", lon="lon", scope="europe", center={"lat": 54.5, "lon": -1.5}, size_max=10)
+    f.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=7))
+    return f
 
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
@@ -152,13 +174,12 @@ predict_div = html.Div([
     Output({"type": "frozen-input", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "max"),
-    Input("context-button", "n_clicks"),
-    State("lat-dropdown", "value"),
-    State("lon-dropdown", "value"),
-    State("year-input", "value"),
+    Input("lat-dropdown", "value"),
+    Input("lon-dropdown", "value"),
+    Input("year-input", "value"),
     prevent_initial_call=True
 )
-def select_context(n_clicks, lat, lon, year):
+def select_context(lat, lon, year):
     """
     Loads context in from lon/lat/time. Updates pie chart, context data store, and frozen inputs.
     Also resets prescription sliders to 0 to avoid confusion.
@@ -171,10 +192,10 @@ def select_context(n_clicks, lat, lon, year):
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
     # For testing purposes:
-    context["primf"].iloc[0] = 0.2
-    context["primn"].iloc[0] = 0.1
-    context["pastr"].iloc[0] -= 0.3
-    context["secdf"].iloc[0] -= 0.1
+    # context["primf"].iloc[0] = 0.2
+    # context["primn"].iloc[0] = 0.1
+    # context["pastr"].iloc[0] -= 0.3
+    # context["secdf"].iloc[0] -= 0.1
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{
@@ -374,7 +395,11 @@ identified by its latitude and longitude coordinates:
 * what changes can we make to the land use
 * in order to minimize the resulting estimated CO2 emissions (ELUC)?
 '''),
-        context_div,
+        dcc.Markdown('''## Context'''),
+        html.Div([
+            html.Div(dcc.Graph(id="map", figure=map_fig), style={"grid-column": "1"}),
+            html.Div(context_div, style={"grid-column": "2"})
+        ], style={"display": "grid", "grid-template-columns": "1fr 1fr"}),
         dcc.Markdown('''## Actions'''),
         presc_select_div,
         html.Div([

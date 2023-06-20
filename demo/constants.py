@@ -48,3 +48,6 @@ XGBOOST_FILE_PATH = "predictors/xgboost_predictor.json"
 
 SLIDER_PRECISION = 1e-5
 
+LSTM_WINDOW_SIZE = 10
+
+PREDICTOR_LIST = ["XGBoost", "LSTM"]

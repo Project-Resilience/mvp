@@ -11,6 +11,7 @@ from dash import State
 from dash import dcc
 from dash import html
 from plotly.subplots import make_subplots
+import plotly.express as px
 
 from Predictor import Predictor
 from Prescriptor import Prescriptor
@@ -19,6 +20,7 @@ from constants import CHART_COLS
 from constants import CONTEXT_COLUMNS
 from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
+from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
 from utils import add_nonland
 from utils import round_list
@@ -42,13 +44,15 @@ max_year = df["time"].max()
 lat_list = [lat for lat in np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP)]
 lon_list = [lon for lon in np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP)]
 
-PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
-PIE_DATA.append(1)
+INITIAL_PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
+INITIAL_PIE_DATA.append(1)
+
+colors = zip(CHART_COLS, px.colors.qualitative.Plotly[:len(CHART_COLS)])
+color = px.colors.qualitative.Plotly
 
 fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
-fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Initial", row=1, col=1)
-fig.add_pie(values=PIE_DATA, labels=CHART_COLS, title="Prescribed", row=1, col=2)
-fig.update_traces(textposition='inside')
+fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Initial", row=1, col=1)
+fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Prescribed", row=1, col=2)
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 context_div = html.Div([
@@ -96,7 +100,7 @@ presc_select_div = html.Div([
 
 sliders_div = html.Div([
     html.Div([
-        html.P(col, style={"grid-column": "1"}),
+        #html.P(col, style={"grid-column": "1"}),
         html.Div([
             dcc.Slider(
                 min=0,
@@ -107,44 +111,47 @@ sliders_div = html.Div([
                 tooltip={"placement": "bottom", "always_visible": False},
                 id={"type": "presc-slider", "index": f"{col}-slider"}
             )
-        ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
-        html.Div("0", id={"type": "slider-value", "index": f"{col}-value"}, style={"grid-column": "3"}),
-    ], style={"display": "grid", "grid-template-columns": "8% 1fr 20%"}) for col in LAND_USE_COLS]
+        ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
+        html.Div("0", id={"type": "slider-value", "index": f"{col}-value"}, style={"grid-column": "2"}),
+    ], style={"display": "grid", "grid-template-columns": "1fr 20%"}) for col in LAND_USE_COLS]
 )
 
-locked_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
-locked_div = html.Div([
+frozen_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
+frozen_div = html.Div([
     dcc.Input(
         value=f"{col}: 0",
         type="text",
         disabled=True,
-        id={"type": "locked-input", "index": f"{col}-locked"}) for col in locked_cols
+        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in frozen_cols
 ])
 
 predict_div = html.Div([
-    html.Button("Predict", id='predict-button', n_clicks=0, style={"grid-column": "1"}),
+    dcc.Dropdown(PREDICTOR_LIST, PREDICTOR_LIST[0], id="pred-select", style={"grid-column": "1"}),
+    html.Button("Predict", id='predict-button', n_clicks=0, style={"grid-column": "2"}),
     dcc.Input(
         value="Predicted ELUC:",
         type="text",
         disabled=True,
         id="predict-eluc",
-        style={"grid-column": "2"}
+        style={"grid-column": "3"}
     ),
     dcc.Input(
         value="Land Change:",
         type="text",
         disabled=True,
         id="predict-change",
-        style={"grid-column": "3"}
+        style={"grid-column": "4"}
     ),
-], style={"display": "grid", "grid-template-columns": "auto 1fr 1fr", "width": "75%"})
+], style={"display": "grid", "grid-template-columns": "1fr auto 1fr 1fr", "width": "75%"})
 
 
 
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
     Output("context-store", "data"),
-    Output({"type": "locked-input", "index": ALL}, "value"),
+    Output({"type": "frozen-input", "index": ALL}, "value"),
+    Output({"type": "presc-slider", "index": ALL}, "value"),
+    Output({"type": "presc-slider", "index": ALL}, "max"),
     Input("context-button", "n_clicks"),
     State("lat-dropdown", "value"),
     State("lon-dropdown", "value"),
@@ -153,19 +160,21 @@ predict_div = html.Div([
 )
 def select_context(n_clicks, lat, lon, year):
     """
-    Loads context in from lon/lat/time. Updates pie chart, context data store, and locked inputs.
+    Loads context in from lon/lat/time. Updates pie chart, context data store, and frozen inputs.
+    Also resets prescription sliders to 0 to avoid confusion.
+    Also sets prescription sliders' max values to 1 - nonland - primf - primn to avoid negative values.
     :param n_clicks: Unused number of times button has been clicked.
     :param lat: Latitude to search.
     :param lon: Longitude to search.
     :param year: Year to search.
-    :return: Updated pie data, context data to store, and locked slider values.
+    :return: Updated pie data, context data to store, and frozen slider values.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
     # For testing purposes:
-    # context["primf"].iloc[0] = 0.2
-    # context["primn"].iloc[0] = 0.1
-    # context["pastr"].iloc[0] -= 0.3
-    # context["secdf"].iloc[0] -= 0.1
+    context["primf"].iloc[0] = 0.2
+    context["primn"].iloc[0] = 0.1
+    context["pastr"].iloc[0] -= 0.3
+    context["secdf"].iloc[0] -= 0.1
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{
@@ -173,11 +182,16 @@ def select_context(n_clicks, lat, lon, year):
             "values": [chart_data]},
         [0], len(CHART_COLS)
     ]
-    locked = chart_df[locked_cols].iloc[0].tolist()
-    locked = round_list(locked)
-    locked = [f"{locked_cols[i]}: {locked[i]}" for i in range(len(locked_cols))]
+    frozen = chart_df[frozen_cols].iloc[0].tolist()
+    frozen = round_list(frozen)
+    frozen = [f"{frozen_cols[i]}: {frozen[i]}" for i in range(len(frozen_cols))]
 
-    return new_data, context.to_dict("records"), locked
+    reset = [0 for _ in range(len(LAND_USE_COLS))]
+
+    max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
+    maxes = [max for _ in range(len(LAND_USE_COLS))]
+
+    return new_data, context.to_dict("records"), frozen, reset, maxes
 
 
 @app.callback(
@@ -210,28 +224,40 @@ def select_prescriptor(n_clicks, presc_idx, context):
     Output("sum-warning", "children"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
     State("context-store", "data"),
+    State("locks", "value"),
     prevent_initial_call=True
 )
-def store_prescription(sliders, context):
+def store_prescription(sliders, context, locked):
     """
     Stores slider values in store and displays them next to sliders.
     Warns user if values don't sum to 1.
     :param sliders: Slider values to store.
+    :param context: Context store to compute if prescription sums to land use in context.
+    :param locked: Locked columns to check for warning.
     :return: Stored slider values, slider values to display, warning if necessary.
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
     rounded = round_list(presc.iloc[0].tolist())
 
-    warning = ""
+    warnings = []
     # Check if prescriptions sum to 1
     # TODO: Are we being precise enough?
     new_sum = presc.sum(axis=1).iloc[0]
     old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        warning = "WARNING: prescriptions sum to " + str(new_sum) + " instead of " + str(old_sum)
+        warnings.append(f"WARNING: prescriptions sum to {str(new_sum)} instead of {str(old_sum)}")
 
-    return presc.to_dict("records"), rounded, warning
+    # Check if sum of locked prescriptions are > sum(land use)
+    # TODO: take a look at this logic.
+    if locked and presc[locked].sum(axis=1).iloc[0] > old_sum:
+        warnings.append("WARNING: sum of locked prescriptions is greater than sum of land use. Reduce one before proceeding")
+
+    # Check if any prescriptions below 0
+    if (presc.iloc[0] < 0).any():
+        warnings.append("WARNING: negative values detected. Please lower the value of a locked slider.")
+
+    return presc.to_dict("records"), rounded, warnings
 
 
 @app.callback(
@@ -264,21 +290,42 @@ def update_chart(presc, context):
     Input("sum-button", "n_clicks"),
     State("presc-store", "data"),
     State("context-store", "data"),
+    State("locks", "value"),
     prevent_initial_call=True
 )
-def sum_to_1(n_clicks, presc, context):
+def sum_to_1(n_clicks, presc, context, locked):
     """
     Sets slider values to sum to how much land was used in context.
+    Subtracts locked sum from both of these and doesn't adjust them.
     :param n_clicks: Unused number of times button has been clicked.
     :param presc: Prescription data from store.
     :param context: Context data from store.
+    :param locked: Which sliders to not consider in calculation.
     :return: Slider values scaled down to fit percentage of land used in context.
     """
     context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
-    new_sum = presc_df.sum(axis=1)
-    old_sum = context_df.sum(axis=1)
-    return presc_df.div(new_sum, axis=0).mul(old_sum, axis=0).iloc[0].tolist()
+
+    old_sum = context_df.sum(axis=1).iloc[0]
+    new_sum = presc_df.sum(axis=1).iloc[0]
+
+    # TODO: There is certainly a more elegant way to handle this.
+    if locked:
+        unlocked = [col for col in LAND_USE_COLS if col not in locked]
+        locked_sum = presc_df[locked].sum(axis=1).iloc[0]
+        old_sum -= locked_sum
+        new_sum -= locked_sum
+        # We do this to avoid divide by zero. In the case where new_sum == 0
+        # we have all locked columns and/or zero columns so no adjustment is needed
+        if new_sum != 0:
+            presc_df[unlocked] = presc_df[unlocked].div(new_sum, axis=0).mul(old_sum, axis=0)
+
+    else:
+        presc_df = presc_df.div(new_sum, axis=0).mul(old_sum, axis=0)
+
+    # Set all negative values to 0
+    presc_df[presc_df < 0] = 0
+    return presc_df.iloc[0].tolist()
 
 
 @app.callback(
@@ -331,13 +378,13 @@ identified by its latitude and longitude coordinates:
         dcc.Markdown('''## Actions'''),
         presc_select_div,
         html.Div([
-            html.Div(sliders_div, style={'grid-column': '1'}),
-            dcc.Graph(id='pies', figure=fig, style={'grid-column': '2'})
-        ], style={'display': 'grid', 'grid-template-columns': '40% 1fr'}),
+            dcc.Checklist(LAND_USE_COLS, id="locks", inputStyle={"margin-bottom": "30px"}, style={"grid-column": "1", "height": "100%"}),
+            html.Div(sliders_div, style={'grid-column': '2'}),
+            dcc.Graph(id='pies', figure=fig, style={'grid-column': '3'})
+        ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr', "width": "100%"}),
         
         html.Div([
-            #sliders_div,
-            locked_div,
+            frozen_div,
             html.Button("Sum to 1", id='sum-button', n_clicks=0),
             html.Div(id='sum-warning')
         ]),

@@ -82,7 +82,8 @@ context_div = html.Div([
                 dcc.Input(id="year-input",
                         type="number",
                         value=2021,
-                        ),
+                        debounce=True
+                ),
                 dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
             ], style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
         ]

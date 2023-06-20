@@ -60,35 +60,33 @@ map_fig = px.scatter_geo(present, lat="lat", lon="lon", scope="europe", center={
 map_fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=7))
 
 
-context_div = html.Div([
-    html.Div(
-        style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto'},
-        children=[
-            html.P("Lat", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
-            dcc.Dropdown(id='lat-dropdown',
-                            options=lat_list,
-                            placeholder="Select a latitude",
-                            value=51.625,
-                            style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
-                            ),
-            html.P("Lon", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
-            dcc.Dropdown(id='lon-dropdown',
-                            options=lon_list,
-                            placeholder="Select a longitude",
-                            value=-3.375,
-                            style={'grid-column': '2', 'grid-row': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
-            html.P("Year ", style={'grid-column': '1', 'grid-row': '3', 'margin-right': '10px'}),
-            html.Div([
-                dcc.Input(id="year-input",
-                        type="number",
-                        value=2021,
-                        debounce=True
-                ),
-                dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
-            ], style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
-        ]
-    )
-])
+context_div = html.Div(
+    style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto', 'position': 'absolute', 'bottom': '0'},
+    children=[
+        html.P("Lat", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
+        dcc.Dropdown(id='lat-dropdown',
+                        options=lat_list,
+                        placeholder="Select a latitude",
+                        value=51.625,
+                        style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px',}
+                        ),
+        html.P("Lon", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
+        dcc.Dropdown(id='lon-dropdown',
+                        options=lon_list,
+                        placeholder="Select a longitude",
+                        value=-3.375,
+                        style={'grid-column': '2', 'grid-row': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+        html.P("Year ", style={'grid-column': '1', 'grid-row': '3', 'margin-right': '10px'}),
+        html.Div([
+            dcc.Input(id="year-input",
+                    type="number",
+                    value=2021,
+                    debounce=True
+            ),
+            dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
+        ], style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+    ]
+)
 
 presc_select_div = html.Div([
     html.P("Minimize change", style={"grid-column": "1"}),
@@ -397,10 +395,11 @@ identified by its latitude and longitude coordinates:
 * in order to minimize the resulting estimated CO2 emissions (ELUC)?
 '''),
         dcc.Markdown('''## Context'''),
+        html.P("Select a context cell:"),
         html.Div([
             html.Div(dcc.Graph(id="map", figure=map_fig), style={"grid-column": "1"}),
             html.Div(context_div, style={"grid-column": "2"})
-        ], style={"display": "grid", "grid-template-columns": "1fr 1fr"}),
+        ], style={"display": "grid", "grid-template-columns": "1fr 1fr", 'position': 'relative'}),
         dcc.Markdown('''## Actions'''),
         presc_select_div,
         html.Div([

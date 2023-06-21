@@ -190,11 +190,6 @@ def select_context(lat, lon, year):
     :return: Updated pie data, context data to store, and frozen slider values.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
-    # For testing purposes:
-    # context["primf"].iloc[0] = 0.2
-    # context["primn"].iloc[0] = 0.1
-    # context["pastr"].iloc[0] -= 0.3
-    # context["secdf"].iloc[0] -= 0.1
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{

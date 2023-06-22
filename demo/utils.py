@@ -1,5 +1,7 @@
 from math import log10
 import pandas as pd
+import plotly.express as px
+from dash import html
 
 from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION
 
@@ -28,3 +30,18 @@ def round_list(vals: list) -> list:
     decimals = int(-1 * log10(SLIDER_PRECISION))
     rounded = [round(val, decimals) for val in vals]
     return rounded
+
+def create_map(df, lat_center, lon_center, zoom=10):
+    map_fig = px.scatter_geo(df, lat="lat", lon="lon", center={"lat": lat_center, "lon": lon_center}, size_max=10)
+    map_fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=zoom))
+    return map_fig
+
+def create_check_options(values):
+    options = []
+    for i in range(len(values)):
+        options.append(
+            {"label": [html.I(className="bi bi-lock"), html.Span(values[i])],
+             "value": values[i]})
+    return options
+    
+        

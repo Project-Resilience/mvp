@@ -51,3 +51,9 @@ SLIDER_PRECISION = 1e-5
 LSTM_WINDOW_SIZE = 10
 
 PREDICTOR_LIST = ["XGBoost", "LSTM"]
+
+MAP_COORDINATE_DICT = {
+    "UK": {"lat": 54.5, "lon": -2.5, "zoom": 20}, 
+    "Brazil": {"lat": -12, "lon": -51.2, "zoom": 4},
+    "Switzerland": {"lat": 47, "lon": 8.15, "zoom": 20}
+}

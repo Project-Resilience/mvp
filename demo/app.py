@@ -10,6 +10,7 @@ from dash import Output
 from dash import State
 from dash import dcc
 from dash import html
+import dash_bootstrap_components as dbc
 from plotly.subplots import make_subplots
 import plotly.express as px
 
@@ -22,15 +23,18 @@ from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
 from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
+from constants import MAP_COORDINATE_DICT
 from utils import add_nonland
 from utils import round_list
+from utils import create_map
+from utils import create_check_options
 
-
-app = Dash(__name__)
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv")
+#df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 
 # Cells
 GRID_STEP = 0.25
@@ -56,9 +60,7 @@ fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", s
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 present = df[df["time"] == 2021]
-map_fig = px.scatter_geo(present, lat="lat", lon="lon", scope="europe", center={"lat": 54.5, "lon": -1.5}, size_max=10)
-map_fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=7))
-
+map_fig = create_map(present, 54.5, -2.5, 20)
 
 context_div = html.Div(
     style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto', 'position': 'absolute', 'bottom': '0'},
@@ -100,6 +102,11 @@ presc_select_div = html.Div([
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
 ], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "75%", "align-content": "center"})
+
+check_options = create_check_options(LAND_USE_COLS)
+checklist_div = html.Div([
+    dcc.Checklist(check_options, id="locks", inputStyle={"margin-bottom": "30px"})
+])
 
 sliders_div = html.Div([
     html.Div([
@@ -147,25 +154,30 @@ predict_div = html.Div([
     ),
 ], style={"display": "grid", "grid-template-columns": "1fr auto 1fr 1fr", "width": "75%"})
 
+
 @app.callback(
     Output("lat-dropdown", "value"),
     Output("lon-dropdown", "value"),
+    Output("map", "extendData"),
     Input("map", "clickData"),
+    State("map", "figure"),
     prevent_initial_call=True
 )
-def click_map(clickData):
-    return clickData["points"][0]["lat"], clickData["points"][0]["lon"]
+def click_map(clickData, fig):
+    fig["data"][0]["marker"]["color"] = "#ffffff"
+    print(fig["data"])
+    return clickData["points"][0]["lat"], clickData["points"][0]["lon"], [fig["data"][0], [0], len(fig["data"])]
 
 @app.callback(
     Output("map", "figure"),
+    Input("loc-dropdown", "value"),
     Input("year-input", "value"),
     prevent_initial_call=True
 )
-def update_map_year(year):
+def update_map(location, year):
+    coord_dict = MAP_COORDINATE_DICT[location]
     data = df[df["time"] == year]
-    f = px.scatter_geo(data, lat="lat", lon="lon", scope="europe", center={"lat": 54.5, "lon": -1.5}, size_max=10)
-    f.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=7))
-    return f
+    return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"])
 
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
@@ -201,7 +213,7 @@ def select_context(lat, lon, year):
     frozen = round_list(frozen)
     frozen = [f"{frozen_cols[i]}: {frozen[i]}" for i in range(len(frozen_cols))]
 
-    reset = [0 for _ in range(len(LAND_USE_COLS))]
+    reset = [0 for _ in LAND_USE_COLS]
 
     max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     maxes = [max for _ in range(len(LAND_USE_COLS))]
@@ -390,7 +402,8 @@ identified by its latitude and longitude coordinates:
 * in order to minimize the resulting estimated CO2 emissions (ELUC)?
 '''),
         dcc.Markdown('''## Context'''),
-        html.P("Select a context cell:"),
+        html.P("Select context area:"),
+        dcc.Dropdown(options=list(MAP_COORDINATE_DICT.keys()), value=list(MAP_COORDINATE_DICT.keys())[0], id="loc-dropdown"),
         html.Div([
             html.Div(dcc.Graph(id="map", figure=map_fig), style={"grid-column": "1"}),
             html.Div(context_div, style={"grid-column": "2"})
@@ -398,7 +411,7 @@ identified by its latitude and longitude coordinates:
         dcc.Markdown('''## Actions'''),
         presc_select_div,
         html.Div([
-            dcc.Checklist(LAND_USE_COLS, id="locks", inputStyle={"margin-bottom": "30px"}, style={"grid-column": "1", "height": "100%"}),
+            html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
             html.Div(sliders_div, style={'grid-column': '2'}),
             dcc.Graph(id='pies', figure=fig, style={'grid-column': '3'})
         ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr', "width": "100%"}),

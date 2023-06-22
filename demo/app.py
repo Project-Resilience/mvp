@@ -33,7 +33,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTS
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv")
+df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 
 # Cells
@@ -51,9 +51,6 @@ lon_list = [lon for lon in np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP)]
 INITIAL_PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
 INITIAL_PIE_DATA.append(1)
 
-colors = zip(CHART_COLS, px.colors.qualitative.Plotly[:len(CHART_COLS)])
-color = px.colors.qualitative.Plotly
-
 fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
 fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Initial", row=1, col=1)
 fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Prescribed", row=1, col=2)
@@ -63,30 +60,41 @@ present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
 
 context_div = html.Div(
-    style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto', 'position': 'absolute', 'bottom': '0'},
+    style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto', 'position': 'absolute', 'bottom': '0'},
     children=[
-        html.P("Lat", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
-        dcc.Dropdown(id='lat-dropdown',
-                        options=lat_list,
-                        placeholder="Select a latitude",
-                        value=51.625,
-                        style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px',}
-                        ),
-        html.P("Lon", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
-        dcc.Dropdown(id='lon-dropdown',
-                        options=lon_list,
-                        placeholder="Select a longitude",
-                        value=-3.375,
-                        style={'grid-column': '2', 'grid-row': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
-        html.P("Year ", style={'grid-column': '1', 'grid-row': '3', 'margin-right': '10px'}),
+        html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
+        dcc.Dropdown(
+            id="loc-dropdown",
+            options=list(MAP_COORDINATE_DICT.keys()), 
+            value=list(MAP_COORDINATE_DICT.keys())[0],
+            style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px',}
+        ),
+        html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
+        dcc.Dropdown(
+            id='lat-dropdown',
+            options=lat_list,
+            placeholder="Select a latitude",
+            value=51.625,
+            style={'grid-column': '2', 'grid-row': '2', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px',}
+        ),
+        html.P("Lon", style={'grid-column': '1', 'grid-row': '3', 'padding-right': '10px'}),
+        dcc.Dropdown(
+            id='lon-dropdown',
+            options=lon_list,
+            placeholder="Select a longitude",
+            value=-3.375,
+            style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
+        ),
+        html.P("Year ", style={'grid-column': '1', 'grid-row': '4', 'margin-right': '10px'}),
         html.Div([
-            dcc.Input(id="year-input",
-                    type="number",
-                    value=2021,
-                    debounce=True
+            dcc.Input(
+                id="year-input",
+                type="number",
+                value=2021,
+                debounce=True
             ),
             dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
-        ], style={'grid-column': '2', 'grid-row': '3', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
+        ], style={'grid-column': '2', 'grid-row': '4', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
     ]
 )
 
@@ -158,26 +166,43 @@ predict_div = html.Div([
 @app.callback(
     Output("lat-dropdown", "value"),
     Output("lon-dropdown", "value"),
-    Output("map", "extendData"),
     Input("map", "clickData"),
-    State("map", "figure"),
     prevent_initial_call=True
 )
-def click_map(clickData, fig):
-    fig["data"][0]["marker"]["color"] = "#ffffff"
-    print(fig["data"])
-    return clickData["points"][0]["lat"], clickData["points"][0]["lon"], [fig["data"][0], [0], len(fig["data"])]
+def click_map(clickData):
+    """
+    Selects context when point on map is clicked.
+    :param clickData: Input data from click action.
+    :return: The new longitude and latitude to put into the dropdowns.
+    """
+    return clickData["points"][0]["lat"], clickData["points"][0]["lon"]
 
 @app.callback(
     Output("map", "figure"),
     Input("loc-dropdown", "value"),
     Input("year-input", "value"),
+    Input("context-store", "data"),
     prevent_initial_call=True
 )
-def update_map(location, year):
+def update_map(location, year, context):
+    """
+    Updates map data behind the scenes when year is clicked.
+    Changes focus when region is selected.
+    :param location: The name of the country selected from the dropdown.
+    :param year: The selected year.
+    :return: A newly created map.
+    """
     coord_dict = MAP_COORDINATE_DICT[location]
     data = df[df["time"] == year]
-    return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"])
+    data = data.reset_index(drop=True)
+    idx = None
+    if context:
+        context_df = pd.DataFrame.from_records(context)
+        lat = context_df["lat"].iloc[0]
+        lon = context_df["lon"].iloc[0]
+        idx = list(data.index[(data["lat"] == lat) & (data["lon"] == lon)])[0]
+
+    return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
 
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
@@ -217,7 +242,6 @@ def select_context(lat, lon, year):
 
     max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     maxes = [max for _ in range(len(LAND_USE_COLS))]
-
     return new_data, context.to_dict("records"), frozen, reset, maxes
 
 
@@ -376,7 +400,7 @@ def predict(n_clicks, context, presc):
     predictor = Predictor()
     prediction, change = predictor.run_predictor(context_df, presc_df)
     
-    return f"Predicted ELUC: {prediction}", f"Land Change: {change}"
+    return f"Predicted ELUC: {prediction} tC/ha/yr", f"Land Change: {change * 100}%"
 
 
 def main():
@@ -399,11 +423,10 @@ This site is for demonstration purposes only.
 For a given context cell representing a portion of the earth,
 identified by its latitude and longitude coordinates:
 * what changes can we make to the land use
-* in order to minimize the resulting estimated CO2 emissions (ELUC)?
+* in order to minimize the resulting estimated CO2 emissions (ELUC: tons of carbon per hectare in a given year)?
 '''),
         dcc.Markdown('''## Context'''),
         html.P("Select context area:"),
-        dcc.Dropdown(options=list(MAP_COORDINATE_DICT.keys()), value=list(MAP_COORDINATE_DICT.keys())[0], id="loc-dropdown"),
         html.Div([
             html.Div(dcc.Graph(id="map", figure=map_fig), style={"grid-column": "1"}),
             html.Div(context_div, style={"grid-column": "2"})

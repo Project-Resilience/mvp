@@ -31,9 +31,24 @@ def round_list(vals: list) -> list:
     rounded = [round(val, decimals) for val in vals]
     return rounded
 
-def create_map(df, lat_center, lon_center, zoom=10):
-    map_fig = px.scatter_geo(df, lat="lat", lon="lon", center={"lat": lat_center, "lon": lon_center}, size_max=10)
-    map_fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), geo=dict(projection_scale=zoom))
+def create_map(df, lat_center, lon_center, zoom=10, color_idx = None):
+    color = ["blue" for _ in range(len(df))]
+    if color_idx:
+        color[color_idx] = "red"
+    color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
+    # TODO: Is this modification going to break things?
+    df["color"] = color
+    map_fig = px.scatter_geo(
+        df, 
+        lat="lat", 
+        lon="lon", 
+        color="color", 
+        color_discrete_sequence=color_seq, 
+        hover_data={"lat": True, "lon": True, "color": False},
+        center={"lat": lat_center, "lon": lon_center}, 
+        size_max=10
+    )
+    map_fig.update_layout(margin=dict(l=0, r=10, t=0, b=0), geo=dict(projection_scale=zoom), showlegend=False)
     return map_fig
 
 def create_check_options(values):

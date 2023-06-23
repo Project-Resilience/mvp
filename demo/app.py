@@ -146,24 +146,25 @@ frozen_div = html.Div([
 ])
 
 predict_div = html.Div([
-    dcc.Dropdown(PREDICTOR_LIST, PREDICTOR_LIST[0], id="pred-select", style={"grid-column": "1"}),
-    html.Button("Predict", id='predict-button', n_clicks=0, style={"grid-column": "2"}),
+    dcc.Dropdown(PREDICTOR_LIST, PREDICTOR_LIST[0], id="pred-select", style={"width": "200px"}),
+    html.Button("Predict", id='predict-button', n_clicks=0,),
+    html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
     dcc.Input(
-        value="Predicted ELUC:",
+        value="",
         type="text",
         disabled=True,
         id="predict-eluc",
-        style={"grid-column": "3"}
     ),
+    html.Label("tC/ha/yr", style={'padding-left': '2px'}),
+    html.Label("Land Change:", style={'padding-left': '10px'}),
     dcc.Input(
-        value="Land Change:",
+        value="",
         type="text",
         disabled=True,
         id="predict-change",
-        style={"grid-column": "4"}
     ),
-], style={"display": "grid", "grid-template-columns": "1fr auto 1fr 1fr", "width": "75%"})
-
+    html.Label("%", style={'padding-left': '2px'}),
+], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
 
 @app.callback(
     Output("lat-dropdown", "value"),
@@ -409,7 +410,7 @@ def predict(n_clicks, context, presc):
         Total emissions reduced by this change: {-1 * total_reduction} tonnes. \
         Plane tickets mitigated by this change: {-1 * total_reduction / CO2_JFK_GVA} tickets (https://flightfree.org/flight-emissions-calculator)"
     
-    return f"Predicted ELUC: {prediction} tC/ha/yr", f"Land Change: {change * 100}%", comparison_text
+    return f"{prediction:.4f}", f"{change * 100:.2f}", comparison_text
 
 
 def main():

@@ -48,7 +48,8 @@ def create_map(df, lat_center, lon_center, zoom=10, color_idx = None):
         center={"lat": lat_center, "lon": lon_center}, 
         size_max=10
     )
-    map_fig.update_layout(margin=dict(l=0, r=10, t=0, b=0), geo=dict(projection_scale=zoom), showlegend=False)
+    map_fig.update_layout(margin=dict(l=0, r=10, t=0, b=0), showlegend=False)
+    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
     return map_fig
 
 def create_check_options(values):

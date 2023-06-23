@@ -43,14 +43,14 @@ ALL_LAND_USE_COLS = ['primf', 'primn'] + LAND_USE_COLS
 CHART_COLS = ALL_LAND_USE_COLS + ["nonland"]
 
 PRESCRIPTOR_LIST = ["1_1", "34_78", "50_67", "40_45", "30_28", "28_40"]
+PREDICTOR_LIST = ["XGBoost", "LSTM", "Ensemble"]
 
 XGBOOST_FILE_PATH = "predictors/xgboost_predictor.json"
 
 SLIDER_PRECISION = 1e-5
 
 LSTM_WINDOW_SIZE = 10
-
-PREDICTOR_LIST = ["XGBoost", "LSTM", "Ensemble"]
+HISTORY_SIZE = LSTM_WINDOW_SIZE - 1
 
 MAP_COORDINATE_DICT = {
     "UK": {"lat": 54.5, "lon": -2.5, "zoom": 20}, 
@@ -60,5 +60,4 @@ MAP_COORDINATE_DICT = {
 
 # Tonnes of CO2 per person for a flight from JFK to Geneva
 CO2_JFK_GVA = 2.2
-
 EARTH_RADIUS_KM = 6371

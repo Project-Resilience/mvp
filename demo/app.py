@@ -25,6 +25,7 @@ from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
 from constants import MAP_COORDINATE_DICT
 from constants import CO2_JFK_GVA
+from constants import HISTORY_SIZE
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
@@ -71,6 +72,41 @@ fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
+
+legend_div = html.Div(
+    style={},
+    children = [
+        dcc.Markdown('''
+### Land Use Types
+
+Primary: Vegetation that is untouched by humans
+
+    - primf: Primary forest
+    - primn: Primary nonforest vegetation
+
+    
+Secondary: Vegetation that has been touched by humans
+
+    - secdf: Secondary forest
+    - secdn: Secondary nonforest vegetation
+
+Urban
+
+Crop
+
+    - c3ann: Annual C3 crops
+    - c4ann: Annual C4 crops
+    - c3per: Perennial C3 crops
+    - c4per: Perennial C4 crops
+    - c3nfx: Nitrogen fixing C3 crops
+
+Pasture
+
+    - pastr: Managed pasture land
+    - range: Natural grassland/savannah/desert/etc.
+    ''')
+    ]
+)
 
 context_div = html.Div(
     style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto', 'position': 'absolute', 'bottom': '0'},
@@ -221,6 +257,7 @@ def update_map(location, year, context):
 @app.callback(
     Output("pies", "extendData", allow_duplicate=True),
     Output("context-store", "data"),
+    Output("history-store", "data"),
     Output({"type": "frozen-input", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "max"),
@@ -230,16 +267,18 @@ def update_map(location, year, context):
 )
 def select_context(lat, lon, year):
     """
-    Loads context in from lon/lat/time. Updates pie chart, context data store, and frozen inputs.
+    Loads context in from lon/lat/time. Updates pie chart, context/history data store, and frozen inputs.
     Also resets prescription sliders to 0 to avoid confusion.
     Also sets prescription sliders' max values to 1 - nonland - primf - primn to avoid negative values.
     :param n_clicks: Unused number of times button has been clicked.
     :param lat: Latitude to search.
     :param lon: Longitude to search.
     :param year: Year to search.
-    :return: Updated pie data, context data to store, and frozen slider values.
+    :return: Updated pie data, context/history data to store, and frozen slider values.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
+    history = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] < year) & (df['time'] >= year-HISTORY_SIZE)]
+
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
     chart_data = chart_df.iloc[0].tolist()
     new_data = [{
@@ -255,7 +294,7 @@ def select_context(lat, lon, year):
 
     max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     maxes = [max for _ in range(len(LAND_USE_COLS))]
-    return new_data, context.to_dict("records"), frozen, reset, maxes
+    return new_data, context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
 
 
 @app.callback(
@@ -398,10 +437,12 @@ def sum_to_1(n_clicks, presc, context, locked):
     Output("comparison", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
+    State("history-store", "data"),
     State("presc-store", "data"),
+    State("pred-select", "value"),
     prevent_initial_call=True
 )
-def predict(n_clicks, context, presc):
+def predict(n_clicks, context, history, presc, predictor_name):
     """
     Predicts ELUC from context and prescription stores.
     :param n_clicks: Unused number of times button has been clicked.
@@ -410,17 +451,23 @@ def predict(n_clicks, context, presc):
     :return: Predicted ELUC and percent change.
     """
     context_df = pd.DataFrame.from_records(context)
+    history_df = pd.DataFrame.from_records(history)
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
-    predictor = Predictor()
-    prediction, change = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
 
-    coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
-    total_reduction = prediction * approx_area(coord)
-    comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes of CO2. \
-        Total emissions reduced by this land change over a year: {-1 * total_reduction} tonnes of CO2. \
-        Plane tickets mitigated: {-1 * int(total_reduction / CO2_JFK_GVA)} tickets (https://flightfree.org/flight-emissions-calculator)"
-    
-    return f"{prediction:.4f}", f"{change * 100:.2f}", comparison_text
+    if predictor_name == "XGBoost":
+        predictor = Predictor()
+        prediction, change = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
+
+        coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
+        total_reduction = prediction * approx_area(coord)
+        comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes of CO2. \
+            Total emissions reduced by this land change over a year: {-1 * total_reduction:.2f} tonnes of CO2. \
+            Plane tickets mitigated: {-1 * int(total_reduction / CO2_JFK_GVA)} tickets (https://flightfree.org/flight-emissions-calculator)"
+        
+        return f"{prediction:.4f}", f"{change * 100:.2f}", comparison_text
+
+    else:
+        return 0, 0, "Model not connected yet"
 
 
 def main():
@@ -435,6 +482,7 @@ def main():
 
     app.layout = html.Div([
         dcc.Store(id='context-store'),
+        dcc.Store(id='history-store'),
         dcc.Store(id='presc-store'),
         dcc.Markdown('''
 # Land Use Optimization
@@ -446,11 +494,11 @@ identified by its latitude and longitude coordinates:
 * in order to minimize the resulting estimated CO2 emissions (ELUC: tons of carbon per hectare in a given year)?
 '''),
         dcc.Markdown('''## Context'''),
-        html.P("Select context area:"),
         html.Div([
-            html.Div(dcc.Graph(id="map", figure=map_fig), style={"grid-column": "1"}),
-            html.Div(context_div, style={"grid-column": "2"})
-        ], style={"display": "grid", "grid-template-columns": "1fr 1fr", 'position': 'relative'}),
+            dcc.Graph(id="map", figure=map_fig, style={"grid-column": "1"}),
+            html.Div([context_div], style={"grid-column": "2"}),
+            html.Div([legend_div], style={"grid-column": "3"})
+        ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
         dcc.Markdown('''## Actions'''),
         presc_select_div,
         html.Div([

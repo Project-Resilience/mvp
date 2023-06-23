@@ -24,10 +24,12 @@ from constants import PRESCRIPTOR_LIST
 from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
 from constants import MAP_COORDINATE_DICT
+from constants import CO2_JFK_GVA
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
 from utils import create_check_options
+from utils import approx_area
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
 
@@ -382,6 +384,7 @@ def sum_to_1(n_clicks, presc, context, locked):
 @app.callback(
     Output("predict-eluc", "value"),
     Output("predict-change", "value"),
+    Output("comparison", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
     State("presc-store", "data"),
@@ -395,12 +398,18 @@ def predict(n_clicks, context, presc):
     :param presc: Prescription data from store.
     :return: Predicted ELUC and percent change.
     """
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+    context_df = pd.DataFrame.from_records(context)
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     predictor = Predictor()
-    prediction, change = predictor.run_predictor(context_df, presc_df)
+    prediction, change = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
+
+    coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
+    total_reduction = prediction * approx_area(coord)
+    comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes. \
+        Total emissions reduced by this change: {-1 * total_reduction} tonnes. \
+        Plane tickets mitigated by this change: {-1 * total_reduction / CO2_JFK_GVA} tickets (https://flightfree.org/flight-emissions-calculator)"
     
-    return f"Predicted ELUC: {prediction} tC/ha/yr", f"Land Change: {change * 100}%"
+    return f"Predicted ELUC: {prediction} tC/ha/yr", f"Land Change: {change * 100}%", comparison_text
 
 
 def main():
@@ -445,7 +454,8 @@ identified by its latitude and longitude coordinates:
             html.Div(id='sum-warning')
         ]),
         dcc.Markdown('''## Outcomes'''),
-        predict_div
+        predict_div,
+        html.Div(id="comparison")
     ])
 
     app.run_server(debug=True)

@@ -57,3 +57,8 @@ MAP_COORDINATE_DICT = {
     "Brazil": {"lat": -12, "lon": -51.2, "zoom": 4},
     "Switzerland": {"lat": 47, "lon": 8.15, "zoom": 20}
 }
+
+# Tonnes of CO2 per person for a flight from JFK to Geneva
+CO2_JFK_GVA = 2.2
+
+EARTH_RADIUS_KM = 6371

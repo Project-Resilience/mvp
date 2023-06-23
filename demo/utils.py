@@ -1,9 +1,9 @@
-from math import log10
+from math import log10, acos, cos, sin, pi, atan2, sqrt
 import pandas as pd
 import plotly.express as px
 from dash import html
 
-from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION
+from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, EARTH_RADIUS_KM
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -58,5 +58,38 @@ def create_check_options(values):
             {"label": [html.I(className="bi bi-lock"), html.Span(values[i])],
              "value": values[i]})
     return options
+
+# From http://www.movable-type.co.uk/scripts/latlong.html
+def latlon_dist(coord1, coord2):
+    lat1, lon1 = coord1
+    lat2, lon2 = coord2
+    R = 6371
+    φ1 = lat1 * pi/180 # φ, λ in radians
+    φ2 = lat2 * pi/180
+    Δφ = (lat2-lat1) * pi/180
+    Δλ = (lon2-lon1) * pi/180
+
+    a = sin(Δφ/2) * sin(Δφ/2) + \
+            cos(φ1) * cos(φ2) * \
+            sin(Δλ/2) * sin(Δλ/2)
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+
+    d = R * c
+
+    return d
+
+def approx_area(coord):
+    lat, lon = coord
+    topleft = (lat+0.125, lon-0.125)
+    topright = (lat+0.125, lon+0.125)
+    botleft = (lat-0.125, lon-0.125)
+
+    height = latlon_dist(topleft, botleft)
+    width = latlon_dist(topleft, topright)
+    # 100 to convert to hectares
+    return height * width * 100
+    
+
+   
     
         

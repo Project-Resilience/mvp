@@ -455,8 +455,8 @@ identified by its latitude and longitude coordinates:
         ]),
         dcc.Markdown('''## Outcomes'''),
         predict_div,
-        html.Div(id="comparison")
-    ])
+        html.Div(id="comparison"),
+    ], style={'padding-left': '10px'},)
 
     app.run_server(debug=True)
 

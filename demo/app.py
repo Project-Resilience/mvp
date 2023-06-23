@@ -158,7 +158,7 @@ presc_select_div = html.Div([
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
-], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "75%", "align-content": "center"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "40%", "align-content": "center"})
 
 check_options = create_check_options(LAND_USE_COLS)
 checklist_div = html.Div([
@@ -212,6 +212,24 @@ predict_div = html.Div([
     ),
     html.Label("%", style={'padding-left': '2px'}),
 ], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
+
+inline_block = {"display": "inline-block", "padding-right": "10px"}
+trivia_div = html.Div([
+    html.Div(className="parent", children=[
+        html.P("Flight emissions from flying from JFK to Geneva: ", className="child", style=inline_block),
+        html.P("2.2 tonnes CO2", style={"font-weight": "bold"}|inline_block)
+    ]),
+
+    html.Div(className="parent", children=[
+        html.P("Total emissions reduced from this land use change over a year: ", className="child", style=inline_block),
+        html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.Div(className="parent", children=[
+        html.P("Plane tickets mitigated: ", className="child", style=inline_block),
+        html.P(id="tickets", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.P("(Source: https://flightfree.org/flight-emissions-calculator)")
+])
 
 @app.callback(
     Output("lat-dropdown", "value"),
@@ -434,7 +452,8 @@ def sum_to_1(n_clicks, presc, context, locked):
 @app.callback(
     Output("predict-eluc", "value"),
     Output("predict-change", "value"),
-    Output("comparison", "children"),
+    Output("total-em", "children"),
+    Output("tickets", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
     State("history-store", "data"),
@@ -448,7 +467,7 @@ def predict(n_clicks, context, history, presc, predictor_name):
     :param n_clicks: Unused number of times button has been clicked.
     :param context: Context data from store.
     :param presc: Prescription data from store.
-    :return: Predicted ELUC and percent change.
+    :return: Predicted ELUC and percent change, trivia values.
     """
     context_df = pd.DataFrame.from_records(context)
     history_df = pd.DataFrame.from_records(history)
@@ -460,11 +479,8 @@ def predict(n_clicks, context, history, presc, predictor_name):
 
         coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
         total_reduction = prediction * approx_area(coord)
-        comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes of CO2. \
-            Total emissions reduced by this land change over a year: {-1 * total_reduction:.2f} tonnes of CO2. \
-            Plane tickets mitigated: {-1 * int(total_reduction / CO2_JFK_GVA)} tickets (https://flightfree.org/flight-emissions-calculator)"
         
-        return f"{prediction:.4f}", f"{change * 100:.2f}", comparison_text
+        return f"{prediction:.4f}", f"{change * 100:.2f}", f"{-1 * total_reduction:,.2f} tonnes CO2", f"{-1 * total_reduction // CO2_JFK_GVA:.0f} tickets"
 
     else:
         return 0, 0, "Model not connected yet"
@@ -514,7 +530,8 @@ identified by its latitude and longitude coordinates:
         ]),
         dcc.Markdown('''## Outcomes'''),
         predict_div,
-        html.Div(id="comparison"),
+        dcc.Markdown('''## Trivia'''),
+        trivia_div
     ], style={'padding-left': '10px'},)
 
     app.run_server(debug=True)

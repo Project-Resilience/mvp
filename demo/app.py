@@ -31,7 +31,9 @@ from utils import create_map
 from utils import create_check_options
 from utils import approx_area
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP])
+app = Dash(__name__, 
+           external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
+           prevent_initial_callbacks="initial_duplicate")
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
@@ -54,8 +56,17 @@ INITIAL_PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
 INITIAL_PIE_DATA.append(1)
 
 fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
-fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Initial", row=1, col=1)
-fig.add_pie(values=INITIAL_PIE_DATA, labels=CHART_COLS, textposition="inside", sort=False, title="Prescribed", row=1, col=2)
+pie_params = {"values": INITIAL_PIE_DATA,
+              "labels": CHART_COLS,
+              "textposition": "inside",
+              "sort": False,
+              "hovertemplate": "%{label}<br>%{value}<br>%{percent}<extra></extra>"}
+fig.add_pie(**pie_params,
+            title="Initial", 
+            row=1, col=1)
+fig.add_pie(**pie_params,
+            title="Prescribed", 
+            row=1, col=2)
 fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 present = df[df["time"] == 2021]
@@ -215,8 +226,7 @@ def update_map(location, year, context):
     Output({"type": "presc-slider", "index": ALL}, "max"),
     Input("lat-dropdown", "value"),
     Input("lon-dropdown", "value"),
-    Input("year-input", "value"),
-    prevent_initial_call=True
+    Input("year-input", "value")
 )
 def select_context(lat, lon, year):
     """
@@ -406,9 +416,9 @@ def predict(n_clicks, context, presc):
 
     coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
     total_reduction = prediction * approx_area(coord)
-    comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes. \
-        Total emissions reduced by this change: {-1 * total_reduction} tonnes. \
-        Plane tickets mitigated by this change: {-1 * total_reduction / CO2_JFK_GVA} tickets (https://flightfree.org/flight-emissions-calculator)"
+    comparison_text = f"Flight emissions from NYC to Geneva per person: {CO2_JFK_GVA} tonnes of CO2. \
+        Total emissions reduced by this land change over a year: {-1 * total_reduction} tonnes of CO2. \
+        Plane tickets mitigated: {-1 * int(total_reduction / CO2_JFK_GVA)} tickets (https://flightfree.org/flight-emissions-calculator)"
     
     return f"{prediction:.4f}", f"{change * 100:.2f}", comparison_text
 

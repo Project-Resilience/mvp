@@ -105,7 +105,7 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(PRESCRIPTOR_LIST)-1, step=1, 
-                value=len(PRESCRIPTOR_LIST)//2,
+                value=1, # By default we select the second prescriptor that minimizes change
                 included=False,
                 marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),

@@ -14,11 +14,13 @@ import dash_bootstrap_components as dbc
 from plotly.subplots import make_subplots
 import plotly.express as px
 
-from Predictor import Predictor
+from Predictor import XGBoostPredictor
+from Predictor import LSTMPredictor
 from Prescriptor import Prescriptor
 from constants import ALL_LAND_USE_COLS
 from constants import CHART_COLS
 from constants import CONTEXT_COLUMNS
+from constants import ACTION_COLUMNS
 from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
 from constants import PREDICTOR_LIST
@@ -26,11 +28,13 @@ from constants import SLIDER_PRECISION
 from constants import MAP_COORDINATE_DICT
 from constants import CO2_JFK_GVA
 from constants import HISTORY_SIZE
+from constants import PRESCRIPTOR_COLS
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
 from utils import create_check_options
 from utils import approx_area
+from utils import compute_percent_change
 
 app = Dash(__name__, 
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -38,8 +42,8 @@ app = Dash(__name__,
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
-#df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+#df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
+df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 
 # Cells
 GRID_STEP = 0.25
@@ -334,8 +338,11 @@ def select_prescriptor(n_clicks, presc_idx, context):
     if context != None:
         presc_id = PRESCRIPTOR_LIST[presc_idx]
         prescriptor = Prescriptor(presc_id)
-        context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+        context_df = pd.DataFrame.from_records(context)[PRESCRIPTOR_COLS]
         prescribed = prescriptor.run_prescriptor(context_df)
+
+        # TODO: Hacking this together because c4per isn't prescribed
+        prescribed["c4per"] = 0
         return prescribed[LAND_USE_COLS].iloc[0].tolist()
 
 
@@ -473,17 +480,30 @@ def predict(n_clicks, context, history, presc, predictor_name):
     history_df = pd.DataFrame.from_records(history)
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
 
-    if predictor_name == "XGBoost":
-        predictor = Predictor()
-        prediction, change = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
+    predictor = None
+    prediction, change = 0, 0
 
-        coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
-        total_reduction = prediction * approx_area(coord)
-        
-        return f"{prediction:.4f}", f"{change * 100:.2f}", f"{-1 * total_reduction:,.2f} tonnes CO2", f"{-1 * total_reduction // CO2_JFK_GVA:.0f} tickets"
+    if predictor_name == "XGBoost":
+        predictor = XGBoostPredictor()
+        prediction = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
+
+    elif predictor_name == "LSTM":
+        predictor = LSTMPredictor()
+        context_merged = pd.concat([history_df, context_df], axis=0)
+        # Sanity check
+        context_merged = context_merged.sort_values(by="time", ascending=True)
+        # TODO: This is gross, clean it up.
+        prediction = predictor.run_predictor(context_merged[CONTEXT_COLUMNS + ACTION_COLUMNS], presc_df)
 
     else:
         return 0, 0, "Model not connected yet"
+    
+    coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
+    total_reduction = prediction * approx_area(coord)
+
+    change = compute_percent_change(context_df, presc_df)
+    
+    return f"{prediction:.4f}", f"{change * 100:.2f}", f"{-1 * total_reduction:,.2f} tonnes CO2", f"{-1 * total_reduction // CO2_JFK_GVA:.0f} tickets"
 
 
 def main():

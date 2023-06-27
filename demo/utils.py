@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from dash import html
 
-from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, EARTH_RADIUS_KM
+from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, EARTH_RADIUS_KM, LAND_USE_COLS
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -89,6 +89,15 @@ def approx_area(coord):
     width = latlon_dist(topleft, topright)
     # 100 to convert to hectares
     return height * width * 100
+
+def compute_percent_change(context, presc):
+    diffs = presc[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
+    percent_changed = diffs[diffs > 0].sum(axis=1)
+    percent_changed = percent_changed / context[LAND_USE_COLS].sum(axis=1)
+
+    return percent_changed[0]
+
+
     
 
    

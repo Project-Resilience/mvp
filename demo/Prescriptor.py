@@ -5,7 +5,7 @@ import numpy as np
 from keras.models import load_model
 
 from data_encoder import DataEncoder
-from constants import fields, cao_mapping, LAND_USE_COLS
+from constants import fields, cao_mapping, PRESCRIPTOR_OUTPUT_COLS
 
 class Prescriptor():
     """
@@ -101,16 +101,16 @@ class Prescriptor():
         encoded_sample_context_df = self.encoder.encode_as_df(sample_context_df)
         prescribed_actions_df = self.__prescribe_from_model(encoded_sample_context_df)
         reco_land_use_df = pd.DataFrame(prescribed_actions_df.recommended_land_use.tolist(),
-                                    columns=LAND_USE_COLS)
+                                    columns=PRESCRIPTOR_OUTPUT_COLS)
 
         # Re-scales our prescribed land to match the amount of land used in the sample
-        used = sum(sample_context_df[LAND_USE_COLS].iloc[0].tolist())
-        for col in LAND_USE_COLS:
+        used = sum(sample_context_df[PRESCRIPTOR_OUTPUT_COLS].iloc[0].tolist())
+        for col in PRESCRIPTOR_OUTPUT_COLS:
             reco_land_use_df[col] *= used
 
         # Assuming there's no primary land left in this cell
         # TODO: not correct. Need to account for primf and primn, that can't increase (no way to return to primary forest)
-        prescribed_land_use_pct = reco_land_use_df.iloc[0][LAND_USE_COLS].sum() * 100
+        prescribed_land_use_pct = reco_land_use_df.iloc[0][PRESCRIPTOR_OUTPUT_COLS].sum() * 100
         print(f"Presribed land usage: {prescribed_land_use_pct:.2f}% of land")
         
-        return reco_land_use_df[LAND_USE_COLS]
+        return reco_land_use_df[PRESCRIPTOR_OUTPUT_COLS]

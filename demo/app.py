@@ -42,8 +42,8 @@ app = Dash(__name__,
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-#df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
-df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
+#df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 
 # Cells
 GRID_STEP = 0.25

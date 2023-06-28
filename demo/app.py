@@ -77,6 +77,7 @@ fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
 
+# Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
     style={},
     children = [
@@ -98,11 +99,11 @@ Urban
 
 Crop
 
-    - c3ann: Annual C3 crops
-    - c4ann: Annual C4 crops
-    - c3per: Perennial C3 crops
-    - c4per: Perennial C4 crops
-    - c3nfx: Nitrogen fixing C3 crops
+    - c3ann: Annual C3 crops (e.g. wheat)
+    - c4ann: Annual C4 crops (e.g. maize)
+    - c3per: Perennial C3 crops (e.g. banana)
+    - c4per: Perennial C4 crops (e.g. sugarcane)
+    - c3nfx: Nitrogen fixing C3 crops (e.g. soybean)
 
 Pasture
 
@@ -234,6 +235,30 @@ trivia_div = html.Div([
     ]),
     html.P("(Source: https://flightfree.org/flight-emissions-calculator)")
 ])
+
+references_div = html.Div([
+    html.Div(className="parent", children=[
+        html.P("ELUC data provided by the BLUE model  ",
+               className="child", style=inline_block),
+        html.A("(BLUE: Bookkeeping of land use emissions)", href="https://agupubs.onlinelibrary.wiley.com/doi/10.1002/2014GB004997\n"),
+    ]),
+    html.Div(className="parent", children=[
+        html.P("Land use change data provided by the LUH2 project",
+               className="child", style=inline_block),
+        html.A("(LUH2: Land Use Harmonization 2)", href="https://luh.umd.edu/\n"),
+    ]),
+    html.Div(className="parent", children=[
+        html.P("Setup is described in Appendix C2.1 of the GCB 2022 report",
+               className="child", style=inline_block),
+        html.A("(Global Carbon Budget 2022 report)", href="https://essd.copernicus.org/articles/14/4811/2022/#section10/\n"),
+    ]),
+    html.Div(className="parent", children=[
+        html.P("The Global Carbon Budget report assesses the global CO2 budget for the Intergovernmental Panel on Climate Change",
+               className="child", style=inline_block),
+        html.A("(IPCC)", href="https://www.ipcc.ch/\n"),
+    ]),
+])
+
 
 @app.callback(
     Output("lat-dropdown", "value"),
@@ -525,9 +550,10 @@ def main():
 This site is for demonstration purposes only.
 
 For a given context cell representing a portion of the earth,
-identified by its latitude and longitude coordinates:
-* what changes can we make to the land use
-* in order to minimize the resulting estimated CO2 emissions (ELUC: tons of carbon per hectare in a given year)?
+identified by its latitude and longitude coordinates, and a given year:
+* what changes can we make to the land usage
+* in order to minimize the resulting estimated CO2 emissions in that year ? (Emissions from Land Use Change, ELUC, 
+in tons of carbon per hectare per year)
 '''),
         dcc.Markdown('''## Context'''),
         html.Div([
@@ -551,7 +577,9 @@ identified by its latitude and longitude coordinates:
         dcc.Markdown('''## Outcomes'''),
         predict_div,
         dcc.Markdown('''## Trivia'''),
-        trivia_div
+        trivia_div,
+        dcc.Markdown('''## References'''),
+        references_div
     ], style={'padding-left': '10px'},)
 
     app.run_server(debug=True)

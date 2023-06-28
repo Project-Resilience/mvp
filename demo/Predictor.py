@@ -8,9 +8,8 @@ from xgboost import XGBRegressor
 import torch
 from data_encoder import DataEncoder
 
-from constants import fields, cao_mapping, LAND_USE_COLS, COLS_MAP, DIFF_LAND_USE_COLS, XGBOOST_FILE_PATH, LSTM_FILE_PATH, CONTEXT_COLUMNS, ACTION_COLUMNS, FEATURES
-LSTM_DIFF_LAND_USE = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff','c4ann_diff', 'c4per_diff',
-                      'pastr_diff', 'primf_diff', 'primn_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff']
+from constants import fields, cao_mapping, LAND_USE_COLS, COLS_MAP, DIFF_LAND_USE_COLS, XGBOOST_FILE_PATH, LSTM_FILE_PATH, CONTEXT_COLUMNS, ALL_DIFF_LAND_USE_COLS, XGBOOST_FEATURES
+
 
 class Predictor:
     """
@@ -60,12 +59,8 @@ class XGBoostPredictor(Predictor):
         encoded_sample_context_df["c4per"] = 0
 
         context_actions = pd.concat([encoded_sample_context_df, encoded_prescribed_actions_df], axis=1)
-        
-        # TODO: Temporary fix while we train on c4per
-        cols = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'cell_area', \
-                'c3ann_diff', 'c3nfx_diff', 'c3per_diff', 'c4ann_diff', 'pastr_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff']
 
-        pred = self.predictor_model.predict(context_actions[cols])
+        pred = self.predictor_model.predict(context_actions[XGBOOST_FEATURES])
         pred_df = pd.DataFrame(pred, columns=["ELUC"])
         # Decode output
         out_df = self.encoder.decode_as_df(pred_df)
@@ -124,10 +119,9 @@ class LSTMPredictor(Predictor):
         context_df["primf_diff"] = 0
         context_df["c4per_diff"] = 0
 
-        # TODO: Figure this out
-        context_df.loc[context_df.index[-1], LSTM_DIFF_LAND_USE] = prescribed_actions_df.loc[prescribed_actions_df.index[0], LSTM_DIFF_LAND_USE]
+        context_df.loc[context_df.index[-1], DIFF_LAND_USE_COLS] = prescribed_actions_df.loc[prescribed_actions_df.index[0], DIFF_LAND_USE_COLS]
         
-        df_np = context_df[CONTEXT_COLUMNS + ACTION_COLUMNS].to_numpy()
+        df_np = context_df[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS].to_numpy()
         input = torch.from_numpy(df_np)
         input = input.type(torch.FloatTensor)
         input = input.unsqueeze(0)

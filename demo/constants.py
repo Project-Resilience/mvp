@@ -34,22 +34,18 @@ cao_mapping = {
     'outcomes': ['ELUC', 'Change']}
 
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'range', 'secdf', 'secdn', 'urban']
-CONTEXT_COLUMNS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'cell_area']
+ALL_LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
+CONTEXT_COLUMNS = ALL_LAND_USE_COLS + ['cell_area']
 DIFF_LAND_USE_COLS = [f"{col}_diff" for col in LAND_USE_COLS]
+ALL_DIFF_LAND_USE_COLS = [f"{col}_diff" for col in ALL_LAND_USE_COLS]
 COLS_MAP = dict(zip(LAND_USE_COLS, DIFF_LAND_USE_COLS))
 PRESCRIBED_LAND_USE_COLS = [f"{col}_prescribed" for col in LAND_USE_COLS]
-ACTION_COLUMNS = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff', 'c4ann_diff', 'c4per_diff', 'pastr_diff',\
-                  'primf_diff', 'primn_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff']
-ALL_LAND_USE_COLS = ['primf', 'primn'] + LAND_USE_COLS
 CHART_COLS = ALL_LAND_USE_COLS + ["nonland"]
 
-LAND_FEATURES = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per',
- 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'cell_area']
-
-LAND_DIFF_FEATURES = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff','c4ann_diff', 'c4per_diff',
- 'pastr_diff', 'primf_diff', 'primn_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff']
-
-FEATURES = LAND_FEATURES + LAND_DIFF_FEATURES
+# TODO: Temporary until XGBoost training is fixed
+XGBOOST_LAND_FEATURES = ['c3ann', 'c3nfx', 'c3per','c4ann', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'cell_area']
+XGBOOST_LAND_DIFF_FEATURES = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff','c4ann_diff', 'pastr_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff']
+XGBOOST_FEATURES = XGBOOST_LAND_FEATURES + XGBOOST_LAND_DIFF_FEATURES
 
 PRESCRIPTOR_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'cell_area']
 PRESCRIPTOR_OUTPUT_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'pastr', 'range', 'secdf', 'secdn', 'urban']

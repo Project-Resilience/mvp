@@ -1,4 +1,4 @@
-from math import isclose, log10
+from math import isclose
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,7 @@ from Prescriptor import Prescriptor
 from constants import ALL_LAND_USE_COLS
 from constants import CHART_COLS
 from constants import CONTEXT_COLUMNS
-from constants import ACTION_COLUMNS
+from constants import ALL_DIFF_LAND_USE_COLS
 from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
 from constants import PREDICTOR_LIST
@@ -29,11 +29,11 @@ from constants import MAP_COORDINATE_DICT
 from constants import CO2_JFK_GVA
 from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
+from constants import CO2_PERSON
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
 from utils import create_check_options
-from utils import approx_area
 from utils import compute_percent_change
 
 app = Dash(__name__, 
@@ -61,10 +61,13 @@ INITIAL_PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
 INITIAL_PIE_DATA.append(1)
 
 fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
+colors = px.colors.qualitative.Plotly + ["#C6CAFD", "#F7A799", "#33FFC9"]
+color_order = [3, 4, 8, 9, 11, 1, 2, 0, 6, 7, 5, 10, 12]
 pie_params = {"values": INITIAL_PIE_DATA,
               "labels": CHART_COLS,
               "textposition": "inside",
               "sort": False,
+              "marker_colors": [colors[i] for i in color_order],
               "hovertemplate": "%{label}<br>%{value}<br>%{percent}<extra></extra>"}
 fig.add_pie(**pie_params,
             title="Initial", 
@@ -221,19 +224,30 @@ predict_div = html.Div([
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
     html.Div(className="parent", children=[
-        html.P("Flight emissions from flying from JFK to Geneva: ", className="child", style=inline_block),
-        html.P("2.2 tonnes CO2", style={"font-weight": "bold"}|inline_block)
-    ]),
-
-    html.Div(className="parent", children=[
         html.P("Total emissions reduced from this land use change over a year: ", className="child", style=inline_block),
         html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
+        html.I(className="bi bi-airplane", style=inline_block),
+        html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
+        html.P(f"{CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-airplane", style=inline_block),
         html.P("Plane tickets mitigated: ", className="child", style=inline_block),
         html.P(id="tickets", style={"font-weight": "bold"}|inline_block)
     ]),
-    html.P("(Source: https://flightfree.org/flight-emissions-calculator)")
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-person", style=inline_block),
+        html.P("Total yearly carbon emissions of average world citizen: ", className="child", style=inline_block),
+        html.P(f"{CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-person", style=inline_block),
+        html.P("Number of peoples' carbon emissions mitigated from this change : ", className="child", style=inline_block),
+        html.P(id="people", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.P("(Sources: https://flightfree.org/flight-emissions-calculator https://scied.ucar.edu/learning-zone/climate-solutions/carbon-footprint)", style={"font-size": "10px"})
 ])
 
 references_div = html.Div([
@@ -375,6 +389,7 @@ def select_prescriptor(n_clicks, presc_idx, context):
     Output("presc-store", "data"),
     Output({"type": "slider-value", "index": ALL}, "children"),
     Output("sum-warning", "children"),
+    Output("predict-change", "value"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
     State("context-store", "data"),
     State("locks", "value"),
@@ -387,7 +402,7 @@ def store_prescription(sliders, context, locked):
     :param sliders: Slider values to store.
     :param context: Context store to compute if prescription sums to land use in context.
     :param locked: Locked columns to check for warning.
-    :return: Stored slider values, slider values to display, warning if necessary.
+    :return: Stored slider values, slider values to display, warning if necessary, land change percent.
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
@@ -399,18 +414,21 @@ def store_prescription(sliders, context, locked):
     new_sum = presc.sum(axis=1).iloc[0]
     old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        warnings.append(f"WARNING: prescriptions sum to {str(new_sum)} instead of {str(old_sum)}")
+        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum)} instead of {str(new_sum)} by clicking \"Sum to 1\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
     if locked and presc[locked].sum(axis=1).iloc[0] > old_sum:
-        warnings.append("WARNING: sum of locked prescriptions is greater than sum of land use. Reduce one before proceeding")
+        warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. Please reduce one before proceeding"))
 
     # Check if any prescriptions below 0
     if (presc.iloc[0] < 0).any():
-        warnings.append("WARNING: negative values detected. Please lower the value of a locked slider.")
+        warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
-    return presc.to_dict("records"), rounded, warnings
+    # Compute total change
+    change = compute_percent_change(context_df, presc)
+
+    return presc.to_dict("records"), rounded, warnings, f"{change * 100:.2f}"
 
 
 @app.callback(
@@ -483,9 +501,9 @@ def sum_to_1(n_clicks, presc, context, locked):
 
 @app.callback(
     Output("predict-eluc", "value"),
-    Output("predict-change", "value"),
     Output("total-em", "children"),
     Output("tickets", "children"),
+    Output("people", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
     State("history-store", "data"),
@@ -499,7 +517,7 @@ def predict(n_clicks, context, history, presc, predictor_name):
     :param n_clicks: Unused number of times button has been clicked.
     :param context: Context data from store.
     :param presc: Prescription data from store.
-    :return: Predicted ELUC and percent change, trivia values.
+    :return: Predicted ELUC and trivia values.
     """
     context_df = pd.DataFrame.from_records(context)
     history_df = pd.DataFrame.from_records(history)
@@ -518,17 +536,19 @@ def predict(n_clicks, context, history, presc, predictor_name):
         # Sanity check
         context_merged = context_merged.sort_values(by="time", ascending=True)
         # TODO: This is gross, clean it up.
-        prediction = predictor.run_predictor(context_merged[CONTEXT_COLUMNS + ACTION_COLUMNS], presc_df)
+        prediction = predictor.run_predictor(context_merged[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS], presc_df)
 
     else:
         return 0, 0, "Model not connected yet"
     
-    coord = (context_df["lat"].iloc[0], context_df["lon"].iloc[0])
-    total_reduction = prediction * approx_area(coord)
-
-    change = compute_percent_change(context_df, presc_df)
+    # Calculate total reduction
+    area = context_df["cell_area"].iloc[0]
+    total_reduction = prediction * area
     
-    return f"{prediction:.4f}", f"{change * 100:.2f}", f"{-1 * total_reduction:,.2f} tonnes CO2", f"{-1 * total_reduction // CO2_JFK_GVA:.0f} tickets"
+    return f"{prediction:.4f}", \
+        f"{-1 * total_reduction:,.2f} tonnes CO2", \
+            f"{-1 * total_reduction // CO2_JFK_GVA:,.0f} tickets", \
+                f"{-1 * total_reduction // CO2_PERSON:,.0f} people"
 
 
 def main():
@@ -551,8 +571,8 @@ This site is for demonstration purposes only.
 
 For a given context cell representing a portion of the earth,
 identified by its latitude and longitude coordinates, and a given year:
-* what changes can we make to the land usage
-* in order to minimize the resulting estimated CO2 emissions in that year ? (Emissions from Land Use Change, ELUC, 
+* What changes can we make to the land usage
+* In order to minimize the resulting estimated CO2 emissions in that year ? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare per year)
 '''),
         dcc.Markdown('''## Context'''),

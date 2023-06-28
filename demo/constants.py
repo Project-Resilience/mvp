@@ -69,4 +69,4 @@ MAP_COORDINATE_DICT = {
 
 # Tonnes of CO2 per person for a flight from JFK to Geneva
 CO2_JFK_GVA = 2.2
-EARTH_RADIUS_KM = 6371
+CO2_PERSON = 4

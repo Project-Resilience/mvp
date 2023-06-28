@@ -29,6 +29,7 @@ from constants import MAP_COORDINATE_DICT
 from constants import CO2_JFK_GVA
 from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
+from constants import CO2_PERSON
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
@@ -222,19 +223,30 @@ predict_div = html.Div([
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
     html.Div(className="parent", children=[
-        html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
-        html.P("2.2 tonnes CO2", style={"font-weight": "bold"}|inline_block)
-    ]),
-
-    html.Div(className="parent", children=[
         html.P("Total emissions reduced from this land use change over a year: ", className="child", style=inline_block),
         html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
+        html.I(className="bi bi-airplane", style=inline_block),
+        html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
+        html.P(f"{CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-airplane", style=inline_block),
         html.P("Plane tickets mitigated: ", className="child", style=inline_block),
         html.P(id="tickets", style={"font-weight": "bold"}|inline_block)
     ]),
-    html.P("(Source: https://flightfree.org/flight-emissions-calculator)")
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-person", style=inline_block),
+        html.P("Total yearly carbon emissions of average world citizen: ", className="child", style=inline_block),
+        html.P(f"{CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.Div(className="parent", children=[
+        html.I(className="bi bi-person", style=inline_block),
+        html.P("Number of peoples' carbon emissions mitigated from this change : ", className="child", style=inline_block),
+        html.P(id="people", style={"font-weight": "bold"}|inline_block)
+    ]),
+    html.P("(Sources: https://flightfree.org/flight-emissions-calculator https://scied.ucar.edu/learning-zone/climate-solutions/carbon-footprint)", style={"font-size": "10px"})
 ])
 
 @app.callback(
@@ -466,6 +478,7 @@ def sum_to_1(n_clicks, presc, context, locked):
     Output("predict-eluc", "value"),
     Output("total-em", "children"),
     Output("tickets", "children"),
+    Output("people", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
     State("history-store", "data"),
@@ -507,7 +520,10 @@ def predict(n_clicks, context, history, presc, predictor_name):
     area = context_df["cell_area"].iloc[0]
     total_reduction = prediction * area
     
-    return f"{prediction:.4f}", f"{-1 * total_reduction:,.2f} tonnes CO2", f"{-1 * total_reduction // CO2_JFK_GVA:.0f} tickets"
+    return f"{prediction:.4f}", \
+        f"{-1 * total_reduction:,.2f} tonnes CO2", \
+            f"{-1 * total_reduction // CO2_JFK_GVA:,.0f} tickets", \
+                f"{-1 * total_reduction // CO2_PERSON:,.0f} people"
 
 
 def main():

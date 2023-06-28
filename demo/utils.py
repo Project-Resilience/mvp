@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 from dash import html
 
-from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, EARTH_RADIUS_KM, LAND_USE_COLS
+from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, LAND_USE_COLS
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """

@@ -1,9 +1,11 @@
 from math import log10, acos, cos, sin, pi, atan2, sqrt
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from dash import html
 
 from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, LAND_USE_COLS
+from constants import C3, C4, PRIMARY, SECONDARY, FIELDS
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -67,6 +69,72 @@ def compute_percent_change(context, presc):
 
     return percent_changed[0]
 
+def create_treemap(data=pd.DataFrame(), type_context=True):
+    """
+    :param data: Pandas series of land use data
+    :param type_context: If the title should be context or prescribed
+    :return: Treemap figure
+    """
+    title = "Context" if type_context else "Prescribed"
+    
+    tree_params = dict(
+        branchvalues = "total",
+        sort=False,
+        textinfo = "label+value",
+        hoverinfo = "label+value+percent parent+percent entry+percent root",
+        root_color="lightgrey"
+    )
+
+    labels, parents, values = None, None, None
+
+    if data.empty:
+        labels = [title]
+        parents = [""]
+        values = [1]
+
+    else:
+        total = data[ALL_LAND_USE_COLS].sum()
+        c3 = data[C3].sum()
+        c4 = data[C4].sum()
+        crops = c3 + c4
+        primary = data[PRIMARY].sum()
+        secondary = data[SECONDARY].sum()
+        fields = data[FIELDS].sum()
+
+        labels = [title, "Nonland",
+                "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
+                "Primary Vegetation", "primf", "primn", 
+                "Secondary Vegetation", "secdf", "secdn",
+                "Fields", "urban", "pastr", "range"]
+        parents = ["", title,
+                title, "Crops", "Crops", "C3", "C3", "C3", "C4", "C4",
+                title, "Primary Vegetation", "Primary Vegetation",
+                title, "Secondary Vegetation", "Secondary Vegetation",
+                title, "Fields", "Fields", "Fields"]
+
+        values =  [total + data["nonland"], data["nonland"],
+                    crops, c3, c4, data["c3ann"], data["c3nfx"], data["c3per"], data["c4ann"], data["c4per"],
+                    primary, data["primf"], data["primn"],
+                    secondary, data["secdf"], data["secdn"],
+                    fields, data["urban"], data["pastr"], data["range"]]
+        
+    assert(len(labels) == len(parents))
+    assert(len(parents) == len(values))
+
+    fig = go.Figure(
+        go.Treemap(
+            labels = labels,
+            parents = parents,
+            values=values,
+            **tree_params
+        )
+    )
+    colors = px.colors.qualitative.Plotly
+    fig.update_layout(
+        treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[0]],
+        margin=dict(t=0, b=0, l=10, r=10)
+    )
+    return fig
 
     
 

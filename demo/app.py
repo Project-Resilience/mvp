@@ -35,6 +35,7 @@ from utils import round_list
 from utils import create_map
 from utils import create_check_options
 from utils import compute_percent_change
+from utils import create_treemap
 
 app = Dash(__name__, 
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -56,26 +57,6 @@ max_year = df["time"].max()
 
 lat_list = [lat for lat in np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP)]
 lon_list = [lon for lon in np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP)]
-
-INITIAL_PIE_DATA = [0 for _ in range(len(CHART_COLS) - 1)]
-INITIAL_PIE_DATA.append(1)
-
-fig = make_subplots(rows=1, cols=2, specs=[[{"type": "pie"}, {"type": "pie"}]])
-colors = px.colors.qualitative.Plotly + ["#C6CAFD", "#F7A799", "#33FFC9"]
-color_order = [3, 4, 8, 9, 11, 1, 2, 0, 6, 7, 5, 10, 12]
-pie_params = {"values": INITIAL_PIE_DATA,
-              "labels": CHART_COLS,
-              "textposition": "inside",
-              "sort": False,
-              "marker_colors": [colors[i] for i in color_order],
-              "hovertemplate": "%{label}<br>%{value}<br>%{percent}<extra></extra>"}
-fig.add_pie(**pie_params,
-            title="Initial", 
-            row=1, col=1)
-fig.add_pie(**pie_params,
-            title="Prescribed", 
-            row=1, col=2)
-fig.update_layout(margin=dict(l=0, r=0, t=0, b=0))
 
 present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
@@ -316,7 +297,7 @@ def update_map(location, year, context):
     return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
 
 @app.callback(
-    Output("pies", "extendData", allow_duplicate=True),
+    Output("context-tree", "figure", allow_duplicate=True),
     Output("context-store", "data"),
     Output("history-store", "data"),
     Output({"type": "frozen-input", "index": ALL}, "value"),
@@ -341,12 +322,9 @@ def select_context(lat, lon, year):
     history = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] < year) & (df['time'] >= year-HISTORY_SIZE)]
 
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
-    chart_data = chart_df.iloc[0].tolist()
-    new_data = [{
-            "labels": [CHART_COLS],
-            "values": [chart_data]},
-        [0], len(CHART_COLS)
-    ]
+
+    fig = create_treemap(chart_df.iloc[0], type_context=True)
+
     frozen = chart_df[frozen_cols].iloc[0].tolist()
     frozen = round_list(frozen)
     frozen = [f"{frozen_cols[i]}: {frozen[i]}" for i in range(len(frozen_cols))]
@@ -355,7 +333,7 @@ def select_context(lat, lon, year):
 
     max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     maxes = [max for _ in range(len(LAND_USE_COLS))]
-    return new_data, context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
+    return fig, context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
 
 
 @app.callback(
@@ -432,7 +410,7 @@ def store_prescription(sliders, context, locked):
 
 
 @app.callback(
-    Output("pies", "extendData", allow_duplicate=True),
+    Output("presc-tree", "figure", allow_duplicate=True),
     Input("presc-store", "data"),
     State("context-store", "data"),
     prevent_initial_call=True
@@ -448,12 +426,8 @@ def update_chart(presc, context):
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc_df["primf"] = context_df["primf"]
     presc_df["primn"] = context_df["primn"]
-    chart_data = add_nonland(presc_df[ALL_LAND_USE_COLS]).iloc[0].tolist()
-    return [{
-            "labels": [CHART_COLS],
-            "values": [chart_data]},
-        [1], len(CHART_COLS)
-    ]
+    chart_df = add_nonland(presc_df[ALL_LAND_USE_COLS])
+    return create_treemap(chart_df.iloc[0], type_context=False)
 
 
 @app.callback(
@@ -586,8 +560,9 @@ in tons of carbon per hectare per year)
         html.Div([
             html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
             html.Div(sliders_div, style={'grid-column': '2'}),
-            dcc.Graph(id='pies', figure=fig, style={'grid-column': '3'})
-        ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr', "width": "100%"}),
+            dcc.Graph(id='context-tree', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
+            dcc.Graph(id='presc-tree', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
+        ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
         
         html.Div([
             frozen_div,

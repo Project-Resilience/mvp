@@ -70,3 +70,10 @@ MAP_COORDINATE_DICT = {
 # Tonnes of CO2 per person for a flight from JFK to Geneva
 CO2_JFK_GVA = 2.2
 CO2_PERSON = 4
+
+# For creating treemap
+C3 = ['c3ann', 'c3nfx', 'c3per']
+C4 = ['c4ann', 'c4per']
+PRIMARY = ['primf', 'primn']
+SECONDARY = ['secdf', 'secdn']
+FIELDS = ['pastr', 'range', 'urban']

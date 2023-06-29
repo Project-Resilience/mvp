@@ -80,7 +80,7 @@ def create_treemap(data=pd.DataFrame(), type_context=True):
     tree_params = dict(
         branchvalues = "total",
         sort=False,
-        textinfo = "label+value",
+        textinfo = "label+percent root",
         hoverinfo = "label+value+percent parent+percent entry+percent root",
         root_color="lightgrey"
     )
@@ -105,18 +105,21 @@ def create_treemap(data=pd.DataFrame(), type_context=True):
                 "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
                 "Primary Vegetation", "primf", "primn", 
                 "Secondary Vegetation", "secdf", "secdn",
-                "Fields", "urban", "pastr", "range"]
+                "Urban",
+                "Fields", "pastr", "range"]
         parents = ["", title,
                 title, "Crops", "Crops", "C3", "C3", "C3", "C4", "C4",
                 title, "Primary Vegetation", "Primary Vegetation",
                 title, "Secondary Vegetation", "Secondary Vegetation",
-                title, "Fields", "Fields", "Fields"]
+                title,
+                title, "Fields", "Fields"]
 
         values =  [total + data["nonland"], data["nonland"],
                     crops, c3, c4, data["c3ann"], data["c3nfx"], data["c3per"], data["c4ann"], data["c4per"],
                     primary, data["primf"], data["primn"],
                     secondary, data["secdf"], data["secdn"],
-                    fields, data["urban"], data["pastr"], data["range"]]
+                    data["urban"],
+                    fields, data["pastr"], data["range"]]
         
     assert(len(labels) == len(parents))
     assert(len(parents) == len(values))
@@ -131,7 +134,7 @@ def create_treemap(data=pd.DataFrame(), type_context=True):
     )
     colors = px.colors.qualitative.Plotly
     fig.update_layout(
-        treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[0]],
+        treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
         margin=dict(t=0, b=0, l=10, r=10)
     )
     return fig

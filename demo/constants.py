@@ -78,7 +78,9 @@ C3 = ['c3ann', 'c3nfx', 'c3per']
 C4 = ['c4ann', 'c4per']
 PRIMARY = ['primf', 'primn']
 SECONDARY = ['secdf', 'secdn']
-FIELDS = ['pastr', 'range', 'urban']
+FIELDS = ['pastr', 'range']
+
+CHART_TYPES = ["Treemap", "Pie Chart"]
 
 # Pareto front
 PARETO_FRONT_PATH = "prescriptors/pareto_front.png"

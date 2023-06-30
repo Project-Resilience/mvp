@@ -69,18 +69,18 @@ def compute_percent_change(context, presc):
 
     return percent_changed[0]
 
-def create_treemap(data=pd.DataFrame(), type_context=True):
+def create_treemap(data=pd.Series(), type_context=True, year=2021):
     """
     :param data: Pandas series of land use data
     :param type_context: If the title should be context or prescribed
     :return: Treemap figure
     """
-    title = "Context" if type_context else "Prescribed"
+    title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
     
     tree_params = dict(
         branchvalues = "total",
         sort=False,
-        textinfo = "label+value",
+        textinfo = "label+percent root",
         hoverinfo = "label+value+percent parent+percent entry+percent root",
         root_color="lightgrey"
     )
@@ -105,18 +105,21 @@ def create_treemap(data=pd.DataFrame(), type_context=True):
                 "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
                 "Primary Vegetation", "primf", "primn", 
                 "Secondary Vegetation", "secdf", "secdn",
-                "Fields", "urban", "pastr", "range"]
+                "Urban",
+                "Fields", "pastr", "range"]
         parents = ["", title,
                 title, "Crops", "Crops", "C3", "C3", "C3", "C4", "C4",
                 title, "Primary Vegetation", "Primary Vegetation",
                 title, "Secondary Vegetation", "Secondary Vegetation",
-                title, "Fields", "Fields", "Fields"]
+                title,
+                title, "Fields", "Fields"]
 
         values =  [total + data["nonland"], data["nonland"],
                     crops, c3, c4, data["c3ann"], data["c3nfx"], data["c3per"], data["c4ann"], data["c4per"],
                     primary, data["primf"], data["primn"],
                     secondary, data["secdf"], data["secdn"],
-                    fields, data["urban"], data["pastr"], data["range"]]
+                    data["urban"],
+                    fields, data["pastr"], data["range"]]
         
     assert(len(labels) == len(parents))
     assert(len(parents) == len(values))
@@ -131,9 +134,54 @@ def create_treemap(data=pd.DataFrame(), type_context=True):
     )
     colors = px.colors.qualitative.Plotly
     fig.update_layout(
-        treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[0]],
+        treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
         margin=dict(t=0, b=0, l=10, r=10)
     )
+    return fig
+
+def create_pie(data=pd.Series(), type_context=True, year=2021):
+    """
+    :param data: Pandas series of land use data
+    :param type_context: If the title should be context or prescribed
+    :return: Pie chart figure
+    """
+
+    values = None
+
+    # Sum for case where all zeroes, which allows us to display pie even when presc is reset
+    if data.empty or data.sum() == 0:
+        values = [0 for _ in range(len(CHART_COLS))]
+        values[-1] = 1
+
+    else:
+        values = data[CHART_COLS].tolist()
+
+    assert(len(values) == len(CHART_COLS))
+
+    title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
+
+    colors = px.colors.qualitative.Plotly + ["#C6CAFD", "#F7A799", "#33FFC9"]
+    color_order = [3, 4, 8, 9, 11, 1, 2, 0, 6, 7, 5, 10, 12]
+    fig = go.Figure(
+        go.Pie(
+            values = values,
+            labels = CHART_COLS,
+            textposition = "inside",
+            sort = False,
+            marker_colors = [colors[i] for i in color_order],
+            hovertemplate = "%{label}<br>%{value}<br>%{percent}<extra></extra>",
+            title = title
+        )
+    )
+
+    if type_context:
+        fig.update_layout(showlegend=False)
+        # To make up for the hidden legend
+        fig.update_layout(margin=dict(t=50, b=50, l=50, r=50))
+
+    else:
+        fig.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+
     return fig
 
     

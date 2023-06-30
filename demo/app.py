@@ -10,6 +10,7 @@ from dash import Output
 from dash import State
 from dash import dcc
 from dash import html
+from dash import ctx
 import dash_bootstrap_components as dbc
 from plotly.subplots import make_subplots
 import plotly.express as px
@@ -30,6 +31,7 @@ from constants import CO2_JFK_GVA
 from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
 from constants import CO2_PERSON
+from constants import CHART_TYPES
 from constants import PARETO_FRONT
 from utils import add_nonland
 from utils import round_list
@@ -37,6 +39,7 @@ from utils import create_map
 from utils import create_check_options
 from utils import compute_percent_change
 from utils import create_treemap
+from utils import create_pie
 
 app = Dash(__name__, 
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -157,7 +160,14 @@ presc_select_div = html.Div([
             id="pareto-modal",
             is_open=False,
         ),
-], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "60%", "align-content": "center"})
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "100%", "align-content": "center"})
+
+chart_select_div = dcc.Dropdown(
+    options=CHART_TYPES,
+    id="chart-select",
+    value=CHART_TYPES[0],
+    clearable=False
+)
 
 check_options = create_check_options(LAND_USE_COLS)
 checklist_div = html.Div([
@@ -178,7 +188,12 @@ sliders_div = html.Div([
                 id={"type": "presc-slider", "index": f"{col}-slider"}
             )
         ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
-        html.Div("0", id={"type": "slider-value", "index": f"{col}-value"}, style={"grid-column": "2"}),
+        dcc.Input(
+            value=0,
+            type="number", 
+            disabled=True,
+            id={"type": "slider-value", "index": f"{col}-value"}, 
+            style={"grid-column": "2"}),
     ], style={"display": "grid", "grid-template-columns": "1fr 20%"}) for col in LAND_USE_COLS]
 )
 
@@ -318,7 +333,6 @@ def update_map(location, year, context):
     return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
 
 @app.callback(
-    Output("context-tree", "figure", allow_duplicate=True),
     Output("context-store", "data"),
     Output("history-store", "data"),
     Output({"type": "frozen-input", "index": ALL}, "value"),
@@ -344,8 +358,6 @@ def select_context(lat, lon, year):
 
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
 
-    fig = create_treemap(chart_df.iloc[0], type_context=True)
-
     frozen = chart_df[frozen_cols].iloc[0].tolist()
     frozen = round_list(frozen)
     frozen = [f"{frozen_cols[i]}: {frozen[i]}" for i in range(len(frozen_cols))]
@@ -354,8 +366,25 @@ def select_context(lat, lon, year):
 
     max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     maxes = [max for _ in range(len(LAND_USE_COLS))]
-    return fig, context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
 
+    return context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
+
+@app.callback(
+    Output("context-fig", "figure"),
+    Input("chart-select", "value"),
+    Input("context-store", "data"),
+    State("year-input", "value")
+)
+def update_context_chart(chart_type, context, year):
+    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+    chart_df = add_nonland(context_df[ALL_LAND_USE_COLS])
+
+    if chart_type == "Treemap":
+        return create_treemap(chart_df.iloc[0], type_context=True, year=year)
+    elif chart_type == "Pie Chart":
+        return create_pie(chart_df.iloc[0], type_context=True, year=year)
+    else:
+        assert(False)
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
@@ -386,7 +415,7 @@ def select_prescriptor(n_clicks, presc_idx, context):
 
 @app.callback(
     Output("presc-store", "data"),
-    Output({"type": "slider-value", "index": ALL}, "children"),
+    Output({"type": "slider-value", "index": ALL}, "value"),
     Output("sum-warning", "children"),
     Output("predict-change", "value"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
@@ -431,12 +460,14 @@ def store_prescription(sliders, context, locked):
 
 
 @app.callback(
-    Output("presc-tree", "figure", allow_duplicate=True),
+    Output("presc-fig", "figure", allow_duplicate=True),
+    Input("chart-select", "value"),
     Input("presc-store", "data"),
     State("context-store", "data"),
+    State("year-input", "value"),
     prevent_initial_call=True
 )
-def update_chart(presc, context):
+def update_presc_chart(chart_type, presc, context, year):
     """
     Updates prescription pie from store.
     :param presc: Prescription data from store.
@@ -447,8 +478,21 @@ def update_chart(presc, context):
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc_df["primf"] = context_df["primf"]
     presc_df["primn"] = context_df["primn"]
-    chart_df = add_nonland(presc_df[ALL_LAND_USE_COLS])
-    return create_treemap(chart_df.iloc[0], type_context=False)
+    
+    # Manually calculate nonland from context so that it's not zeroed out by sliders.
+    nonland = 1 - context_df[ALL_LAND_USE_COLS].iloc[0].sum()
+    nonland = nonland if nonland > 0 else 0
+    presc_df["nonland"] = nonland
+    chart_df = presc_df[CHART_COLS]
+
+    if chart_type == "Treemap":
+        return create_treemap(chart_df.iloc[0], type_context=False, year=year)
+    
+    elif chart_type == "Pie Chart":
+        return create_pie(chart_df.iloc[0], type_context=False, year=year)
+    
+    else:
+        assert(False)
 
 
 @app.callback(
@@ -577,12 +621,15 @@ in tons of carbon per hectare per year)
             html.Div([legend_div], style={"grid-column": "3"})
         ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
         dcc.Markdown('''## Actions'''),
-        presc_select_div,
+        html.Div([
+            html.Div([presc_select_div], style={"grid-column": "1"}),
+            html.Div([chart_select_div], style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
+        ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
         html.Div([
             html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
             html.Div(sliders_div, style={'grid-column': '2'}),
-            dcc.Graph(id='context-tree', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
-            dcc.Graph(id='presc-tree', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
+            dcc.Graph(id='context-fig', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
+            dcc.Graph(id='presc-fig', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
         ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
         
         html.Div([

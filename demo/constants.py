@@ -77,3 +77,5 @@ C4 = ['c4ann', 'c4per']
 PRIMARY = ['primf', 'primn']
 SECONDARY = ['secdf', 'secdn']
 FIELDS = ['pastr', 'range']
+
+CHART_TYPES = ["Treemap", "Pie Chart"]

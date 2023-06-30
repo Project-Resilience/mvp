@@ -1,4 +1,4 @@
-from math import log10, acos, cos, sin, pi, atan2, sqrt
+from math import log10
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
@@ -184,8 +184,35 @@ def create_pie(data=pd.Series(), type_context=True, year=2021):
 
     return fig
 
-    
 
-   
-    
-        
+def create_pareto(pareto_df, presc_id):
+    """
+    :param pareto_df: Pandas data frame containing the pareto front
+    :param presc_id: The currently selected prescriptor id
+    :return: A pareto plot figure
+    """
+    fig = go.Figure(
+            go.Scatter(
+                x=pareto_df['Change'] * 100,
+                y=pareto_df['ELUC'],
+                # marker='o',
+            )
+        )
+    # Highlight the selected prescriptor
+    presc_df = pareto_df[pareto_df["id"] == presc_id]
+    fig.add_scatter(x=presc_df['Change'] * 100,
+                    y=presc_df['ELUC'],
+                    marker=dict(
+                        color='red',
+                        size=10
+                    ))
+    # Name axes and hide legend
+    fig.update_layout(xaxis_title=dict(text='Change (%)'),
+                      yaxis_title=dict(text='ELUC (tC/ha/yr)'),
+                      showlegend=False,
+                      title="Prescriptors",
+                      )
+    fig.update_traces(hovertemplate="Average Change: %{x} <span>&#37;</span>"
+                                    "<br>"
+                                    " Average ELUC: %{y} tC/ha/yr<extra></extra>")
+    return fig

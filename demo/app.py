@@ -3,17 +3,13 @@ from math import isclose
 import numpy as np
 import pandas as pd
 from dash import ALL
-from dash import MATCH
 from dash import Dash
 from dash import Input
 from dash import Output
 from dash import State
 from dash import dcc
 from dash import html
-from dash import ctx
 import dash_bootstrap_components as dbc
-from plotly.subplots import make_subplots
-import plotly.express as px
 
 from Predictor import XGBoostPredictor
 from Predictor import LSTMPredictor
@@ -24,6 +20,7 @@ from constants import CONTEXT_COLUMNS
 from constants import ALL_DIFF_LAND_USE_COLS
 from constants import LAND_USE_COLS
 from constants import PRESCRIPTOR_LIST
+from constants import DEFAULT_PRESCRIPTOR_IDX
 from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
 from constants import MAP_COORDINATE_DICT
@@ -32,7 +29,7 @@ from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
 from constants import CO2_PERSON
 from constants import CHART_TYPES
-from constants import PARETO_FRONT
+from constants import PARETO_CSV_PATH
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
@@ -40,6 +37,7 @@ from utils import create_check_options
 from utils import compute_percent_change
 from utils import create_treemap
 from utils import create_pie
+from utils import create_pareto
 
 app = Dash(__name__, 
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -49,6 +47,7 @@ app = Dash(__name__,
 # This seems more secure.
 df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+pareto_df = pd.read_csv(PARETO_CSV_PATH)
 
 # Cells
 GRID_STEP = 0.25
@@ -145,7 +144,7 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(PRESCRIPTOR_LIST)-1, step=1, 
-                value=1, # By default we select the second prescriptor that minimizes change
+                value=DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
                 marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
@@ -155,7 +154,8 @@ presc_select_div = html.Div([
     dbc.Modal(
             [
                 dbc.ModalHeader("Pareto front"),
-                dbc.ModalBody(html.Img(src='data:image/png;base64,{}'.format(PARETO_FRONT), style={"width": "100%"})),
+                dcc.Graph(id='pareto-fig', figure=create_pareto(pareto_df=pareto_df,
+                                                                presc_id=PRESCRIPTOR_LIST[DEFAULT_PRESCRIPTOR_IDX])),
             ],
             id="pareto-modal",
             is_open=False,
@@ -282,13 +282,16 @@ references_div = html.Div([
 
 @app.callback(
     Output("pareto-modal", "is_open"),
+    Output("pareto-fig", "figure"),
     [Input("pareto-button", "n_clicks")],
     [State("pareto-modal", "is_open")],
+    [State("presc-select", "value")],
 )
-def toggle_modal(n, is_open):
+def toggle_modal(n, is_open, presc_idx):
+    fig = create_pareto(pareto_df, PRESCRIPTOR_LIST[presc_idx])
     if n:
-        return not is_open
-    return is_open
+        return not is_open, fig
+    return is_open, fig
 
 
 @app.callback(

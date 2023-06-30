@@ -53,6 +53,7 @@ PRESCRIPTOR_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'pastr', 'primf', 'primn
 PRESCRIPTOR_OUTPUT_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'pastr', 'range', 'secdf', 'secdn', 'urban']
 
 PRESCRIPTOR_LIST = ["1_1", "34_78", "50_67", "40_45", "30_28", "28_40"]
+DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change
 PREDICTOR_LIST = ["XGBoost", "LSTM", "Ensemble"]
 
 XGBOOST_FILE_PATH = "predictors/xgboost_predictor.json"
@@ -83,5 +84,6 @@ FIELDS = ['pastr', 'range']
 CHART_TYPES = ["Treemap", "Pie Chart"]
 
 # Pareto front
+PARETO_CSV_PATH = "prescriptors/pareto.csv"
 PARETO_FRONT_PATH = "prescriptors/pareto_front.png"
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')

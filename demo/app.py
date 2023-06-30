@@ -189,8 +189,8 @@ sliders_div = html.Div([
             )
         ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
         dcc.Input(
-            value=0,
-            type="number", 
+            value="0%",
+            type="text", 
             disabled=True,
             id={"type": "slider-value", "index": f"{col}-value"}, 
             style={"grid-column": "2"}),
@@ -437,7 +437,7 @@ def store_prescription(sliders, context, locked):
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
-    rounded = round_list(presc.iloc[0].tolist())
+    rounded = round_list(presc.iloc[0].tolist(), True)
 
     warnings = []
     # Check if prescriptions sum to 1
@@ -445,7 +445,7 @@ def store_prescription(sliders, context, locked):
     new_sum = presc.sum(axis=1).iloc[0]
     old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum)} instead of {str(new_sum)} by clicking \"Sum to 1\""))
+        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
@@ -459,7 +459,7 @@ def store_prescription(sliders, context, locked):
     # Compute total change
     change = compute_percent_change(context_df, presc)
 
-    return presc.to_dict("records"), rounded, warnings, f"{change * 100:.2f}"
+    return presc.to_dict("records"), [f"{round}%" for round in rounded], warnings, f"{change * 100:.2f}"
 
 
 @app.callback(
@@ -637,7 +637,7 @@ in tons of carbon per hectare per year)
         
         html.Div([
             frozen_div,
-            html.Button("Sum to 1", id='sum-button', n_clicks=0),
+            html.Button("Sum to 100%", id='sum-button', n_clicks=0),
             html.Div(id='sum-warning')
         ]),
         dcc.Markdown('''## Outcomes'''),

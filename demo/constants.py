@@ -1,3 +1,5 @@
+import base64
+
 fields = {'lat': {'data_type': 'FLOAT', 'has_nan': False, 'mean': 53.93974, 'range': [50.125, 58.625], 'std_dev': 2.2288961, 'sum': 4630295, 'valued': 'CONTINUOUS'},
           'lon': {'data_type': 'FLOAT', 'has_nan': False, 'mean': -2.7644422, 'range': [-7.375, 1.625], 'std_dev': 1.9270877, 'sum': -237305.25, 'valued': 'CONTINUOUS'},
           'ELUC': {'data_type': 'FLOAT', 'has_nan': False, 'mean': -0.021404957, 'range': [-1.2820702, 2.3366203], 'std_dev': 0.18355964, 'sum': -1837.4443, 'valued': 'CONTINUOUS'},
@@ -77,3 +79,7 @@ C4 = ['c4ann', 'c4per']
 PRIMARY = ['primf', 'primn']
 SECONDARY = ['secdf', 'secdn']
 FIELDS = ['pastr', 'range', 'urban']
+
+# Pareto front
+PARETO_FRONT_PATH = "prescriptors/pareto_front.png"
+PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')

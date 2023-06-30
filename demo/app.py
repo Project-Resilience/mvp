@@ -30,6 +30,7 @@ from constants import CO2_JFK_GVA
 from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
 from constants import CO2_PERSON
+from constants import PARETO_FRONT
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
@@ -146,8 +147,17 @@ presc_select_div = html.Div([
                 marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
-    html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"})
-], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "40%", "align-content": "center"})
+    html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"}),
+    html.Button("View Pareto", id='pareto-button', n_clicks=0, style={"grid-column": "5", "margin-top": "-10px"}),
+    dbc.Modal(
+            [
+                dbc.ModalHeader("Pareto front"),
+                dbc.ModalBody(html.Img(src='data:image/png;base64,{}'.format(PARETO_FRONT), style={"width": "100%"})),
+            ],
+            id="pareto-modal",
+            is_open=False,
+        ),
+], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "60%", "align-content": "center"})
 
 check_options = create_check_options(LAND_USE_COLS)
 checklist_div = html.Div([
@@ -253,6 +263,17 @@ references_div = html.Div([
         html.A("(IPCC)", href="https://www.ipcc.ch/\n"),
     ]),
 ])
+
+
+@app.callback(
+    Output("pareto-modal", "is_open"),
+    [Input("pareto-button", "n_clicks")],
+    [State("pareto-modal", "is_open")],
+)
+def toggle_modal(n, is_open):
+    if n:
+        return not is_open
+    return is_open
 
 
 @app.callback(

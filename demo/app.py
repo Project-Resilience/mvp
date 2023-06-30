@@ -32,7 +32,6 @@ from constants import HISTORY_SIZE
 from constants import PRESCRIPTOR_COLS
 from constants import CO2_PERSON
 from constants import CHART_TYPES
-from constants import PARETO_FRONT
 from utils import add_nonland
 from utils import round_list
 from utils import create_map
@@ -151,15 +150,7 @@ presc_select_div = html.Div([
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"}),
-    html.Button("View Pareto", id='pareto-button', n_clicks=0, style={"grid-column": "5", "margin-top": "-10px"}),
-    dbc.Modal(
-            [
-                dbc.ModalHeader("Pareto front"),
-                dbc.ModalBody(html.Img(src='data:image/png;base64,{}'.format(PARETO_FRONT), style={"width": "100%"})),
-            ],
-            id="pareto-modal",
-            is_open=False,
-        ),
+
 ], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "100%", "align-content": "center"})
 
 chart_select_div = dcc.Dropdown(
@@ -189,8 +180,8 @@ sliders_div = html.Div([
             )
         ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
         dcc.Input(
-            value=0,
-            type="number", 
+            value="0%",
+            type="text", 
             disabled=True,
             id={"type": "slider-value", "index": f"{col}-value"}, 
             style={"grid-column": "2"}),
@@ -278,17 +269,6 @@ references_div = html.Div([
         html.A("(IPCC)", href="https://www.ipcc.ch/\n"),
     ]),
 ])
-
-
-@app.callback(
-    Output("pareto-modal", "is_open"),
-    [Input("pareto-button", "n_clicks")],
-    [State("pareto-modal", "is_open")],
-)
-def toggle_modal(n, is_open):
-    if n:
-        return not is_open
-    return is_open
 
 
 @app.callback(
@@ -434,7 +414,7 @@ def store_prescription(sliders, context, locked):
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
-    rounded = round_list(presc.iloc[0].tolist())
+    rounded = round_list(presc.iloc[0].tolist(), True)
 
     warnings = []
     # Check if prescriptions sum to 1
@@ -442,7 +422,7 @@ def store_prescription(sliders, context, locked):
     new_sum = presc.sum(axis=1).iloc[0]
     old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum)} instead of {str(new_sum)} by clicking \"Sum to 1\""))
+        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
@@ -456,7 +436,7 @@ def store_prescription(sliders, context, locked):
     # Compute total change
     change = compute_percent_change(context_df, presc)
 
-    return presc.to_dict("records"), rounded, warnings, f"{change * 100:.2f}"
+    return presc.to_dict("records"), [f"{round}%" for round in rounded], warnings, f"{change * 100:.2f}"
 
 
 @app.callback(
@@ -634,7 +614,7 @@ in tons of carbon per hectare per year)
         
         html.Div([
             frozen_div,
-            html.Button("Sum to 1", id='sum-button', n_clicks=0),
+            html.Button("Sum to 100%", id='sum-button', n_clicks=0),
             html.Div(id='sum-warning')
         ]),
         dcc.Markdown('''## Outcomes'''),

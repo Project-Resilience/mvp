@@ -22,16 +22,19 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     data['nonland'] = nonland
     return data[CHART_COLS]
 
-def round_list(vals: list) -> list:
+def round_list(vals: list, percent=False) -> list:
     """
     Rounds all the values of a list to the number of decimals that gets it
     to within SLIDER_PRECISION.
     :param vals: List of values to round.
+    :param percent: If we should multiply by 100 to get it as a percentage.
     :return: List of rounded values.
     """
     decimals = int(-1 * log10(SLIDER_PRECISION))
-    rounded = [round(val, decimals) for val in vals]
-    return rounded
+    if percent:
+        return [round(val * 100, decimals - 2) for val in vals]
+    else:
+        return [round(val, decimals) for val in vals]
 
 def create_map(df, lat_center, lon_center, zoom=10, color_idx = None):
     color = ["blue" for _ in range(len(df))]
@@ -81,7 +84,7 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
         branchvalues = "total",
         sort=False,
         textinfo = "label+percent root",
-        hoverinfo = "label+value+percent parent+percent entry+percent root",
+        hoverinfo = "label+percent root+percent parent",
         root_color="lightgrey"
     )
 
@@ -160,15 +163,18 @@ def create_pie(data=pd.Series(), type_context=True, year=2021):
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
-    colors = px.colors.qualitative.Plotly + ["#C6CAFD", "#F7A799", "#33FFC9"]
-    color_order = [3, 4, 8, 9, 11, 1, 2, 0, 6, 7, 5, 10, 12]
+    p = px.colors.qualitative.Plotly
+    ps = px.colors.qualitative.Pastel1
+    d = px.colors.qualitative.Dark24
+    #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'nonland]
+    colors = [p[4], d[8], ps[4], p[9], ps[5], p[0], p[2], d[14], p[5], p[7], d[2], p[3], p[1]]
     fig = go.Figure(
         go.Pie(
             values = values,
             labels = CHART_COLS,
             textposition = "inside",
             sort = False,
-            marker_colors = [colors[i] for i in color_order],
+            marker_colors = colors,
             hovertemplate = "%{label}<br>%{value}<br>%{percent}<extra></extra>",
             title = title
         )

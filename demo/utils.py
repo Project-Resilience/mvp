@@ -83,7 +83,7 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
     tree_params = dict(
         branchvalues = "total",
         sort=False,
-        textinfo = "label+percent root",
+        texttemplate="%{label}<br>%{percentRoot:.2%}",
         hoverinfo = "label+percent root+percent parent",
         root_color="lightgrey"
     )
@@ -124,6 +124,19 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
                     data["urban"],
                     fields, data["pastr"], data["range"]]
         
+        hovertext = []
+        for i, label in enumerate(labels):
+            v = values[i] * 100
+            parent_v = values[parents.index(parents[i])] * 100
+            if parents[i] == '':
+                hovertext.append(f"{label}: {v:.2f}%")
+            elif parents[i] == title:
+                hovertext.append(f"{label}<br>{v:.2f}% of {title}")
+            else:
+                hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{v/parent_v*100:.2f}% of {parents[i]}")
+        tree_params["customdata"] = hovertext
+        tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
+        
     assert(len(labels) == len(parents))
     assert(len(parents) == len(values))
 
@@ -131,7 +144,7 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
         go.Treemap(
             labels = labels,
             parents = parents,
-            values=values,
+            values = values,
             **tree_params
         )
     )
@@ -140,6 +153,7 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
         treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
         margin=dict(t=0, b=0, l=10, r=10)
     )
+    print(fig)
     return fig
 
 def create_pie(data=pd.Series(), type_context=True, year=2021):

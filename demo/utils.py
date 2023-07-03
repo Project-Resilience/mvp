@@ -153,7 +153,6 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
         treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
         margin=dict(t=0, b=0, l=10, r=10)
     )
-    print(fig)
     return fig
 
 def create_pie(data=pd.Series(), type_context=True, year=2021):

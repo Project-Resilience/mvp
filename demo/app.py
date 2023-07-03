@@ -193,8 +193,8 @@ sliders_div = html.Div([
             type="text", 
             disabled=True,
             id={"type": "slider-value", "index": f"{col}-value"}, 
-            style={"grid-column": "2"}),
-    ], style={"display": "grid", "grid-template-columns": "1fr 20%"}) for col in LAND_USE_COLS]
+            style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
+    ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in LAND_USE_COLS]
 )
 
 frozen_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]

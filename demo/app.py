@@ -437,7 +437,7 @@ def store_prescription(sliders, context, locked):
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
-    rounded = round_list(presc.iloc[0].tolist(), True)
+    vals = presc.iloc[0].tolist()
 
     warnings = []
     # Check if prescriptions sum to 1
@@ -459,7 +459,7 @@ def store_prescription(sliders, context, locked):
     # Compute total change
     change = compute_percent_change(context_df, presc)
 
-    return presc.to_dict("records"), [f"{round}%" for round in rounded], warnings, f"{change * 100:.2f}"
+    return presc.to_dict("records"), [f"{val * 100:.2f}%" for val in vals], warnings, f"{change * 100:.2f}"
 
 
 @app.callback(

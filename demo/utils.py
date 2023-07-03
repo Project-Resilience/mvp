@@ -127,13 +127,15 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
         hovertext = []
         for i, label in enumerate(labels):
             v = values[i] * 100
-            parent_v = values[parents.index(parents[i])] * 100
+            # Get value of parent or 100 if parent is ''
+            parent_v = values[labels.index(parents[i])] * 100 if parents[i] != '' else values[0] * 100
             if parents[i] == '':
                 hovertext.append(f"{label}: {v:.2f}%")
             elif parents[i] == title:
                 hovertext.append(f"{label}<br>{v:.2f}% of {title}")
             else:
-                hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{v/parent_v*100:.2f}% of {parents[i]}")
+                hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{(v/parent_v)*100:.2f}% of {parents[i]}")
+
         tree_params["customdata"] = hovertext
         tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
         

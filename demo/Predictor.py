@@ -20,7 +20,7 @@ class Predictor:
     def __init__(self):
         pass
 
-    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame):
+    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> float:
          pass
 
 
@@ -36,7 +36,7 @@ class XGBoostPredictor(Predictor):
         self.encoder = DataEncoder(fields, cao_mapping)
 
 
-    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame):
+    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> float:
         """
         Runs predictor model.
         :param context: DataFrame of context.
@@ -95,7 +95,7 @@ class LSTMPredictor(Predictor):
         self.encoder = DataEncoder(fields, cao_mapping)
 
 
-    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame):
+    def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> float:
         """
         Runs predictor model.
         :param context: DataFrame of context.

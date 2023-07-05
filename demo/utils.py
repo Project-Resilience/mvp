@@ -11,7 +11,7 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
     Adds a nonland column that is the difference between 1 and
     ALL_LAND_USE_COLS.
-        - Since sum isn't exactly 1 we just set to 0 if we get a negative.
+    Note: Since sum isn't exactly 1 we just set to 0 if we get a negative.
     :param df: DataFrame of all land usage.
     :return: DataFrame with nonland column.
     """
@@ -22,21 +22,17 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     data['nonland'] = nonland
     return data[CHART_COLS]
 
-def round_list(vals: list, percent=False) -> list:
-    """
-    Rounds all the values of a list to the number of decimals that gets it
-    to within SLIDER_PRECISION.
-    :param vals: List of values to round.
-    :param percent: If we should multiply by 100 to get it as a percentage.
-    :return: List of rounded values.
-    """
-    decimals = int(-1 * log10(SLIDER_PRECISION))
-    if percent:
-        return [round(val * 100, decimals - 2) for val in vals]
-    else:
-        return [round(val, decimals) for val in vals]
 
-def create_map(df, lat_center, lon_center, zoom=10, color_idx = None):
+def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, color_idx = None) -> go.Figure:
+    """
+    Creates map figure with data centered and zoomed in with appropriate point marked.
+    :param df: DataFrame of data to plot.
+    :param lat_center: Latitude to center map on.
+    :param lon_center: Longitude to center map on.
+    :param zoom: Zoom level of map.
+    :param color_idx: Index of point to color red.
+    :return: Plotly figure
+    """
     color = ["blue" for _ in range(len(df))]
     if color_idx:
         color[color_idx] = "red"
@@ -57,7 +53,13 @@ def create_map(df, lat_center, lon_center, zoom=10, color_idx = None):
     map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
     return map_fig
 
-def create_check_options(values):
+
+def create_check_options(values: list) -> list:
+    """
+    Creates dash HTML options for checklist based on values.
+    :param values: List of values to create options for.
+    :return: List of dash HTML options.
+    """
     options = []
     for i in range(len(values)):
         options.append(
@@ -65,14 +67,22 @@ def create_check_options(values):
              "value": values[i]})
     return options
 
-def compute_percent_change(context, presc):
+
+def compute_percent_change(context: pd.DataFrame, presc: pd.DataFrame) -> float:
+    """
+    Computes percent land use change from context to presc
+    :param context: Context land use data
+    :param presc: Prescribed land use data
+    :return: Percent land use change
+    """
     diffs = presc[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
     percent_changed = diffs[diffs > 0].sum(axis=1)
     percent_changed = percent_changed / context[LAND_USE_COLS].sum(axis=1)
 
     return percent_changed[0]
 
-def create_treemap(data=pd.Series(), type_context=True, year=2021):
+
+def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     """
     :param data: Pandas series of land use data
     :param type_context: If the title should be context or prescribed
@@ -157,7 +167,8 @@ def create_treemap(data=pd.Series(), type_context=True, year=2021):
     )
     return fig
 
-def create_pie(data=pd.Series(), type_context=True, year=2021):
+
+def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     """
     :param data: Pandas series of land use data
     :param type_context: If the title should be context or prescribed
@@ -206,7 +217,7 @@ def create_pie(data=pd.Series(), type_context=True, year=2021):
     return fig
 
 
-def create_pareto(pareto_df, presc_id):
+def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     """
     :param pareto_df: Pandas data frame containing the pareto front
     :param presc_id: The currently selected prescriptor id

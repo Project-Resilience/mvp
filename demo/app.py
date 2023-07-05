@@ -31,7 +31,6 @@ from constants import CO2_PERSON
 from constants import CHART_TYPES
 from constants import PARETO_CSV_PATH
 from utils import add_nonland
-from utils import round_list
 from utils import create_map
 from utils import create_check_options
 from utils import compute_percent_change
@@ -200,7 +199,7 @@ sliders_div = html.Div([
 frozen_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
 frozen_div = html.Div([
     dcc.Input(
-        value=f"{col}: 0",
+        value=f"{col}: 0.00%",
         type="text",
         disabled=True,
         id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in frozen_cols
@@ -347,14 +346,13 @@ def update_map(location, year, context):
 )
 def select_context(lat, lon, year):
     """
-    Loads context in from lon/lat/time. Updates pie chart, context/history data store, and frozen inputs.
+    Loads context in from lat/lon/time. Updates context/history stores and frozen inputs (primf, etc.).
     Also resets prescription sliders to 0 to avoid confusion.
     Also sets prescription sliders' max values to 1 - nonland - primf - primn to avoid negative values.
-    :param n_clicks: Unused number of times button has been clicked.
-    :param lat: Latitude to search.
-    :param lon: Longitude to search.
-    :param year: Year to search.
-    :return: Updated pie data, context/history data to store, and frozen slider values.
+    :param lat: Selected latitude.
+    :param lon: Selected longitude.
+    :param year: Selected year.
+    :return: Context/history data to store, frozen values, slider values, and slider max.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
     history = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] < year) & (df['time'] >= year-HISTORY_SIZE)]
@@ -362,8 +360,8 @@ def select_context(lat, lon, year):
     chart_df = add_nonland(context[ALL_LAND_USE_COLS])
 
     frozen = chart_df[frozen_cols].iloc[0].tolist()
-    frozen = round_list(frozen)
-    frozen = [f"{frozen_cols[i]}: {frozen[i]}" for i in range(len(frozen_cols))]
+    #frozen = round_list(frozen)
+    frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
     reset = [0 for _ in LAND_USE_COLS]
 
@@ -379,6 +377,13 @@ def select_context(lat, lon, year):
     State("year-input", "value")
 )
 def update_context_chart(chart_type, context, year):
+    """
+    Updates context chart when context store is updated or chart type is changed.
+    :param chart_type: String input from chart select dropdown.
+    :param context: Context data from store.
+    :param year: Selected year.
+    :return: New figure type selected by chart_type with data context.
+    """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     chart_df = add_nonland(context_df[ALL_LAND_USE_COLS])
 
@@ -400,11 +405,10 @@ def select_prescriptor(n_clicks, presc_idx, context):
     """
     Selects prescriptor, runs on context, updates sliders.
     :param n_clicks: Unused number of times button has been clicked.
-    :param presc_id: Prescriptor id to load.
+    :param presc_idx: Index of prescriptor in PRESCRIPTOR_LIST to load.
     :param context: Context data from store to run prescriptor on.
     :return: Updated slider values.
     """
-    # TODO: this is pretty lazy. We should cache used prescriptors
     if context != None:
         presc_id = PRESCRIPTOR_LIST[presc_idx]
         prescriptor = Prescriptor(presc_id)
@@ -428,7 +432,7 @@ def select_prescriptor(n_clicks, presc_idx, context):
 )
 def store_prescription(sliders, context, locked):
     """
-    Stores slider values in store and displays them next to sliders.
+    Stores slider values in store and displays them next to sliders. Computes land change percent for output.
     Warns user if values don't sum to 1.
     :param sliders: Slider values to store.
     :param context: Context store to compute if prescription sums to land use in context.
@@ -472,10 +476,12 @@ def store_prescription(sliders, context, locked):
 )
 def update_presc_chart(chart_type, presc, context, year):
     """
-    Updates prescription pie from store.
+    Updates prescription pie from store according to chart type.
+    :param chart_type: String input from chart select dropdown.
     :param presc: Prescription data from store.
     :param context: Context data from store.
-    :return: Updated prescription pie data.
+    :param year: Selected year for title of chart.
+    :return: New chart of type chart_type using presc data.
     """
     presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
@@ -558,7 +564,9 @@ def predict(n_clicks, context, history, presc, predictor_name):
     Predicts ELUC from context and prescription stores.
     :param n_clicks: Unused number of times button has been clicked.
     :param context: Context data from store.
+    :param history: History data for time series predictors.
     :param presc: Prescription data from store.
+    :param predictor_name: String name of predictor to use from dropdown.
     :return: Predicted ELUC and trivia values.
     """
     context_df = pd.DataFrame.from_records(context)

@@ -1,15 +1,24 @@
 import warnings
 
 import pandas as pd
+import torch
+
+from xgboost import XGBRegressor
+from data_encoder import DataEncoder
+
+from constants import fields
+from constants import cao_mapping
+from constants import LAND_USE_COLS
+from constants import COLS_MAP
+from constants import DIFF_LAND_USE_COLS
+from constants import XGBOOST_FILE_PATH
+from constants import LSTM_FILE_PATH
+from constants import CONTEXT_COLUMNS
+from constants import ALL_DIFF_LAND_USE_COLS
+from constants import XGBOOST_FEATURES
 
 # Silence xgboost warnings
 warnings.filterwarnings("ignore")
-from xgboost import XGBRegressor
-import torch
-from data_encoder import DataEncoder
-
-from constants import fields, cao_mapping, LAND_USE_COLS, COLS_MAP, DIFF_LAND_USE_COLS, XGBOOST_FILE_PATH, LSTM_FILE_PATH, CONTEXT_COLUMNS, ALL_DIFF_LAND_USE_COLS, XGBOOST_FEATURES
-
 
 class Predictor:
     """
@@ -21,7 +30,10 @@ class Predictor:
         pass
 
     def run_predictor(self, context: pd.DataFrame, prescribed: pd.DataFrame) -> float:
-         pass
+        """
+        Runs predictor using context and prescription.
+        """
+        pass
 
 
 class XGBoostPredictor(Predictor):
@@ -47,7 +59,8 @@ class XGBoostPredictor(Predictor):
         # TODO: Encoder deletes columns not in it. Manual add c4per
         encoded_sample_context_df = self.encoder.encode_as_df(context)
 
-        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
+        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) \
+            - context[LAND_USE_COLS].reset_index(drop=True)
         prescribed_actions_df.rename(COLS_MAP, axis=1, inplace=True)
 
         encoded_prescribed_actions_df = self.encoder.encode_as_df(prescribed_actions_df)
@@ -65,7 +78,7 @@ class XGBoostPredictor(Predictor):
         # Decode output
         out_df = self.encoder.decode_as_df(pred_df)
         return out_df.iloc[0, 0]
-    
+
 
 class LSTMPredictor(Predictor):
 
@@ -107,7 +120,8 @@ class LSTMPredictor(Predictor):
 
         # TODO: This is yucky because we have to add primn and primf 0 diffs since our
         # prescriptor doesn't handle them.
-        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) - context_df[LAND_USE_COLS].iloc[[-1]].reset_index(drop=True)
+        prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) \
+            - context_df[LAND_USE_COLS].iloc[[-1]].reset_index(drop=True)
         prescribed_actions_df.rename(COLS_MAP, inplace=True, axis=1)
 
         # TODO: @IMPORTANT WE DONT PRESCRIBE C4PER. Does this destroy our df?
@@ -122,10 +136,10 @@ class LSTMPredictor(Predictor):
         context_df.loc[context_df.index[-1], DIFF_LAND_USE_COLS] = prescribed_actions_df.loc[prescribed_actions_df.index[0], DIFF_LAND_USE_COLS]
         
         df_np = context_df[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS].to_numpy()
-        input = torch.from_numpy(df_np)
-        input = input.type(torch.FloatTensor)
-        input = input.unsqueeze(0)
+        inp = torch.from_numpy(df_np)
+        inp = inp.type(torch.FloatTensor)
+        inp = inp.unsqueeze(0)
 
-        out = self.predictor_model(input)
+        out = self.predictor_model(inp)
 
         return out.item()

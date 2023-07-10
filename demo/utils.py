@@ -1,11 +1,16 @@
-from math import log10
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from constants import ALL_LAND_USE_COLS, CHART_COLS, SLIDER_PRECISION, LAND_USE_COLS
-from constants import C3, C4, PRIMARY, SECONDARY, FIELDS
+from constants import ALL_LAND_USE_COLS
+from constants import CHART_COLS
+from constants import LAND_USE_COLS
+from constants import C3
+from constants import C4
+from constants import PRIMARY
+from constants import SECONDARY
+from constants import FIELDS
 
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -18,7 +23,7 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     data = df[ALL_LAND_USE_COLS]
     nonland = 1 - data.sum(axis=1)
     nonland[nonland < 0] = 0
-    assert((nonland >= 0).all())
+    assert (nonland >= 0).all()
     data['nonland'] = nonland
     return data[CHART_COLS]
 
@@ -40,16 +45,16 @@ def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, 
     # TODO: Is this modification going to break things?
     df["color"] = color
     map_fig = px.scatter_geo(
-        df, 
-        lat="lat", 
-        lon="lon", 
-        color="color", 
-        color_discrete_sequence=color_seq, 
+        df,
+        lat="lat",
+        lon="lon",
+        color="color",
+        color_discrete_sequence=color_seq,
         hover_data={"lat": True, "lon": True, "color": False},
-        center={"lat": lat_center, "lon": lon_center}, 
+        center={"lat": lat_center, "lon": lon_center},
         size_max=10
     )
-    map_fig.update_layout(margin=dict(l=0, r=10, t=0, b=0), showlegend=False)
+    map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
     map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
     return map_fig
 
@@ -61,10 +66,10 @@ def create_check_options(values: list) -> list:
     :return: List of dash HTML options.
     """
     options = []
-    for i in range(len(values)):
+    for val in values:
         options.append(
-            {"label": [html.I(className="bi bi-lock"), html.Span(values[i])],
-             "value": values[i]})
+            {"label": [html.I(className="bi bi-lock"), html.Span(val)],
+             "value": val})
     return options
 
 
@@ -82,6 +87,22 @@ def compute_percent_change(context: pd.DataFrame, presc: pd.DataFrame) -> float:
     return percent_changed[0]
 
 
+def create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
+    hovertext = []
+    for i, label in enumerate(labels):
+        v = values[i] * 100
+        # Get value of parent or 100 if parent is ''
+        parent_v = values[labels.index(parents[i])] * 100 if parents[i] != '' else values[0] * 100
+        if parents[i] == '':
+            hovertext.append(f"{label}: {v:.2f}%")
+        elif parents[i] == title:
+            hovertext.append(f"{label}<br>{v:.2f}% of {title}")
+        else:
+            hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{(v/parent_v)*100:.2f}% of {parents[i]}")
+
+    return hovertext
+
+
 def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     """
     :param data: Pandas series of land use data
@@ -89,14 +110,14 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     :return: Treemap figure
     """
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
-    
-    tree_params = dict(
-        branchvalues = "total",
-        sort=False,
-        texttemplate="%{label}<br>%{percentRoot:.2%}",
-        hoverinfo = "label+percent root+percent parent",
-        root_color="lightgrey"
-    )
+
+    tree_params = {
+        "branchvalues": "total",
+        "sort": False,
+        "texttemplate": "%{label}<br>%{percentRoot:.2%}",
+        "hoverinfo": "label+percent root+percent parent",
+        "root_color": "lightgrey"
+    }
 
     labels, parents, values = None, None, None
 
@@ -133,24 +154,12 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
                     secondary, data["secdf"], data["secdn"],
                     data["urban"],
                     fields, data["pastr"], data["range"]]
-        
-        hovertext = []
-        for i, label in enumerate(labels):
-            v = values[i] * 100
-            # Get value of parent or 100 if parent is ''
-            parent_v = values[labels.index(parents[i])] * 100 if parents[i] != '' else values[0] * 100
-            if parents[i] == '':
-                hovertext.append(f"{label}: {v:.2f}%")
-            elif parents[i] == title:
-                hovertext.append(f"{label}<br>{v:.2f}% of {title}")
-            else:
-                hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{(v/parent_v)*100:.2f}% of {parents[i]}")
 
-        tree_params["customdata"] = hovertext
+        tree_params["customdata"] = create_hovertext(labels, parents, values, title)
         tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
-        
-    assert(len(labels) == len(parents))
-    assert(len(parents) == len(values))
+ 
+    assert len(labels) == len(parents)
+    assert len(parents) == len(values)
 
     fig = go.Figure(
         go.Treemap(
@@ -163,7 +172,7 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     colors = px.colors.qualitative.Plotly
     fig.update_layout(
         treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
-        margin=dict(t=0, b=0, l=10, r=10)
+        margin={"t": 0, "b": 0, "l": 10, "r": 10}
     )
     return fig
 
@@ -192,7 +201,8 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     p = px.colors.qualitative.Plotly
     ps = px.colors.qualitative.Pastel1
     d = px.colors.qualitative.Dark24
-    #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'nonland]
+    #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 
+    # 'range', 'secdf', 'secdn', 'urban', 'nonland]
     colors = [p[4], d[8], ps[4], p[9], ps[5], p[0], p[2], d[14], p[5], p[7], d[2], p[3], p[1]]
     fig = go.Figure(
         go.Pie(
@@ -209,10 +219,10 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     if type_context:
         fig.update_layout(showlegend=False)
         # To make up for the hidden legend
-        fig.update_layout(margin=dict(t=50, b=50, l=50, r=50))
+        fig.update_layout(margin={"t": 50, "b": 50, "l": 50, "r": 50})
 
     else:
-        fig.update_layout(margin=dict(t=0, b=0, l=0, r=0))
+        fig.update_layout(margin={"t": 0, "b": 0, "l": 0, "r": 0})
 
     return fig
 
@@ -234,13 +244,13 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     presc_df = pareto_df[pareto_df["id"] == presc_id]
     fig.add_scatter(x=presc_df['Change'] * 100,
                     y=presc_df['ELUC'],
-                    marker=dict(
-                        color='red',
-                        size=10
-                    ))
+                    marker={
+                        "color": 'red',
+                        "size": 10
+                    })
     # Name axes and hide legend
-    fig.update_layout(xaxis_title=dict(text='Change (%)'),
-                      yaxis_title=dict(text='ELUC (tC/ha/yr)'),
+    fig.update_layout(xaxis_title={"text": "Change (%)"},
+                      yaxis_title={"text": 'ELUC (tC/ha/yr)'},
                       showlegend=False,
                       title="Prescriptors",
                       )

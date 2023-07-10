@@ -1,13 +1,15 @@
-import pandas as pd
-from typing import Dict, Any, List
 import os
+from typing import List
+import pandas as pd
 import numpy as np
 from keras.models import load_model
 
 from data_encoder import DataEncoder
-from constants import fields, cao_mapping, PRESCRIPTOR_OUTPUT_COLS
+from constants import fields
+from constants import cao_mapping
+from constants import PRESCRIPTOR_OUTPUT_COLS
 
-class Prescriptor():
+class Prescriptor:
     """
     Wrapper for Keras prescriptor and encoder.
     """
@@ -63,11 +65,11 @@ class Prescriptor():
         :return: a pandas DataFrame of action name to action value or list of action values
         """
         action_list = ['recommended_land_use']
-        
+
         # Convert the input df
         context_as_nn_input = self._convert_to_nn_input(context_df)
         row_index = context_df.index
-        
+
         # Get the prescrib?ed actions
         prescribed_actions = self.prescriptor_model.predict(context_as_nn_input)
         actions = {}
@@ -75,14 +77,14 @@ class Prescriptor():
         if self._is_single_action_prescriptor(action_list):
             # Put the single action in an array to process it like multiple actions
             prescribed_actions = [prescribed_actions]
-                
-        for i, action_col in enumerate(action_list):
-            if self._is_scalar(prescribed_actions[i]):
+
+        for idx, action_col in enumerate(action_list):
+            if self._is_scalar(prescribed_actions[idx]):
                 # We have a single row and this action is numerical. Convert it to a scalar.
-                actions[action_col] = prescribed_actions[i].item()
+                actions[action_col] = prescribed_actions[idx].item()
             else:
-                actions[action_col] = prescribed_actions[i].tolist()
-        
+                actions[action_col] = prescribed_actions[idx].tolist()
+
         # Convert the prescribed actions to a DataFrame
         prescribed_actions_df = pd.DataFrame(actions,
                                             columns=action_list,
@@ -109,8 +111,9 @@ class Prescriptor():
             reco_land_use_df[col] *= used
 
         # Assuming there's no primary land left in this cell
-        # TODO: not correct. Need to account for primf and primn, that can't increase (no way to return to primary forest)
+        # TODO: not correct. Need to account for primf and primn, that can't increase
+        # (no way to return to primary forest)
         prescribed_land_use_pct = reco_land_use_df.iloc[0][PRESCRIPTOR_OUTPUT_COLS].sum() * 100
         print(f"Presribed land usage: {prescribed_land_use_pct:.2f}% of land")
-        
+
         return reco_land_use_df[PRESCRIPTOR_OUTPUT_COLS]

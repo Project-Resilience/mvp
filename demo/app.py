@@ -38,7 +38,7 @@ from utils import create_treemap
 from utils import create_pie
 from utils import create_pareto
 
-app = Dash(__name__, 
+app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            prevent_initial_callbacks="initial_duplicate")
 
@@ -57,8 +57,8 @@ max_lon = df["i_lon"].max()
 min_year = df["time"].min()
 max_year = df["time"].max()
 
-lat_list = [lat for lat in np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP)]
-lon_list = [lon for lon in np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP)]
+lat_list = list(np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP))
+lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
 
 present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
@@ -100,14 +100,16 @@ Pasture
 )
 
 context_div = html.Div(
-    style={'display': 'grid', 'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto', 'position': 'absolute', 'bottom': '0'},
+    style={'display': 'grid',
+           'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto',
+           'position': 'absolute', 'bottom': '0'},
     children=[
         html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
         dcc.Dropdown(
             id="loc-dropdown",
-            options=list(MAP_COORDINATE_DICT.keys()), 
+            options=list(MAP_COORDINATE_DICT.keys()),
             value=list(MAP_COORDINATE_DICT.keys())[0],
-            style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px',}
+            style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         ),
         html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
         dcc.Dropdown(
@@ -142,7 +144,7 @@ presc_select_div = html.Div([
     html.P("Minimize change", style={"grid-column": "1"}),
     html.Div([
         dcc.Slider(id='presc-select',
-                min=0, max=len(PRESCRIPTOR_LIST)-1, step=1, 
+                min=0, max=len(PRESCRIPTOR_LIST)-1, step=1,
                 value=DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
                 marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
@@ -191,7 +193,7 @@ sliders_div = html.Div([
             value="0%",
             type="text", 
             disabled=True,
-            id={"type": "slider-value", "index": f"{col}-value"}, 
+            id={"type": "slider-value", "index": f"{col}-value"},
             style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
     ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in LAND_USE_COLS]
 )
@@ -287,6 +289,13 @@ references_div = html.Div([
     [State("presc-select", "value")],
 )
 def toggle_modal(n, is_open, presc_idx):
+    """
+    Toggles pareto modal.
+    :param n: Number of times button has been clicked.
+    :param is_open: Whether the modal is open.
+    :param presc_idx: The index of the prescriptor to show.
+    :return: The new state of the modal and the figure to show.
+    """
     fig = create_pareto(pareto_df, PRESCRIPTOR_LIST[presc_idx])
     if n:
         return not is_open, fig
@@ -299,13 +308,13 @@ def toggle_modal(n, is_open, presc_idx):
     Input("map", "clickData"),
     prevent_initial_call=True
 )
-def click_map(clickData):
+def click_map(click_data):
     """
     Selects context when point on map is clicked.
-    :param clickData: Input data from click action.
+    :param click_data: Input data from click action.
     :return: The new longitude and latitude to put into the dropdowns.
     """
-    return clickData["points"][0]["lat"], clickData["points"][0]["lon"]
+    return click_data["points"][0]["lat"], click_data["points"][0]["lon"]
 
 @app.callback(
     Output("map", "figure"),
@@ -365,8 +374,8 @@ def select_context(lat, lon, year):
 
     reset = [0 for _ in LAND_USE_COLS]
 
-    max = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
-    maxes = [max for _ in range(len(LAND_USE_COLS))]
+    max_val = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
+    maxes = [max_val for _ in range(len(LAND_USE_COLS))]
 
     return context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
 
@@ -387,12 +396,12 @@ def update_context_chart(chart_type, context, year):
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     chart_df = add_nonland(context_df[ALL_LAND_USE_COLS])
 
+    assert chart_type in ("Treemap", "Pie Chart")
+
     if chart_type == "Treemap":
         return create_treemap(chart_df.iloc[0], type_context=True, year=year)
-    elif chart_type == "Pie Chart":
-        return create_pie(chart_df.iloc[0], type_context=True, year=year)
-    else:
-        assert(False)
+    
+    return create_pie(chart_df.iloc[0], type_context=True, year=year)
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
@@ -409,7 +418,7 @@ def select_prescriptor(n_clicks, presc_idx, context):
     :param context: Context data from store to run prescriptor on.
     :return: Updated slider values.
     """
-    if context != None:
+    if context is not None:
         presc_id = PRESCRIPTOR_LIST[presc_idx]
         prescriptor = Prescriptor(presc_id)
         context_df = pd.DataFrame.from_records(context)[PRESCRIPTOR_COLS]
@@ -418,6 +427,8 @@ def select_prescriptor(n_clicks, presc_idx, context):
         # TODO: Hacking this together because c4per isn't prescribed
         prescribed["c4per"] = 0
         return prescribed[LAND_USE_COLS].iloc[0].tolist()
+    
+    return None
 
 
 @app.callback(
@@ -487,21 +498,19 @@ def update_presc_chart(chart_type, presc, context, year):
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
     presc_df["primf"] = context_df["primf"]
     presc_df["primn"] = context_df["primn"]
-    
+
     # Manually calculate nonland from context so that it's not zeroed out by sliders.
     nonland = 1 - context_df[ALL_LAND_USE_COLS].iloc[0].sum()
     nonland = nonland if nonland > 0 else 0
     presc_df["nonland"] = nonland
     chart_df = presc_df[CHART_COLS]
 
+    assert chart_type in ("Treemap", "Pie Chart")
+
     if chart_type == "Treemap":
         return create_treemap(chart_df.iloc[0], type_context=False, year=year)
     
-    elif chart_type == "Pie Chart":
-        return create_pie(chart_df.iloc[0], type_context=False, year=year)
-    
-    else:
-        assert(False)
+    return create_pie(chart_df.iloc[0], type_context=False, year=year)
 
 
 @app.callback(
@@ -642,7 +651,6 @@ in tons of carbon per hectare per year)
             dcc.Graph(id='context-fig', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
             dcc.Graph(id='presc-fig', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
         ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
-        
         html.Div([
             frozen_div,
             html.Button("Sum to 100%", id='sum-button', n_clicks=0),

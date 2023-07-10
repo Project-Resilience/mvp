@@ -83,17 +83,17 @@ class XGBoostPredictor(Predictor):
 class LSTMPredictor(Predictor):
 
     class LSTMModel(torch.nn.Module):
-        def __init__(self, layers=2, hidden_dim=128, input_dim=25, output_dim=1):
+        def __init__(self, in_features, layers=1, hidden_dim=64, dropout=0):
             super().__init__()
-            self.lstm = torch.nn.LSTM(input_dim, hidden_dim, num_layers=layers, batch_first=True)
-            self.linear = torch.nn.Linear(hidden_dim, output_dim)
+            self.norm = torch.nn.LayerNorm(in_features)
+            self.lstm = torch.nn.LSTM(in_features, hidden_dim, num_layers=layers, batch_first=True, dropout=dropout)
+            self.ff = torch.nn.Linear(hidden_dim, 1)
 
         def forward(self, x):
+            x = self.norm(x)
             x, _ = self.lstm(x)
-            x = torch.relu(x)
-            x = self.linear(x)
-            x = torch.squeeze(x, dim=2)
-            x = torch.mean(x, dim=-1)
+            x = self.ff(x[:,-1,:])
+            x = torch.squeeze(x)
             return x
     
     def __init__(self, model_path=LSTM_FILE_PATH):
@@ -101,7 +101,7 @@ class LSTMPredictor(Predictor):
         :param model_path: Path to XGBoost model file
         """
         super().__init__()
-        self.predictor_model = self.LSTMModel()
+        self.predictor_model = self.LSTMModel(in_features=len(CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS))
         self.predictor_model.load_state_dict(torch.load(model_path))
         self.predictor_model.eval()
 
@@ -117,25 +117,27 @@ class LSTMPredictor(Predictor):
         """
         
         context_df = context.reset_index(drop=True)
+        encoded_context_df = self.encoder.encode_as_df(context_df)
 
         # TODO: This is yucky because we have to add primn and primf 0 diffs since our
         # prescriptor doesn't handle them.
         prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) \
             - context_df[LAND_USE_COLS].iloc[[-1]].reset_index(drop=True)
         prescribed_actions_df.rename(COLS_MAP, inplace=True, axis=1)
+        encoded_prescribed_actions_df = self.encoder.encode_as_df(prescribed_actions_df)
 
         # TODO: @IMPORTANT WE DONT PRESCRIBE C4PER. Does this destroy our df?
-        prescribed_actions_df["primn_diff"] = 0
-        prescribed_actions_df["primf_diff"] = 0
-        prescribed_actions_df["c4per_diff"] = 0
-        context_df["c4per"] = 0
-        context_df["primn_diff"] = 0
-        context_df["primf_diff"] = 0
-        context_df["c4per_diff"] = 0
+        encoded_prescribed_actions_df["primn_diff"] = 0
+        encoded_prescribed_actions_df["primf_diff"] = 0
+        encoded_prescribed_actions_df["c4per_diff"] = 0
+        encoded_context_df["c4per"] = 0
+        encoded_context_df["primn_diff"] = 0
+        encoded_context_df["primf_diff"] = 0
+        encoded_context_df["c4per_diff"] = 0
 
-        context_df.loc[context_df.index[-1], DIFF_LAND_USE_COLS] = prescribed_actions_df.loc[prescribed_actions_df.index[0], DIFF_LAND_USE_COLS]
+        encoded_context_df.loc[encoded_context_df.index[-1], DIFF_LAND_USE_COLS] = encoded_prescribed_actions_df.loc[encoded_prescribed_actions_df.index[0], DIFF_LAND_USE_COLS]
         
-        df_np = context_df[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS].to_numpy()
+        df_np = encoded_context_df[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS].to_numpy()
         inp = torch.from_numpy(df_np)
         inp = inp.type(torch.FloatTensor)
         inp = inp.unsqueeze(0)

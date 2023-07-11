@@ -57,11 +57,13 @@ DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that 
 PREDICTOR_LIST = ["XGBoost", "LSTM", "Ensemble"]
 
 XGBOOST_FILE_PATH = "predictors/xgboost_predictor.json"
-LSTM_FILE_PATH = "predictors/lstm_0.pt"
+lstm_name = "lstm_1"
+LSTM_CONFIG_PATH = f"predictors/{lstm_name}.json"
+LSTM_FILE_PATH = f"predictors/{lstm_name}.pt"
 
 SLIDER_PRECISION = 1e-5
 
-LSTM_WINDOW_SIZE = 10
+LSTM_WINDOW_SIZE = 20
 HISTORY_SIZE = LSTM_WINDOW_SIZE - 1
 
 MAP_COORDINATE_DICT = {

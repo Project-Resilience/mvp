@@ -1,4 +1,5 @@
 import warnings
+import json
 
 import pandas as pd
 import torch
@@ -12,6 +13,7 @@ from constants import LAND_USE_COLS
 from constants import COLS_MAP
 from constants import DIFF_LAND_USE_COLS
 from constants import XGBOOST_FILE_PATH
+from constants import LSTM_CONFIG_PATH
 from constants import LSTM_FILE_PATH
 from constants import CONTEXT_COLUMNS
 from constants import ALL_DIFF_LAND_USE_COLS
@@ -96,12 +98,13 @@ class LSTMPredictor(Predictor):
             x = torch.squeeze(x)
             return x
     
-    def __init__(self, model_path=LSTM_FILE_PATH):
+    def __init__(self, config_path=LSTM_CONFIG_PATH, model_path=LSTM_FILE_PATH):
         """
         :param model_path: Path to XGBoost model file
         """
         super().__init__()
-        self.predictor_model = self.LSTMModel(in_features=len(CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS))
+        config = json.load(open(LSTM_CONFIG_PATH))
+        self.predictor_model = self.LSTMModel(in_features=len(CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS), **config)
         self.predictor_model.load_state_dict(torch.load(model_path))
         self.predictor_model.eval()
 
@@ -115,10 +118,9 @@ class LSTMPredictor(Predictor):
         :param prescribed: DataFrame of prescribed land usage to be diffed.
         :return: Tuple of predicted ELUC and percentage of land use changed.
         """
-        
+
         context_df = context.reset_index(drop=True)
         encoded_context_df = self.encoder.encode_as_df(context_df)
-
         # TODO: This is yucky because we have to add primn and primf 0 diffs since our
         # prescriptor doesn't handle them.
         prescribed_actions_df = prescribed[LAND_USE_COLS].reset_index(drop=True) \
@@ -136,7 +138,6 @@ class LSTMPredictor(Predictor):
         encoded_context_df["c4per_diff"] = 0
 
         encoded_context_df.loc[encoded_context_df.index[-1], DIFF_LAND_USE_COLS] = encoded_prescribed_actions_df.loc[encoded_prescribed_actions_df.index[0], DIFF_LAND_USE_COLS]
-        
         df_np = encoded_context_df[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS].to_numpy()
         inp = torch.from_numpy(df_np)
         inp = inp.type(torch.FloatTensor)

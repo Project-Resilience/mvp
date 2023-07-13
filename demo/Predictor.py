@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 
 from xgboost import XGBRegressor
-from data_encoder import DataEncoder
+from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
 from constants import fields
 from constants import cao_mapping

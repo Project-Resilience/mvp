@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from keras.models import load_model
 
-from data_encoder import DataEncoder
+from unileaf_util.framework.transformers.data_encoder import DataEncoder
 from constants import fields
 from constants import cao_mapping
 from constants import PRESCRIPTOR_OUTPUT_COLS

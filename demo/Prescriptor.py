@@ -7,7 +7,7 @@ from keras.models import load_model
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 from constants import fields
 from constants import cao_mapping
-from constants import PRESCRIPTOR_OUTPUT_COLS
+from constants import RECO_COLS
 
 class Prescriptor:
     """
@@ -64,7 +64,7 @@ class Prescriptor:
         ::param context_df: a DataFrame containing the context to prescribe for,
         :return: a pandas DataFrame of action name to action value or list of action values
         """
-        action_list = ['recommended_land_use']
+        action_list = ['reco_land_use']
 
         # Convert the input df
         context_as_nn_input = self._convert_to_nn_input(context_df)
@@ -102,18 +102,12 @@ class Prescriptor:
         """
         encoded_sample_context_df = self.encoder.encode_as_df(sample_context_df)
         prescribed_actions_df = self.__prescribe_from_model(encoded_sample_context_df)
-        reco_land_use_df = pd.DataFrame(prescribed_actions_df.recommended_land_use.tolist(),
-                                    columns=PRESCRIPTOR_OUTPUT_COLS)
+        reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
+                                    columns=RECO_COLS)
 
         # Re-scales our prescribed land to match the amount of land used in the sample
-        used = sum(sample_context_df[PRESCRIPTOR_OUTPUT_COLS].iloc[0].tolist())
-        for col in PRESCRIPTOR_OUTPUT_COLS:
-            reco_land_use_df[col] *= used
+        used = sample_context_df[RECO_COLS].iloc[0].sum()
+        reco_land_use_df = reco_land_use_df[RECO_COLS].mul(used, axis=0)
 
-        # Assuming there's no primary land left in this cell
-        # TODO: not correct. Need to account for primf and primn, that can't increase
-        # (no way to return to primary forest)
-        prescribed_land_use_pct = reco_land_use_df.iloc[0][PRESCRIPTOR_OUTPUT_COLS].sum() * 100
-        print(f"Presribed land usage: {prescribed_land_use_pct:.2f}% of land")
-
-        return reco_land_use_df[PRESCRIPTOR_OUTPUT_COLS]
+        # Reorder columns
+        return reco_land_use_df[RECO_COLS]

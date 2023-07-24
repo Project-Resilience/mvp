@@ -3,6 +3,7 @@ from math import isclose
 import numpy as np
 import pandas as pd
 from dash import ALL
+from dash import MATCH
 from dash import Dash
 from dash import Input
 from dash import Output
@@ -11,22 +12,18 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 
-from Predictor import XGBoostPredictor
-from Predictor import LSTMPredictor
+from Predictor import RandomForestPredictor
 from Prescriptor import Prescriptor
-from constants import ALL_LAND_USE_COLS
-from constants import CHART_COLS
+from constants import COLS_MAP
+from constants import NO_CHANGE_COLS
+from constants import RECO_COLS
 from constants import CONTEXT_COLUMNS
-from constants import ALL_DIFF_LAND_USE_COLS
 from constants import LAND_USE_COLS
-from constants import PRESCRIPTOR_LIST
 from constants import DEFAULT_PRESCRIPTOR_IDX
 from constants import PREDICTOR_LIST
 from constants import SLIDER_PRECISION
 from constants import MAP_COORDINATE_DICT
 from constants import CO2_JFK_GVA
-from constants import HISTORY_SIZE
-from constants import PRESCRIPTOR_COLS
 from constants import CO2_PERSON
 from constants import CHART_TYPES
 from constants import PARETO_CSV_PATH
@@ -47,6 +44,9 @@ app = Dash(__name__,
 df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 pareto_df = pd.read_csv(PARETO_CSV_PATH)
+# We have to reverse for some reason?
+prescriptor_list = list(pareto_df["id"])
+prescriptor_list.reverse()
 
 # Cells
 GRID_STEP = 0.25
@@ -62,6 +62,9 @@ lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
 
 present = df[df["time"] == 2021]
 map_fig = create_map(present, 54.5, -2.5, 20)
+
+#TODO: Is this allowed?
+random_forest_predictor = RandomForestPredictor()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -144,10 +147,10 @@ presc_select_div = html.Div([
     html.P("Minimize change", style={"grid-column": "1"}),
     html.Div([
         dcc.Slider(id='presc-select',
-                min=0, max=len(PRESCRIPTOR_LIST)-1, step=1,
+                min=0, max=len(prescriptor_list)-1, step=1,
                 value=DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
-                marks={i : "" for i in range(len(PRESCRIPTOR_LIST))})
+                marks={i : "" for i in range(len(prescriptor_list))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
     html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
     html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", "margin-top": "-10px"}),
@@ -156,7 +159,7 @@ presc_select_div = html.Div([
             [
                 dbc.ModalHeader("Pareto front"),
                 dcc.Graph(id='pareto-fig', figure=create_pareto(pareto_df=pareto_df,
-                                                                presc_id=PRESCRIPTOR_LIST[DEFAULT_PRESCRIPTOR_IDX])),
+                                                                presc_id=prescriptor_list[DEFAULT_PRESCRIPTOR_IDX])),
             ],
             id="pareto-modal",
             is_open=False,
@@ -170,7 +173,7 @@ chart_select_div = dcc.Dropdown(
     clearable=False
 )
 
-check_options = create_check_options(LAND_USE_COLS)
+check_options = create_check_options(RECO_COLS)
 checklist_div = html.Div([
     dcc.Checklist(check_options, id="locks", inputStyle={"margin-bottom": "30px"})
 ])
@@ -186,25 +189,24 @@ sliders_div = html.Div([
                 value=0,
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": False},
-                id={"type": "presc-slider", "index": f"{col}-slider"}
+                id={"type": "presc-slider", "index": f"{col}"}
             )
         ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
         dcc.Input(
             value="0%",
             type="text", 
             disabled=True,
-            id={"type": "slider-value", "index": f"{col}-value"},
+            id={"type": "slider-value", "index": f"{col}"},
             style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
-    ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in LAND_USE_COLS]
+    ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in RECO_COLS]
 )
 
-frozen_cols = [col for col in CHART_COLS if col not in LAND_USE_COLS]
 frozen_div = html.Div([
     dcc.Input(
         value=f"{col}: 0.00%",
         type="text",
         disabled=True,
-        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in frozen_cols
+        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in NO_CHANGE_COLS + ["nonland"]
 ])
 
 predict_div = html.Div([
@@ -231,7 +233,7 @@ predict_div = html.Div([
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
     html.Div(className="parent", children=[
-        html.P("Total emissions reduced from this land use change over a year: ", className="child", style=inline_block),
+        html.P("Total emissions reduced from this land use change: ", className="child", style=inline_block),
         html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
@@ -296,7 +298,7 @@ def toggle_modal(n, is_open, presc_idx):
     :param presc_idx: The index of the prescriptor to show.
     :return: The new state of the modal and the figure to show.
     """
-    fig = create_pareto(pareto_df, PRESCRIPTOR_LIST[presc_idx])
+    fig = create_pareto(pareto_df, prescriptor_list[presc_idx])
     if n:
         return not is_open, fig
     return is_open, fig
@@ -345,7 +347,6 @@ def update_map(location, year, context):
 
 @app.callback(
     Output("context-store", "data"),
-    Output("history-store", "data"),
     Output({"type": "frozen-input", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "max"),
@@ -361,23 +362,22 @@ def select_context(lat, lon, year):
     :param lat: Selected latitude.
     :param lon: Selected longitude.
     :param year: Selected year.
-    :return: Context/history data to store, frozen values, slider values, and slider max.
+    :return: Context data to store, frozen values, slider values, and slider max.
     """
     context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
-    history = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] < year) & (df['time'] >= year-HISTORY_SIZE)]
 
-    chart_df = add_nonland(context[ALL_LAND_USE_COLS])
+    chart_df = add_nonland(context[LAND_USE_COLS])
 
+    frozen_cols = NO_CHANGE_COLS + ["nonland"]
     frozen = chart_df[frozen_cols].iloc[0].tolist()
-    #frozen = round_list(frozen)
     frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
-    reset = [0 for _ in LAND_USE_COLS]
+    reset = [0 for _ in RECO_COLS]
+    
+    max_val = chart_df[RECO_COLS].sum(axis=1).iloc[0]
+    maxes = [max_val for _ in range(len(RECO_COLS))]
 
-    max_val = chart_df[LAND_USE_COLS].sum(axis=1).iloc[0]
-    maxes = [max_val for _ in range(len(LAND_USE_COLS))]
-
-    return context.to_dict("records"), history.to_dict("records"), frozen, reset, maxes
+    return context.to_dict("records"), frozen, reset, maxes
 
 @app.callback(
     Output("context-fig", "figure"),
@@ -394,7 +394,7 @@ def update_context_chart(chart_type, context, year):
     :return: New figure type selected by chart_type with data context.
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    chart_df = add_nonland(context_df[ALL_LAND_USE_COLS])
+    chart_df = add_nonland(context_df[LAND_USE_COLS])
 
     assert chart_type in ("Treemap", "Pie Chart")
 
@@ -418,22 +418,27 @@ def select_prescriptor(n_clicks, presc_idx, context):
     :param context: Context data from store to run prescriptor on.
     :return: Updated slider values.
     """
-    if context is not None:
-        presc_id = PRESCRIPTOR_LIST[presc_idx]
-        prescriptor = Prescriptor(presc_id)
-        context_df = pd.DataFrame.from_records(context)[PRESCRIPTOR_COLS]
-        prescribed = prescriptor.run_prescriptor(context_df)
-
-        # TODO: Hacking this together because c4per isn't prescribed
-        prescribed["c4per"] = 0
-        return prescribed[LAND_USE_COLS].iloc[0].tolist()
+    presc_id = prescriptor_list[presc_idx]
+    prescriptor = Prescriptor(presc_id)
+    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+    prescribed = prescriptor.run_prescriptor(context_df)
+    return prescribed.iloc[0].tolist()
     
-    return None
+
+@app.callback(
+    Output({"type": "slider-value", "index": MATCH}, "value"),
+    Input({"type": "presc-slider", "index": MATCH}, "value")
+)
+def show_slider_value(slider):
+    """
+    Displays slider values next to sliders.
+    :param sliders: Slider values.
+    :return: Slider values.
+    """
+    return f"{slider * 100:.2f}%"
 
 
 @app.callback(
-    Output("presc-store", "data"),
-    Output({"type": "slider-value", "index": ALL}, "value"),
     Output("sum-warning", "children"),
     Output("predict-change", "value"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
@@ -441,51 +446,50 @@ def select_prescriptor(n_clicks, presc_idx, context):
     State("locks", "value"),
     prevent_initial_call=True
 )
-def store_prescription(sliders, context, locked):
+def compute_land_change(sliders, context, locked):
     """
-    Stores slider values in store and displays them next to sliders. Computes land change percent for output.
+    Computes land change percent for output.
     Warns user if values don't sum to 1.
     :param sliders: Slider values to store.
     :param context: Context store to compute if prescription sums to land use in context.
     :param locked: Locked columns to check for warning.
-    :return: Stored slider values, slider values to display, warning if necessary, land change percent.
+    :return: Stored slider values, warning if necessary, land change percent.
     """
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    presc = pd.DataFrame([sliders], columns=LAND_USE_COLS)
-    vals = presc.iloc[0].tolist()
+    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
 
     warnings = []
     # Check if prescriptions sum to 1
     # TODO: Are we being precise enough?
-    new_sum = presc.sum(axis=1).iloc[0]
-    old_sum = context_df[LAND_USE_COLS].sum(axis=1).iloc[0]
+    new_sum = presc_df.sum(axis=1).iloc[0]
+    old_sum = context_df[RECO_COLS].iloc[0].sum()
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
         warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
-    if locked and presc[locked].sum(axis=1).iloc[0] > old_sum:
+    if locked and presc_df[locked].sum(axis=1).iloc[0] > old_sum:
         warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. Please reduce one before proceeding"))
 
     # Check if any prescriptions below 0
-    if (presc.iloc[0] < 0).any():
+    if (presc_df.iloc[0] < 0).any():
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = compute_percent_change(context_df, presc)
+    change = compute_percent_change(context_df, presc_df)
 
-    return presc.to_dict("records"), [f"{val * 100:.2f}%" for val in vals], warnings, f"{change * 100:.2f}"
+    return warnings, f"{change * 100:.2f}"
 
 
 @app.callback(
-    Output("presc-fig", "figure", allow_duplicate=True),
+    Output("presc-fig", "figure"),
     Input("chart-select", "value"),
-    Input("presc-store", "data"),
+    Input({"type": "presc-slider", "index": ALL}, "value"),
     State("context-store", "data"),
     State("year-input", "value"),
     prevent_initial_call=True
 )
-def update_presc_chart(chart_type, presc, context, year):
+def update_presc_chart(chart_type, sliders, context, year):
     """
     Updates prescription pie from store according to chart type.
     :param chart_type: String input from chart select dropdown.
@@ -494,16 +498,21 @@ def update_presc_chart(chart_type, presc, context, year):
     :param year: Selected year for title of chart.
     :return: New chart of type chart_type using presc data.
     """
-    presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
+
+    # If we have no prescription just return an empty chart
+    if all(slider == 0 for slider in sliders):
+        return create_treemap(pd.Series([]), type_context=False, year=year)
+
+    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
     context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    presc_df["primf"] = context_df["primf"]
-    presc_df["primn"] = context_df["primn"]
+
+    chart_df = context_df[LAND_USE_COLS].copy()
+    chart_df[RECO_COLS] = presc_df[RECO_COLS]
 
     # Manually calculate nonland from context so that it's not zeroed out by sliders.
-    nonland = 1 - context_df[ALL_LAND_USE_COLS].iloc[0].sum()
+    nonland = 1 - context_df[LAND_USE_COLS].iloc[0].sum()
     nonland = nonland if nonland > 0 else 0
-    presc_df["nonland"] = nonland
-    chart_df = presc_df[CHART_COLS]
+    chart_df["nonland"] = nonland
 
     assert chart_type in ("Treemap", "Pie Chart")
 
@@ -516,12 +525,12 @@ def update_presc_chart(chart_type, presc, context, year):
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("sum-button", "n_clicks"),
-    State("presc-store", "data"),
+    State({"type": "presc-slider", "index": ALL}, "value"),
     State("context-store", "data"),
     State("locks", "value"),
     prevent_initial_call=True
 )
-def sum_to_1(n_clicks, presc, context, locked):
+def sum_to_1(n_clicks, sliders, context, locked):
     """
     Sets slider values to sum to how much land was used in context.
     Subtracts locked sum from both of these and doesn't adjust them.
@@ -532,14 +541,14 @@ def sum_to_1(n_clicks, presc, context, locked):
     :return: Slider values scaled down to fit percentage of land used in context.
     """
     context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
-    presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
+    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
 
-    old_sum = context_df.sum(axis=1).iloc[0]
-    new_sum = presc_df.sum(axis=1).iloc[0]
+    old_sum = context_df[RECO_COLS].iloc[0].sum()
+    new_sum = presc_df.iloc[0].sum()
 
     # TODO: There is certainly a more elegant way to handle this.
     if locked:
-        unlocked = [col for col in LAND_USE_COLS if col not in locked]
+        unlocked = [col for col in RECO_COLS if col not in locked]
         locked_sum = presc_df[locked].sum(axis=1).iloc[0]
         old_sum -= locked_sum
         new_sum -= locked_sum
@@ -558,54 +567,62 @@ def sum_to_1(n_clicks, presc, context, locked):
 
 @app.callback(
     Output("predict-eluc", "value"),
-    Output("total-em", "children"),
-    Output("tickets", "children"),
-    Output("people", "children"),
     Input("predict-button", "n_clicks"),
     State("context-store", "data"),
-    State("history-store", "data"),
-    State("presc-store", "data"),
+    State({"type": "presc-slider", "index": ALL}, "value"),
     State("pred-select", "value"),
     prevent_initial_call=True
 )
-def predict(n_clicks, context, history, presc, predictor_name):
+def predict(n_clicks, context, sliders, predictor_name):
     """
     Predicts ELUC from context and prescription stores.
     :param n_clicks: Unused number of times button has been clicked.
     :param context: Context data from store.
-    :param history: History data for time series predictors.
     :param presc: Prescription data from store.
     :param predictor_name: String name of predictor to use from dropdown.
     :return: Predicted ELUC and trivia values.
     """
-    context_df = pd.DataFrame.from_records(context)
-    history_df = pd.DataFrame.from_records(history)
-    presc_df = pd.DataFrame.from_records(presc)[LAND_USE_COLS]
+    context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
+    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
+
+    # Preprocess presc_df into diffs
+    presc_df[NO_CHANGE_COLS] = context_df[NO_CHANGE_COLS]
+    diff_df = presc_df[LAND_USE_COLS].reset_index(drop=True) - context_df.reset_index(drop=True)
+    diff_df = diff_df.rename(COLS_MAP, axis=1)
 
     predictor = None
-    prediction, change = 0, 0
-
-    if predictor_name == "XGBoost":
-        predictor = XGBoostPredictor()
-        prediction = predictor.run_predictor(context_df[CONTEXT_COLUMNS], presc_df)
-
-    elif predictor_name == "LSTM":
-        predictor = LSTMPredictor()
-        context_merged = pd.concat([history_df, context_df], axis=0)
-        # Sanity check
-        context_merged = context_merged.sort_values(by="time", ascending=True)
-        # TODO: This is gross, clean it up.
-        prediction = predictor.run_predictor(context_merged[CONTEXT_COLUMNS + ALL_DIFF_LAND_USE_COLS], presc_df)
+    prediction = 0
+    if predictor_name == "Random Forest":
+        predictor = random_forest_predictor
+        prediction = predictor.predict(diff_df)
+        return f"{prediction:.4f}"
 
     else:
-        return 0, 0, "Model not connected yet"
-    
-    # Calculate total reduction
+        return "0"
+
+
+@app.callback(
+    Output("total-em", "children"),
+    Output("tickets", "children"),
+    Output("people", "children"),
+    Input("predict-eluc", "value"),
+    State("context-store", "data"),
+    prevent_initial_call=True
+)
+def update_trivia(eluc_str, context):
+    """
+    Updates trivia section based on rounded ELUC value.
+    :param eluc_str: ELUC in string form.
+    :param context: Context data to get area.
+    :return: Trivia string output.
+    """
+    context_df = pd.DataFrame.from_records(context)
     area = context_df["cell_area"].iloc[0]
-    total_reduction = prediction * area
-    
-    return f"{prediction:.4f}", \
-        f"{-1 * total_reduction:,.2f} tonnes CO2", \
+
+    # Calculate total reduction
+    eluc = float(eluc_str)
+    total_reduction = eluc * area
+    return f"{-1 * total_reduction:,.2f} tonnes CO2", \
             f"{-1 * total_reduction // CO2_JFK_GVA:,.0f} tickets", \
                 f"{-1 * total_reduction // CO2_PERSON:,.0f} people"
 

@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from constants import ALL_LAND_USE_COLS
+from constants import RECO_COLS
 from constants import CHART_COLS
 from constants import LAND_USE_COLS
 from constants import C3
@@ -15,12 +15,12 @@ from constants import FIELDS
 def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
     """
     Adds a nonland column that is the difference between 1 and
-    ALL_LAND_USE_COLS.
+    LAND_USE_COLS.
     Note: Since sum isn't exactly 1 we just set to 0 if we get a negative.
     :param df: DataFrame of all land usage.
     :return: DataFrame with nonland column.
     """
-    data = df[ALL_LAND_USE_COLS]
+    data = df[LAND_USE_COLS]
     nonland = 1 - data.sum(axis=1)
     nonland[nonland < 0] = 0
     assert (nonland >= 0).all()
@@ -80,11 +80,11 @@ def compute_percent_change(context: pd.DataFrame, presc: pd.DataFrame) -> float:
     :param presc: Prescribed land use data
     :return: Percent land use change
     """
-    diffs = presc[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
-    percent_changed = diffs[diffs > 0].sum(axis=1)
-    percent_changed = percent_changed / context[LAND_USE_COLS].sum(axis=1)
+    diffs = presc[RECO_COLS].reset_index(drop=True) - context[RECO_COLS].reset_index(drop=True)
+    change = diffs[diffs > 0].iloc[0].sum()
+    percent_changed = change/ context[LAND_USE_COLS].iloc[0].sum()
 
-    return percent_changed[0]
+    return percent_changed
 
 
 def create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
@@ -127,7 +127,7 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         values = [1]
 
     else:
-        total = data[ALL_LAND_USE_COLS].sum()
+        total = data[LAND_USE_COLS].sum()
         c3 = data[C3].sum()
         c4 = data[C4].sum()
         crops = c3 + c4
@@ -235,14 +235,14 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     """
     fig = go.Figure(
             go.Scatter(
-                x=pareto_df['Change'] * 100,
+                x=pareto_df['change'] * 100,
                 y=pareto_df['ELUC'],
                 # marker='o',
             )
         )
     # Highlight the selected prescriptor
     presc_df = pareto_df[pareto_df["id"] == presc_id]
-    fig.add_scatter(x=presc_df['Change'] * 100,
+    fig.add_scatter(x=presc_df['change'] * 100,
                     y=presc_df['ELUC'],
                     marker={
                         "color": 'red',

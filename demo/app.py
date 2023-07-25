@@ -2,6 +2,7 @@ from math import isclose
 
 import numpy as np
 import pandas as pd
+import plotly.graph_objects as go
 from dash import ALL
 from dash import MATCH
 from dash import Dash
@@ -14,6 +15,7 @@ import dash_bootstrap_components as dbc
 
 from Predictor import RandomForestPredictor
 from Prescriptor import Prescriptor
+from constants import INDEX_COLS
 from constants import COLS_MAP
 from constants import NO_CHANGE_COLS
 from constants import RECO_COLS
@@ -41,7 +43,7 @@ app = Dash(__name__,
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=0)
+df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=INDEX_COLS)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 pareto_df = pd.read_csv(PARETO_CSV_PATH)
 # We have to reverse for some reason?
@@ -50,18 +52,19 @@ prescriptor_list.reverse()
 
 # Cells
 GRID_STEP = 0.25
-min_lat = df["i_lat"].min()
-max_lat = df["i_lat"].max()
-min_lon = df["i_lon"].min()
-max_lon = df["i_lon"].max()
-min_year = df["time"].min()
-max_year = df["time"].max()
+min_lat = df.index.get_level_values("lat").min()
+max_lat = df.index.get_level_values("lat").max()
+min_lon = df.index.get_level_values("lon").min()
+max_lon = df.index.get_level_values("lon").max()
+min_time = df.index.get_level_values("time").min()
+max_time = df.index.get_level_values("time").max()
 
 lat_list = list(np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP))
 lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
 
-present = df[df["time"] == 2021]
-map_fig = create_map(present, 54.5, -2.5, 20)
+present = df.loc[max_time]
+#map_fig = create_map(present, 54.5, -2.5, 20)
+map_fig = go.Figure()
 
 #TODO: Is this allowed?
 random_forest_predictor = RandomForestPredictor()
@@ -138,7 +141,7 @@ context_div = html.Div(
                 value=2021,
                 debounce=True
             ),
-            dcc.Tooltip(f"Year must be between {min_year} and {max_year}."),
+            dcc.Tooltip(f"Year must be between {min_time} and {max_time}."),
         ], style={'grid-column': '2', 'grid-row': '4', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}),
     ]
 )
@@ -318,14 +321,15 @@ def click_map(click_data):
     """
     return click_data["points"][0]["lat"], click_data["points"][0]["lon"]
 
+
 @app.callback(
     Output("map", "figure"),
     Input("loc-dropdown", "value"),
     Input("year-input", "value"),
-    Input("context-store", "data"),
-    prevent_initial_call=True
+    Input("lat-dropdown", "value"),
+    Input("lon-dropdown", "value")
 )
-def update_map(location, year, context):
+def update_map(location, year, lat, lon):
     """
     Updates map data behind the scenes when year is clicked.
     Changes focus when region is selected.
@@ -334,19 +338,15 @@ def update_map(location, year, context):
     :return: A newly created map.
     """
     coord_dict = MAP_COORDINATE_DICT[location]
-    data = df[df["time"] == year]
-    data = data.reset_index(drop=True)
-    idx = None
-    if context:
-        context_df = pd.DataFrame.from_records(context)
-        lat = context_df["lat"].iloc[0]
-        lon = context_df["lon"].iloc[0]
-        idx = list(data.index[(data["lat"] == lat) & (data["lon"] == lon)])[0]
+    data = df.loc[year]
+    data = data.copy().reset_index()
+    lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
+    idx = data[lat_lon].index[0]
 
     return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
 
+
 @app.callback(
-    Output("context-store", "data"),
     Output({"type": "frozen-input", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "value"),
     Output({"type": "presc-slider", "index": ALL}, "max"),
@@ -354,73 +354,81 @@ def update_map(location, year, context):
     Input("lon-dropdown", "value"),
     Input("year-input", "value")
 )
-def select_context(lat, lon, year):
+def set_frozen_reset_sliders(lat, lon, year):
     """
-    Loads context in from lat/lon/time. Updates context/history stores and frozen inputs (primf, etc.).
-    Also resets prescription sliders to 0 to avoid confusion.
-    Also sets prescription sliders' max values to 1 - nonland - primf - primn to avoid negative values.
+    Resets prescription sliders to 0 to avoid confusion.
+    Also sets prescription sliders' max values to 1 - no change cols to avoid negative values.
     :param lat: Selected latitude.
     :param lon: Selected longitude.
     :param year: Selected year.
-    :return: Context data to store, frozen values, slider values, and slider max.
+    :return: Frozen values, slider values, and slider max.
     """
-    context = df[(df['i_lat'] == lat) & (df['i_lon'] == lon) & (df['time'] == year)]
+    context = df.loc[year, lat, lon]
 
-    chart_df = add_nonland(context[LAND_USE_COLS])
+    chart_data = add_nonland(context[LAND_USE_COLS])
 
     frozen_cols = NO_CHANGE_COLS + ["nonland"]
-    frozen = chart_df[frozen_cols].iloc[0].tolist()
+    frozen = chart_data[frozen_cols].tolist()
     frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
     reset = [0 for _ in RECO_COLS]
     
-    max_val = chart_df[RECO_COLS].sum(axis=1).iloc[0]
+    max_val = chart_data[RECO_COLS].sum()
     maxes = [max_val for _ in range(len(RECO_COLS))]
 
-    return context.to_dict("records"), frozen, reset, maxes
+    return frozen, reset, maxes
+
 
 @app.callback(
     Output("context-fig", "figure"),
     Input("chart-select", "value"),
-    Input("context-store", "data"),
-    State("year-input", "value")
+    Input("year-input", "value"),
+    Input("lat-dropdown", "value"),
+    Input("lon-dropdown", "value")
 )
-def update_context_chart(chart_type, context, year):
+def update_context_chart(chart_type, year, lat, lon):
     """
     Updates context chart when context store is updated or chart type is changed.
     :param chart_type: String input from chart select dropdown.
-    :param context: Context data from store.
-    :param year: Selected year.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :return: New figure type selected by chart_type with data context.
     """
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    chart_df = add_nonland(context_df[LAND_USE_COLS])
+    context = df.loc[year, lat, lon]
+    chart_data = add_nonland(context[LAND_USE_COLS])
 
     assert chart_type in ("Treemap", "Pie Chart")
 
     if chart_type == "Treemap":
-        return create_treemap(chart_df.iloc[0], type_context=True, year=year)
+        return create_treemap(chart_data, type_context=True, year=year)
     
-    return create_pie(chart_df.iloc[0], type_context=True, year=year)
+    return create_pie(chart_data, type_context=True, year=year)
+
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("presc-button", "n_clicks"),
     State("presc-select", "value"),
-    State("context-store", "data"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     prevent_initial_call=True
 )
-def select_prescriptor(n_clicks, presc_idx, context):
+def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     """
     Selects prescriptor, runs on context, updates sliders.
     :param n_clicks: Unused number of times button has been clicked.
     :param presc_idx: Index of prescriptor in PRESCRIPTOR_LIST to load.
-    :param context: Context data from store to run prescriptor on.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :return: Updated slider values.
     """
     presc_id = prescriptor_list[presc_idx]
     prescriptor = Prescriptor(presc_id)
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+    context = df.loc[year, lat, lon][CONTEXT_COLUMNS]
+    context_df = pd.DataFrame([context])
     prescribed = prescriptor.run_prescriptor(context_df)
     return prescribed.iloc[0].tolist()
     
@@ -442,41 +450,45 @@ def show_slider_value(slider):
     Output("sum-warning", "children"),
     Output("predict-change", "value"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
-    State("context-store", "data"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     State("locks", "value"),
     prevent_initial_call=True
 )
-def compute_land_change(sliders, context, locked):
+def compute_land_change(sliders, year, lat, lon, locked):
     """
     Computes land change percent for output.
     Warns user if values don't sum to 1.
     :param sliders: Slider values to store.
-    :param context: Context store to compute if prescription sums to land use in context.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :param locked: Locked columns to check for warning.
-    :return: Stored slider values, warning if necessary, land change percent.
+    :return: Warning if necessary, land change percent.
     """
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
-    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
+    context = df.loc[year, lat, lon][LAND_USE_COLS]
+    presc = pd.Series(sliders, index=RECO_COLS)
 
     warnings = []
     # Check if prescriptions sum to 1
     # TODO: Are we being precise enough?
-    new_sum = presc_df.sum(axis=1).iloc[0]
-    old_sum = context_df[RECO_COLS].iloc[0].sum()
+    new_sum = presc.sum()
+    old_sum = context[RECO_COLS].sum()
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
         warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
-    if locked and presc_df[locked].sum(axis=1).iloc[0] > old_sum:
+    if locked and presc[locked].sum() > old_sum:
         warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. Please reduce one before proceeding"))
 
     # Check if any prescriptions below 0
-    if (presc_df.iloc[0] < 0).any():
+    if (presc < 0).any():
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = compute_percent_change(context_df, presc_df)
+    change = compute_percent_change(context, presc)
 
     return warnings, f"{change * 100:.2f}"
 
@@ -485,17 +497,19 @@ def compute_land_change(sliders, context, locked):
     Output("presc-fig", "figure"),
     Input("chart-select", "value"),
     Input({"type": "presc-slider", "index": ALL}, "value"),
-    State("context-store", "data"),
     State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     prevent_initial_call=True
 )
-def update_presc_chart(chart_type, sliders, context, year):
+def update_presc_chart(chart_type, sliders, year, lat, lon):
     """
     Updates prescription pie from store according to chart type.
     :param chart_type: String input from chart select dropdown.
-    :param presc: Prescription data from store.
-    :param context: Context data from store.
-    :param year: Selected year for title of chart.
+    :param sliders: Prescribed slider values.
+    :param year: Selected context year (also for title of chart).
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :return: New chart of type chart_type using presc data.
     """
 
@@ -503,92 +517,101 @@ def update_presc_chart(chart_type, sliders, context, year):
     if all(slider == 0 for slider in sliders):
         return create_treemap(pd.Series([]), type_context=False, year=year)
 
-    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
-    context_df = pd.DataFrame.from_records(context)[CONTEXT_COLUMNS]
+    presc = pd.Series(sliders, index=RECO_COLS)
+    context = df.loc[year, lat, lon]
 
-    chart_df = context_df[LAND_USE_COLS].copy()
-    chart_df[RECO_COLS] = presc_df[RECO_COLS]
+    chart_data = context[LAND_USE_COLS].copy()
+    chart_data[RECO_COLS] = presc[RECO_COLS]
 
     # Manually calculate nonland from context so that it's not zeroed out by sliders.
-    nonland = 1 - context_df[LAND_USE_COLS].iloc[0].sum()
+    nonland = 1 - context[LAND_USE_COLS].sum()
     nonland = nonland if nonland > 0 else 0
-    chart_df["nonland"] = nonland
+    chart_data["nonland"] = nonland
 
     assert chart_type in ("Treemap", "Pie Chart")
 
     if chart_type == "Treemap":
-        return create_treemap(chart_df.iloc[0], type_context=False, year=year)
+        return create_treemap(chart_data, type_context=False, year=year)
     
-    return create_pie(chart_df.iloc[0], type_context=False, year=year)
+    return create_pie(chart_data, type_context=False, year=year)
 
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
     Input("sum-button", "n_clicks"),
     State({"type": "presc-slider", "index": ALL}, "value"),
-    State("context-store", "data"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     State("locks", "value"),
     prevent_initial_call=True
 )
-def sum_to_1(n_clicks, sliders, context, locked):
+def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     """
     Sets slider values to sum to how much land was used in context.
     Subtracts locked sum from both of these and doesn't adjust them.
     :param n_clicks: Unused number of times button has been clicked.
-    :param presc: Prescription data from store.
-    :param context: Context data from store.
+    :param sliders: Prescribed slider values to set to sum to 1.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :param locked: Which sliders to not consider in calculation.
     :return: Slider values scaled down to fit percentage of land used in context.
     """
-    context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
-    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
+    context = df.loc[year, lat, lon]
+    presc = pd.Series(sliders, index=RECO_COLS)
 
-    old_sum = context_df[RECO_COLS].iloc[0].sum()
-    new_sum = presc_df.iloc[0].sum()
+    old_sum = context[RECO_COLS].sum()
+    new_sum = presc.sum()
 
     # TODO: There is certainly a more elegant way to handle this.
     if locked:
         unlocked = [col for col in RECO_COLS if col not in locked]
-        locked_sum = presc_df[locked].sum(axis=1).iloc[0]
+        locked_sum = presc[locked].sum()
         old_sum -= locked_sum
         new_sum -= locked_sum
         # We do this to avoid divide by zero. In the case where new_sum == 0
         # we have all locked columns and/or zero columns so no adjustment is needed
         if new_sum != 0:
-            presc_df[unlocked] = presc_df[unlocked].div(new_sum, axis=0).mul(old_sum, axis=0)
+            presc[unlocked] = presc[unlocked].div(new_sum).mul(old_sum)
 
     else:
-        presc_df = presc_df.div(new_sum, axis=0).mul(old_sum, axis=0)
+        presc = presc.div(new_sum).mul(old_sum)
 
     # Set all negative values to 0
-    presc_df[presc_df < 0] = 0
-    return presc_df.iloc[0].tolist()
+    presc[presc < 0] = 0
+    return presc.tolist()
 
 
 @app.callback(
     Output("predict-eluc", "value"),
     Input("predict-button", "n_clicks"),
-    State("context-store", "data"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     State({"type": "presc-slider", "index": ALL}, "value"),
     State("pred-select", "value"),
     prevent_initial_call=True
 )
-def predict(n_clicks, context, sliders, predictor_name):
+def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     """
     Predicts ELUC from context and prescription stores.
     :param n_clicks: Unused number of times button has been clicked.
-    :param context: Context data from store.
-    :param presc: Prescription data from store.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
+    :param sliders: Prescribed slider values.
     :param predictor_name: String name of predictor to use from dropdown.
-    :return: Predicted ELUC and trivia values.
+    :return: Predicted ELUC.
     """
-    context_df = pd.DataFrame.from_records(context)[LAND_USE_COLS]
-    presc_df = pd.DataFrame([sliders], columns=RECO_COLS)
+    context = df.loc[year, lat, lon]
+    presc = pd.Series(sliders, index=RECO_COLS)
 
-    # Preprocess presc_df into diffs
-    presc_df[NO_CHANGE_COLS] = context_df[NO_CHANGE_COLS]
-    diff_df = presc_df[LAND_USE_COLS].reset_index(drop=True) - context_df.reset_index(drop=True)
-    diff_df = diff_df.rename(COLS_MAP, axis=1)
+    # Preprocess presc into diffs
+    presc = presc.combine_first(context[NO_CHANGE_COLS])
+    diff = presc[LAND_USE_COLS] - context[LAND_USE_COLS]
+    diff = diff.rename(COLS_MAP)
+    diff_df = pd.DataFrame([diff])
 
     predictor = None
     prediction = 0
@@ -606,18 +629,22 @@ def predict(n_clicks, context, sliders, predictor_name):
     Output("tickets", "children"),
     Output("people", "children"),
     Input("predict-eluc", "value"),
-    State("context-store", "data"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
     prevent_initial_call=True
 )
-def update_trivia(eluc_str, context):
+def update_trivia(eluc_str, year, lat, lon):
     """
     Updates trivia section based on rounded ELUC value.
     :param eluc_str: ELUC in string form.
-    :param context: Context data to get area.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
     :return: Trivia string output.
     """
-    context_df = pd.DataFrame.from_records(context)
-    area = context_df["cell_area"].iloc[0]
+    context = df.loc[year, lat, lon]
+    area = context["cell_area"]
 
     # Calculate total reduction
     eluc = float(eluc_str)
@@ -638,9 +665,6 @@ def main():
     app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
     app.layout = html.Div([
-        dcc.Store(id='context-store'),
-        dcc.Store(id='history-store'),
-        dcc.Store(id='presc-store'),
         dcc.Markdown('''
 # Land Use Optimization
 This site is for demonstration purposes only.

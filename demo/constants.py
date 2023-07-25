@@ -35,6 +35,8 @@ cao_mapping = {
     'actions': ['c3ann_diff', 'c3nfx_diff', 'c3per_diff', 'c4ann_diff', 'pastr_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff'],
     'outcomes': ['ELUC', 'Change']}
 
+INDEX_COLS = ["time", "lat", "lon"]
+
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
 CONTEXT_COLUMNS = LAND_USE_COLS + ['cell_area']
 DIFF_LAND_USE_COLS = [f"{col}_diff" for col in LAND_USE_COLS]

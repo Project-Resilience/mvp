@@ -12,18 +12,16 @@ from constants import PRIMARY
 from constants import SECONDARY
 from constants import FIELDS
 
-def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
+def add_nonland(data: pd.Series) -> pd.Series:
     """
     Adds a nonland column that is the difference between 1 and
     LAND_USE_COLS.
     Note: Since sum isn't exactly 1 we just set to 0 if we get a negative.
-    :param df: DataFrame of all land usage.
-    :return: DataFrame with nonland column.
+    :param data: pd Series containing land use data.
+    :return: pd Series with nonland column added.
     """
-    data = df[LAND_USE_COLS]
-    nonland = 1 - data.sum(axis=1)
-    nonland[nonland < 0] = 0
-    assert (nonland >= 0).all()
+    data = data[LAND_USE_COLS]
+    nonland = 1 - data.sum() if data.sum() <= 1 else 0
     data['nonland'] = nonland
     return data[CHART_COLS]
 
@@ -31,19 +29,21 @@ def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
 def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, color_idx = None) -> go.Figure:
     """
     Creates map figure with data centered and zoomed in with appropriate point marked.
-    :param df: DataFrame of data to plot.
+    :param df: DataFrame of data to plot. This dataframe has its index reset.
     :param lat_center: Latitude to center map on.
     :param lon_center: Longitude to center map on.
     :param zoom: Zoom level of map.
-    :param color_idx: Index of point to color red.
+    :param color_idx: Index of point to color red in reset index.
     :return: Plotly figure
     """
+    color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
+
+    # Add color column    
     color = ["blue" for _ in range(len(df))]
     if color_idx:
         color[color_idx] = "red"
-    color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
-    # TODO: Is this modification going to break things?
     df["color"] = color
+
     map_fig = px.scatter_geo(
         df,
         lat="lat",
@@ -73,21 +73,29 @@ def create_check_options(values: list) -> list:
     return options
 
 
-def compute_percent_change(context: pd.DataFrame, presc: pd.DataFrame) -> float:
+def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
     """
     Computes percent land use change from context to presc
     :param context: Context land use data
     :param presc: Prescribed land use data
     :return: Percent land use change
     """
-    diffs = presc[RECO_COLS].reset_index(drop=True) - context[RECO_COLS].reset_index(drop=True)
-    change = diffs[diffs > 0].iloc[0].sum()
-    percent_changed = change/ context[LAND_USE_COLS].iloc[0].sum()
+    diffs = presc[RECO_COLS] - context[RECO_COLS]
+    change = diffs[diffs > 0].sum()
+    percent_changed = change/ context[LAND_USE_COLS].sum()
 
     return percent_changed
 
 
-def create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
+def _create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
+    """
+    Helper function that formats the hover text for the treemap to be 2 decimals.
+    :param labels: Labels according to treemap format.
+    :param parents: Parents for each label according to treemap format.
+    :param values: Values for each label according to treemap format.
+    :param title: Title of treemap, root node's name.
+    :return: List of hover text strings.
+    """
     hovertext = []
     for i, label in enumerate(labels):
         v = values[i] * 100
@@ -155,7 +163,7 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
                     data["urban"],
                     fields, data["pastr"], data["range"]]
 
-        tree_params["customdata"] = create_hovertext(labels, parents, values, title)
+        tree_params["customdata"] = _create_hovertext(labels, parents, values, title)
         tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
  
     assert len(labels) == len(parents)

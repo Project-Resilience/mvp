@@ -4,17 +4,20 @@ This is a demo of the MVP Climate Change app. It allows users to select a locati
 
 ## Dependencies:
 
-The demo relies on the `unileaf_util` package. This has to be manually installed from the `.whl` file.
-The requirements.txt is set up for M1 macs. Your installations of tensorflow and pytorch may differ.
+This application relies on the ``unileaf-util`` package which can be downloaded from git. Save your authentication token in ``$LEAF_PRIVATE_SOURCE_CREDENTIAL`` in order to be able to ``pip install -r requirements.txt`` for the dependencies.
+
+## Downloading the data:
+
+In ``data/`` there is a script called ``process_data.py``. This will download the entire 2.5GB data file from HuggingFace then process it into a 500MB csv that is used by the app.
+
+## Predictors:
+
+The RandomForest model is 1.7GB and is also saved on HuggingFace. To download it run ``download_predictors.py`` in ``predictors/``. This downloads a ``.joblib`` file that is loaded in the app.
+
+## Prescriptors:
+
+Prescriptors are already stored in `prescriptors/` as well as the pareto front image and a CSV of pareto info from training the prescriptors.
 
 ## Running the app:
 
 To run the app use: ``python app.py``
-
-## Predictors:
-
-Saved predictors can be found in `predictors/`. The XGBoost predictor's weights are stored in a `.json` file whereas the LSTM predictor's weights are stored in a `.pt` file and its configuration is saved in the corresponding `.json` file.
-
-## Prescriptors:
-
-Prescriptors are stored in `prescriptors/` as well as the pareto front image and a CSV of pareto info from training the prescriptors.

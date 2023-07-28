@@ -224,7 +224,7 @@ predict_div = html.Div([
         disabled=True,
         id="predict-eluc",
     ),
-    html.Label("tC/ha/yr", style={'padding-left': '2px'}),
+    html.Label("tC/ha", style={'padding-left': '2px'}),
     html.Label("Land Change:", style={'padding-left': '10px'}),
     dcc.Input(
         value="",
@@ -672,8 +672,8 @@ This site is for demonstration purposes only.
 For a given context cell representing a portion of the earth,
 identified by its latitude and longitude coordinates, and a given year:
 * What changes can we make to the land usage
-* In order to minimize the resulting estimated CO2 emissions in that year ? (Emissions from Land Use Change, ELUC, 
-in tons of carbon per hectare per year)
+* In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
+in tons of carbon per hectare)
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([

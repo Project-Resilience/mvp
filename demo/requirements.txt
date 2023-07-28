@@ -14,3 +14,6 @@ huggingface_hub==0.16.4
 xarray==2023.6.0
 zarr
 regionmask==0.10.0
+
+# For hosting
+gunicorn

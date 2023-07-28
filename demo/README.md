@@ -8,7 +8,7 @@ This application relies on the ``unileaf-util`` package which can be downloaded 
 
 ## Downloading the data:
 
-In ``data/`` there is a script called ``process_data.py``. This will download the entire 2.5GB data file from HuggingFace then process it into a 500MB csv that is used by the app.
+In ``data/`` there is a script called ``process_data.py``. This will download the entire 2.5GB data file from HuggingFace then process it into a 500MB csv that is used by the app. A token is required to download the data and must be saved in ``$HF_TOKEN``.
 
 ## Predictors:
 

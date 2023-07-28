@@ -27,3 +27,5 @@ RUN pip install --no-cache-dir -r ${ELUC_APP_HOME}/requirements.txt
 COPY . ${ELUC_APP_HOME}
 WORKDIR ${ELUC_APP_HOME}
 ENV PYTHONPATH=${ELUC_APP_HOME}
+
+

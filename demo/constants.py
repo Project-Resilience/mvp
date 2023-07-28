@@ -35,6 +35,8 @@ cao_mapping = {
     'actions': ['c3ann_diff', 'c3nfx_diff', 'c3per_diff', 'c4ann_diff', 'pastr_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff'],
     'outcomes': ['ELUC', 'Change']}
 
+DATA_FILE_PATH = "data/processed/gb_br_ch_eluc.csv"
+
 INDEX_COLS = ["time", "lat", "lon"]
 
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']

@@ -15,6 +15,7 @@ import dash_bootstrap_components as dbc
 
 from Predictor import RandomForestPredictor
 from Prescriptor import Prescriptor
+from constants import DATA_FILE_PATH
 from constants import INDEX_COLS
 from constants import COLS_MAP
 from constants import NO_CHANGE_COLS
@@ -40,10 +41,11 @@ from utils import create_pareto
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            prevent_initial_callbacks="initial_duplicate")
+server = app.server
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv("../data/gcb/processed/gb_br_ch_eluc.csv", index_col=INDEX_COLS)
+df = pd.read_csv(DATA_FILE_PATH, index_col=INDEX_COLS)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
 pareto_df = pd.read_csv(PARETO_CSV_PATH)
 # We have to reverse for some reason?
@@ -654,18 +656,16 @@ def update_trivia(eluc_str, year, lat, lon):
                 f"{-1 * total_reduction // CO2_PERSON:,.0f} people"
 
 
-def main():
-    global app
-    app.title = 'Land Use Optimization'
-    app.css.config.serve_locally = False
-    # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
-    # These two allow us to dim the screen while loading.
-    # See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
+app.title = 'Land Use Optimization'
+app.css.config.serve_locally = False
+# Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
+# These two allow us to dim the screen while loading.
+# See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
+app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
-    app.layout = html.Div([
-        dcc.Markdown('''
+app.layout = html.Div([
+    dcc.Markdown('''
 # Land Use Optimization
 This site is for demonstration purposes only.
 
@@ -675,38 +675,36 @@ identified by its latitude and longitude coordinates, and a given year:
 * In order to minimize the resulting estimated CO2 emissions in that year ? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare per year)
 '''),
-        dcc.Markdown('''## Context'''),
-        html.Div([
-            dcc.Graph(id="map", figure=map_fig, style={"grid-column": "1"}),
-            html.Div([context_div], style={"grid-column": "2"}),
-            html.Div([legend_div], style={"grid-column": "3"})
-        ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
-        dcc.Markdown('''## Actions'''),
-        html.Div([
-            html.Div([presc_select_div], style={"grid-column": "1"}),
-            html.Div([chart_select_div], style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
-        ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
-        html.Div([
-            html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
-            html.Div(sliders_div, style={'grid-column': '2'}),
-            dcc.Graph(id='context-fig', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
-            dcc.Graph(id='presc-fig', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
-        ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
-        html.Div([
-            frozen_div,
-            html.Button("Sum to 100%", id='sum-button', n_clicks=0),
-            html.Div(id='sum-warning')
-        ]),
-        dcc.Markdown('''## Outcomes'''),
-        predict_div,
-        dcc.Markdown('''## Trivia'''),
-        trivia_div,
-        dcc.Markdown('''## References'''),
-        references_div
-    ], style={'padding-left': '10px'},)
-
-    app.run_server(debug=True)
+    dcc.Markdown('''## Context'''),
+    html.Div([
+        dcc.Graph(id="map", figure=map_fig, style={"grid-column": "1"}),
+        html.Div([context_div], style={"grid-column": "2"}),
+        html.Div([legend_div], style={"grid-column": "3"})
+    ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
+    dcc.Markdown('''## Actions'''),
+    html.Div([
+        html.Div([presc_select_div], style={"grid-column": "1"}),
+        html.Div([chart_select_div], style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
+    ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
+    html.Div([
+        html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
+        html.Div(sliders_div, style={'grid-column': '2'}),
+        dcc.Graph(id='context-fig', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
+        dcc.Graph(id='presc-fig', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
+    ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
+    html.Div([
+        frozen_div,
+        html.Button("Sum to 100%", id='sum-button', n_clicks=0),
+        html.Div(id='sum-warning')
+    ]),
+    dcc.Markdown('''## Outcomes'''),
+    predict_div,
+    dcc.Markdown('''## Trivia'''),
+    trivia_div,
+    dcc.Markdown('''## References'''),
+    references_div
+], style={'padding-left': '10px'},)
 
 
 if __name__ == '__main__':
-    main()
+    app.run_server(debug=True, host="0.0.0.0", port=8080)

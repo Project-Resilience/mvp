@@ -47,6 +47,7 @@ def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, 
         center={"lat": lat_center, "lon": lon_center},
         size_max=10
     )
+
     map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
     map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
     return map_fig
@@ -75,7 +76,10 @@ def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
     """
     diffs = presc[constants.RECO_COLS] - context[constants.RECO_COLS]
     change = diffs[diffs > 0].sum()
-    percent_changed = change/ context[constants.LAND_USE_COLS].sum()
+    total = context[constants.LAND_USE_COLS].sum()
+    assert total > 0
+    percent_changed = change / total
+    assert percent_changed <= 1
 
     return percent_changed
 

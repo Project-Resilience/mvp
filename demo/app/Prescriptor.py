@@ -3,11 +3,9 @@ from typing import List
 import pandas as pd
 import numpy as np
 from keras.models import load_model
-
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
-from constants import fields
-from constants import cao_mapping
-from constants import RECO_COLS
+
+import app.constants as constants
 
 class Prescriptor:
     """
@@ -18,13 +16,13 @@ class Prescriptor:
         """
         :param prescriptor_id: ID of Keras prescriptor to load.
         """
-        prescriptor_model_filename = os.path.join("prescriptors",
+        prescriptor_model_filename = os.path.join(constants.PRESCRIPTOR_PATH,
                                                 prescriptor_id + '.h5')
 
         print(f'Loading prescriptor model: {prescriptor_model_filename}')
         self.prescriptor_model = load_model(prescriptor_model_filename, compile=False)
 
-        self.encoder = DataEncoder(fields, cao_mapping)
+        self.encoder = DataEncoder(constants.fields, constants.cao_mapping)
 
 
     def _is_single_action_prescriptor(self, actions):
@@ -103,11 +101,11 @@ class Prescriptor:
         encoded_sample_context_df = self.encoder.encode_as_df(sample_context_df)
         prescribed_actions_df = self.__prescribe_from_model(encoded_sample_context_df)
         reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
-                                    columns=RECO_COLS)
+                                    columns=constants.RECO_COLS)
 
         # Re-scales our prescribed land to match the amount of land used in the sample
-        used = sample_context_df[RECO_COLS].iloc[0].sum()
-        reco_land_use_df = reco_land_use_df[RECO_COLS].mul(used, axis=0)
+        used = sample_context_df[constants.RECO_COLS].iloc[0].sum()
+        reco_land_use_df = reco_land_use_df[constants.RECO_COLS].mul(used, axis=0)
 
         # Reorder columns
-        return reco_land_use_df[RECO_COLS]
+        return reco_land_use_df[constants.RECO_COLS]

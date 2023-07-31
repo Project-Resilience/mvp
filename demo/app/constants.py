@@ -82,3 +82,4 @@ PARETO_FRONT_PATH = "prescriptors/pareto_front.png"
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
 RANDOM_FOREST_PATH = "predictors/ELUC_forest.joblib"
+PRESCRIPTOR_PATH = "prescriptors/"

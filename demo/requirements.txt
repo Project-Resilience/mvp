@@ -1,19 +1,11 @@
-# For application
 dash==2.10.2
 dash_bootstrap_components==1.4.1
+huggingface_hub==0.16.4
 joblib==1.2.0
-tensorflow==2.11
-keras==2.11
+keras==2.13.1rc0
 numpy==1.23.5
 pandas==1.5.3
 plotly==5.14.1
-git+https://${LEAF_PRIVATE_SOURCE_CREDENTIALS}@github.com/leaf-ai/unileaf-util
-
-# For dataset processing and model download
-huggingface_hub==0.16.4
-xarray==2023.6.0
-zarr
 regionmask==0.10.0
-
-# For hosting
-gunicorn
+git+https://${LEAF_PRIVATE_SOURCE_CREDENTIALS}@github.com/leaf-ai/unileaf-util
+xarray==2023.6.0

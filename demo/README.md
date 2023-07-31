@@ -20,4 +20,4 @@ Prescriptors are already stored in `prescriptors/` as well as the pareto front i
 
 ## Running the app:
 
-To run the app use: ``python app.py``
+To run the app call the app module with ``python -m app.app``

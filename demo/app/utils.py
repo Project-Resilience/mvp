@@ -3,14 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from constants import RECO_COLS
-from constants import CHART_COLS
-from constants import LAND_USE_COLS
-from constants import C3
-from constants import C4
-from constants import PRIMARY
-from constants import SECONDARY
-from constants import FIELDS
+import app.constants as constants
 
 def add_nonland(data: pd.Series) -> pd.Series:
     """
@@ -20,10 +13,10 @@ def add_nonland(data: pd.Series) -> pd.Series:
     :param data: pd Series containing land use data.
     :return: pd Series with nonland column added.
     """
-    data = data[LAND_USE_COLS]
+    data = data[constants.LAND_USE_COLS]
     nonland = 1 - data.sum() if data.sum() <= 1 else 0
     data['nonland'] = nonland
-    return data[CHART_COLS]
+    return data[constants.CHART_COLS]
 
 
 def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, color_idx = None) -> go.Figure:
@@ -80,9 +73,9 @@ def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
     :param presc: Prescribed land use data
     :return: Percent land use change
     """
-    diffs = presc[RECO_COLS] - context[RECO_COLS]
+    diffs = presc[constants.RECO_COLS] - context[constants.RECO_COLS]
     change = diffs[diffs > 0].sum()
-    percent_changed = change/ context[LAND_USE_COLS].sum()
+    percent_changed = change/ context[constants.LAND_USE_COLS].sum()
 
     return percent_changed
 
@@ -135,13 +128,13 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         values = [1]
 
     else:
-        total = data[LAND_USE_COLS].sum()
-        c3 = data[C3].sum()
-        c4 = data[C4].sum()
+        total = data[constants.LAND_USE_COLS].sum()
+        c3 = data[constants.C3].sum()
+        c4 = data[constants.C4].sum()
         crops = c3 + c4
-        primary = data[PRIMARY].sum()
-        secondary = data[SECONDARY].sum()
-        fields = data[FIELDS].sum()
+        primary = data[constants.PRIMARY].sum()
+        secondary = data[constants.SECONDARY].sum()
+        fields = data[constants.FIELDS].sum()
 
         labels = [title, "Nonland",
                 "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
@@ -196,13 +189,13 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     # Sum for case where all zeroes, which allows us to display pie even when presc is reset
     if data.empty or data.sum() == 0:
-        values = [0 for _ in range(len(CHART_COLS))]
+        values = [0 for _ in range(len(constants.CHART_COLS))]
         values[-1] = 1
 
     else:
-        values = data[CHART_COLS].tolist()
+        values = data[constants.CHART_COLS].tolist()
 
-    assert(len(values) == len(CHART_COLS))
+    assert(len(values) == len(constants.CHART_COLS))
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
@@ -215,7 +208,7 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     fig = go.Figure(
         go.Pie(
             values = values,
-            labels = CHART_COLS,
+            labels = constants.CHART_COLS,
             textposition = "inside",
             sort = False,
             marker_colors = colors,

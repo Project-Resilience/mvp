@@ -13,30 +13,10 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 
-from Predictor import RandomForestPredictor
-from Prescriptor import Prescriptor
-from constants import DATA_FILE_PATH
-from constants import INDEX_COLS
-from constants import COLS_MAP
-from constants import NO_CHANGE_COLS
-from constants import RECO_COLS
-from constants import CONTEXT_COLUMNS
-from constants import LAND_USE_COLS
-from constants import DEFAULT_PRESCRIPTOR_IDX
-from constants import PREDICTOR_LIST
-from constants import SLIDER_PRECISION
-from constants import MAP_COORDINATE_DICT
-from constants import CO2_JFK_GVA
-from constants import CO2_PERSON
-from constants import CHART_TYPES
-from constants import PARETO_CSV_PATH
-from utils import add_nonland
-from utils import create_map
-from utils import create_check_options
-from utils import compute_percent_change
-from utils import create_treemap
-from utils import create_pie
-from utils import create_pareto
+import app.Predictor as Predictor
+import app.Prescriptor as Prescriptor
+import app.constants as constants
+import app.utils as utils
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -45,9 +25,9 @@ server = app.server
 
 # TODO: should we load all our data into a store?
 # This seems more secure.
-df = pd.read_csv(DATA_FILE_PATH, index_col=INDEX_COLS)
+df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
 #df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
-pareto_df = pd.read_csv(PARETO_CSV_PATH)
+pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
 # We have to reverse for some reason?
 prescriptor_list = list(pareto_df["id"])
 prescriptor_list.reverse()
@@ -64,12 +44,10 @@ max_time = df.index.get_level_values("time").max()
 lat_list = list(np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP))
 lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
 
-present = df.loc[max_time]
-#map_fig = create_map(present, 54.5, -2.5, 20)
 map_fig = go.Figure()
 
 #TODO: Is this allowed?
-random_forest_predictor = RandomForestPredictor()
+random_forest_predictor = Predictor.RandomForestPredictor()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -115,8 +93,8 @@ context_div = html.Div(
         html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
         dcc.Dropdown(
             id="loc-dropdown",
-            options=list(MAP_COORDINATE_DICT.keys()),
-            value=list(MAP_COORDINATE_DICT.keys())[0],
+            options=list(constants.MAP_COORDINATE_DICT.keys()),
+            value=list(constants.MAP_COORDINATE_DICT.keys())[0],
             style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         ),
         html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
@@ -153,7 +131,7 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(prescriptor_list)-1, step=1,
-                value=DEFAULT_PRESCRIPTOR_IDX,
+                value=constants.DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
                 marks={i : "" for i in range(len(prescriptor_list))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
@@ -163,8 +141,8 @@ presc_select_div = html.Div([
     dbc.Modal(
             [
                 dbc.ModalHeader("Pareto front"),
-                dcc.Graph(id='pareto-fig', figure=create_pareto(pareto_df=pareto_df,
-                                                                presc_id=prescriptor_list[DEFAULT_PRESCRIPTOR_IDX])),
+                dcc.Graph(id='pareto-fig', figure=utils.create_pareto(pareto_df=pareto_df,
+                                                                presc_id=prescriptor_list[constants.DEFAULT_PRESCRIPTOR_IDX])),
             ],
             id="pareto-modal",
             is_open=False,
@@ -172,13 +150,13 @@ presc_select_div = html.Div([
 ], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "100%", "align-content": "center"})
 
 chart_select_div = dcc.Dropdown(
-    options=CHART_TYPES,
+    options=constants.CHART_TYPES,
     id="chart-select",
-    value=CHART_TYPES[0],
+    value=constants.CHART_TYPES[0],
     clearable=False
 )
 
-check_options = create_check_options(RECO_COLS)
+check_options = utils.create_check_options(constants.RECO_COLS)
 checklist_div = html.Div([
     dcc.Checklist(check_options, id="locks", inputStyle={"margin-bottom": "30px"})
 ])
@@ -190,7 +168,7 @@ sliders_div = html.Div([
             dcc.Slider(
                 min=0,
                 max=1,
-                step=SLIDER_PRECISION,
+                step=constants.SLIDER_PRECISION,
                 value=0,
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": False},
@@ -203,7 +181,7 @@ sliders_div = html.Div([
             disabled=True,
             id={"type": "slider-value", "index": f"{col}"},
             style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
-    ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in RECO_COLS]
+    ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in constants.RECO_COLS]
 )
 
 frozen_div = html.Div([
@@ -211,11 +189,11 @@ frozen_div = html.Div([
         value=f"{col}: 0.00%",
         type="text",
         disabled=True,
-        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in NO_CHANGE_COLS + ["nonland"]
+        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in constants.NO_CHANGE_COLS + ["nonland"]
 ])
 
 predict_div = html.Div([
-    dcc.Dropdown(PREDICTOR_LIST, PREDICTOR_LIST[0], id="pred-select", style={"width": "200px"}),
+    dcc.Dropdown(constants.PREDICTOR_LIST, constants.PREDICTOR_LIST[0], id="pred-select", style={"width": "200px"}),
     html.Button("Predict", id='predict-button', n_clicks=0,),
     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
     dcc.Input(
@@ -244,7 +222,7 @@ trivia_div = html.Div([
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
         html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
-        html.P(f"{CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(f"{constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
@@ -254,7 +232,7 @@ trivia_div = html.Div([
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
         html.P("Total yearly carbon emissions of average world citizen: ", className="child", style=inline_block),
-        html.P(f"{CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(f"{constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
@@ -303,7 +281,7 @@ def toggle_modal(n, is_open, presc_idx):
     :param presc_idx: The index of the prescriptor to show.
     :return: The new state of the modal and the figure to show.
     """
-    fig = create_pareto(pareto_df, prescriptor_list[presc_idx])
+    fig = utils.create_pareto(pareto_df, prescriptor_list[presc_idx])
     if n:
         return not is_open, fig
     return is_open, fig
@@ -339,13 +317,13 @@ def update_map(location, year, lat, lon):
     :param year: The selected year.
     :return: A newly created map.
     """
-    coord_dict = MAP_COORDINATE_DICT[location]
+    coord_dict = constants.MAP_COORDINATE_DICT[location]
     data = df.loc[year]
     data = data.copy().reset_index()
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
     idx = data[lat_lon].index[0]
 
-    return create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
+    return utils.create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
 
 
 @app.callback(
@@ -367,16 +345,16 @@ def set_frozen_reset_sliders(lat, lon, year):
     """
     context = df.loc[year, lat, lon]
 
-    chart_data = add_nonland(context[LAND_USE_COLS])
+    chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
 
-    frozen_cols = NO_CHANGE_COLS + ["nonland"]
+    frozen_cols = constants.NO_CHANGE_COLS + ["nonland"]
     frozen = chart_data[frozen_cols].tolist()
     frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
-    reset = [0 for _ in RECO_COLS]
+    reset = [0 for _ in constants.RECO_COLS]
     
-    max_val = chart_data[RECO_COLS].sum()
-    maxes = [max_val for _ in range(len(RECO_COLS))]
+    max_val = chart_data[constants.RECO_COLS].sum()
+    maxes = [max_val for _ in range(len(constants.RECO_COLS))]
 
     return frozen, reset, maxes
 
@@ -398,14 +376,14 @@ def update_context_chart(chart_type, year, lat, lon):
     :return: New figure type selected by chart_type with data context.
     """
     context = df.loc[year, lat, lon]
-    chart_data = add_nonland(context[LAND_USE_COLS])
+    chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
 
     assert chart_type in ("Treemap", "Pie Chart")
 
     if chart_type == "Treemap":
-        return create_treemap(chart_data, type_context=True, year=year)
+        return utils.create_treemap(chart_data, type_context=True, year=year)
     
-    return create_pie(chart_data, type_context=True, year=year)
+    return utils.create_pie(chart_data, type_context=True, year=year)
 
 
 @app.callback(
@@ -428,8 +406,8 @@ def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     :return: Updated slider values.
     """
     presc_id = prescriptor_list[presc_idx]
-    prescriptor = Prescriptor(presc_id)
-    context = df.loc[year, lat, lon][CONTEXT_COLUMNS]
+    prescriptor = Prescriptor.Prescriptor(presc_id)
+    context = df.loc[year, lat, lon][constants.CONTEXT_COLUMNS]
     context_df = pd.DataFrame([context])
     prescribed = prescriptor.run_prescriptor(context_df)
     return prescribed.iloc[0].tolist()
@@ -469,14 +447,14 @@ def compute_land_change(sliders, year, lat, lon, locked):
     :param locked: Locked columns to check for warning.
     :return: Warning if necessary, land change percent.
     """
-    context = df.loc[year, lat, lon][LAND_USE_COLS]
-    presc = pd.Series(sliders, index=RECO_COLS)
+    context = df.loc[year, lat, lon][constants.LAND_USE_COLS]
+    presc = pd.Series(sliders, index=constants.RECO_COLS)
 
     warnings = []
     # Check if prescriptions sum to 1
     # TODO: Are we being precise enough?
     new_sum = presc.sum()
-    old_sum = context[RECO_COLS].sum()
+    old_sum = context[constants.RECO_COLS].sum()
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
         warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
@@ -490,7 +468,7 @@ def compute_land_change(sliders, year, lat, lon, locked):
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = compute_percent_change(context, presc)
+    change = utils.compute_percent_change(context, presc)
 
     return warnings, f"{change * 100:.2f}"
 
@@ -517,25 +495,25 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
 
     # If we have no prescription just return an empty chart
     if all(slider == 0 for slider in sliders):
-        return create_treemap(pd.Series([]), type_context=False, year=year)
+        return utils.create_treemap(pd.Series([]), type_context=False, year=year)
 
-    presc = pd.Series(sliders, index=RECO_COLS)
+    presc = pd.Series(sliders, index=constants.RECO_COLS)
     context = df.loc[year, lat, lon]
 
-    chart_data = context[LAND_USE_COLS].copy()
-    chart_data[RECO_COLS] = presc[RECO_COLS]
+    chart_data = context[constants.LAND_USE_COLS].copy()
+    chart_data[constants.RECO_COLS] = presc[constants.RECO_COLS]
 
     # Manually calculate nonland from context so that it's not zeroed out by sliders.
-    nonland = 1 - context[LAND_USE_COLS].sum()
+    nonland = 1 - context[constants.LAND_USE_COLS].sum()
     nonland = nonland if nonland > 0 else 0
     chart_data["nonland"] = nonland
 
     assert chart_type in ("Treemap", "Pie Chart")
 
     if chart_type == "Treemap":
-        return create_treemap(chart_data, type_context=False, year=year)
+        return utils.create_treemap(chart_data, type_context=False, year=year)
     
-    return create_pie(chart_data, type_context=False, year=year)
+    return utils.create_pie(chart_data, type_context=False, year=year)
 
 
 @app.callback(
@@ -561,14 +539,14 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     :return: Slider values scaled down to fit percentage of land used in context.
     """
     context = df.loc[year, lat, lon]
-    presc = pd.Series(sliders, index=RECO_COLS)
+    presc = pd.Series(sliders, index=constants.RECO_COLS)
 
-    old_sum = context[RECO_COLS].sum()
+    old_sum = context[constants.RECO_COLS].sum()
     new_sum = presc.sum()
 
     # TODO: There is certainly a more elegant way to handle this.
     if locked:
-        unlocked = [col for col in RECO_COLS if col not in locked]
+        unlocked = [col for col in constants.RECO_COLS if col not in locked]
         locked_sum = presc[locked].sum()
         old_sum -= locked_sum
         new_sum -= locked_sum
@@ -607,12 +585,12 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     :return: Predicted ELUC.
     """
     context = df.loc[year, lat, lon]
-    presc = pd.Series(sliders, index=RECO_COLS)
+    presc = pd.Series(sliders, index=constants.RECO_COLS)
 
     # Preprocess presc into diffs
-    presc = presc.combine_first(context[NO_CHANGE_COLS])
-    diff = presc[LAND_USE_COLS] - context[LAND_USE_COLS]
-    diff = diff.rename(COLS_MAP)
+    presc = presc.combine_first(context[constants.NO_CHANGE_COLS])
+    diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
+    diff = diff.rename(constants.COLS_MAP)
     diff_df = pd.DataFrame([diff])
 
     predictor = None
@@ -652,8 +630,8 @@ def update_trivia(eluc_str, year, lat, lon):
     eluc = float(eluc_str)
     total_reduction = eluc * area
     return f"{-1 * total_reduction:,.2f} tonnes CO2", \
-            f"{-1 * total_reduction // CO2_JFK_GVA:,.0f} tickets", \
-                f"{-1 * total_reduction // CO2_PERSON:,.0f} people"
+            f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
+                f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
 
 
 app.title = 'Land Use Optimization'
@@ -689,8 +667,8 @@ in tons of carbon per hectare)
     html.Div([
         html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
         html.Div(sliders_div, style={'grid-column': '2'}),
-        dcc.Graph(id='context-fig', figure=create_treemap(type_context=True), style={'grid-column': '3'}),
-        dcc.Graph(id='presc-fig', figure=create_treemap(type_context=False), style={'grid-clumn': '4'})
+        dcc.Graph(id='context-fig', figure=utils.create_treemap(type_context=True), style={'grid-column': '3'}),
+        dcc.Graph(id='presc-fig', figure=utils.create_treemap(type_context=False), style={'grid-clumn': '4'})
     ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
     html.Div([
         frozen_div,

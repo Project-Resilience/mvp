@@ -25,3 +25,9 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 # Copy source files over
 COPY . .
+
+# Expose Flask (Dash) port
+EXPOSE 4057
+
+# Run main UI
+ENTRYPOINT ["python", "-m", "app.app"]

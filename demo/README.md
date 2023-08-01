@@ -18,6 +18,27 @@ The RandomForest model is 1.7GB and is also saved on HuggingFace. To download it
 
 Prescriptors are already stored in `prescriptors/` as well as the pareto front image and a CSV of pareto info from training the prescriptors.
 
+## Testing:
+
+Testing can be done with ``python -m unittest discover``
+
 ## Running the app:
 
 To run the app call the app module with ``python -m app.app``
+
+## Deployment:
+
+Once ``process_data.py`` and ``download_predictors.py`` have been run, the app can be deployed by building with:
+```
+docker build \
+--build-arg leaf_private_source_credentials=$LEAF_PRIVATE_SOURCE_CREDENTIALS \
+-t eluc-demo .
+```
+then the container can be run with:
+```
+docker run \
+-v PATH_TO_PROJECT/mvp/demo/data/processed:/usr/local/cognizant/eluc/data/processed:ro \
+-v PATH_TO_PROJECT/mvp/demo/predictors:/usr/local/congizant/eluc/predictors:ro \
+-p 8080:4057 eluc-demo
+```
+Note: This mounts your local directories to the docker container, different steps may have to be taken for different setups.

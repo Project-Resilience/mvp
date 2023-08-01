@@ -23,6 +23,14 @@ app = Dash(__name__,
            prevent_initial_callbacks="initial_duplicate")
 server = app.server
 
+# Remove "Server" http header for security (by obscurity) 
+# Note: this is not a security measure, it's just a way to hide the fact that we're using Flask
+# Note2: Using "del" to remove the header entirely doesn't work here. Something in Flask/Dash just adds it back.
+@server.after_request
+def remove_headers(response):
+    response.headers['Server'] = ''
+    return response
+
 # TODO: should we load all our data into a store?
 # This seems more secure.
 df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)

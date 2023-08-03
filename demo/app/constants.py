@@ -1,4 +1,5 @@
 import base64
+import os
 
 # TODO: Have this generated somewhere else/loaded from a file
 fields = {
@@ -35,7 +36,8 @@ cao_mapping = {
     'actions': ['c3ann_diff', 'c3nfx_diff', 'c3per_diff', 'c4ann_diff', 'pastr_diff', 'range_diff', 'secdf_diff', 'secdn_diff', 'urban_diff'],
     'outcomes': ['ELUC', 'Change']}
 
-DATA_FILE_PATH = "data/processed/gb_br_ch_eluc.csv"
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/gb_br_ch_eluc.csv")
 
 INDEX_COLS = ["time", "lat", "lon"]
 
@@ -77,9 +79,9 @@ FIELDS = ['pastr', 'range']
 CHART_TYPES = ["Treemap", "Pie Chart"]
 
 # Pareto front
-PARETO_CSV_PATH = "prescriptors/pareto.csv"
-PARETO_FRONT_PATH = "prescriptors/pareto_front.png"
+PARETO_CSV_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto.csv")
+PARETO_FRONT_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto_front.png")
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
-RANDOM_FOREST_PATH = "predictors/ELUC_forest.joblib"
-PRESCRIPTOR_PATH = "prescriptors/"
+RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
+PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")

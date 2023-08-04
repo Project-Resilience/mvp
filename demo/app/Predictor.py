@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
+from abc import ABC
+from abc import abstractmethod
 import warnings
 from joblib import load
 
-import app.constants as constants
+from . import constants
 
 # Silence xgboost warnings
 warnings.filterwarnings("ignore")

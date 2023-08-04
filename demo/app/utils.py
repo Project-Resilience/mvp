@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-import app.constants as constants
+from . import constants
 
 def add_nonland(data: pd.Series) -> pd.Series:
     """

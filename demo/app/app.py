@@ -13,10 +13,10 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 
-import app.Predictor as Predictor
-import app.Prescriptor as Prescriptor
-import app.constants as constants
-import app.utils as utils
+from . import Predictor
+from . import Prescriptor
+from . import constants
+from . import utils
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],

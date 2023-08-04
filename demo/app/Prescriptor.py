@@ -5,7 +5,7 @@ import numpy as np
 from keras.models import load_model
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
-import app.constants as constants
+from . import constants
 
 class Prescriptor:
     """

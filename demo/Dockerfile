@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 4057
 
 # Run main UI
-ENTRYPOINT ["python", "-m", "app.app"]
+ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:4057", "app.app:server"]

@@ -1,5 +1,6 @@
 dash==2.10.2
 dash_bootstrap_components==1.4.1
+gunicorn==21.2.0
 huggingface_hub==0.16.4
 joblib==1.2.0
 tensorflow==2.13.0

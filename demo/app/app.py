@@ -23,14 +23,6 @@ app = Dash(__name__,
            prevent_initial_callbacks="initial_duplicate")
 server = app.server
 
-# Remove "Server" http header for security (by obscurity) 
-# Note: this is not a security measure, it's just a way to hide the fact that we're using Flask
-# Note2: Using "del" to remove the header entirely doesn't work here. Something in Flask/Dash just adds it back.
-@server.after_request
-def remove_headers(response):
-    response.headers['Server'] = ''
-    return response
-
 # TODO: should we load all our data into a store?
 # This seems more secure.
 df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
@@ -641,59 +633,55 @@ def update_trivia(eluc_str, year, lat, lon):
             f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
                 f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
 
-def main():
-    global app
-    app.title = 'Land Use Optimization'
-    app.css.config.serve_locally = False
-    # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
-    # These two allow us to dim the screen while loading.
-    # See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
-    app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
+app.title = 'Land Use Optimization'
+app.css.config.serve_locally = False
+# Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
+# These two allow us to dim the screen while loading.
+# See discussion with Dash devs here: https://community.plotly.com/t/dash-loading-states/5687
+app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
+app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
-    app.layout = html.Div([
-        dcc.Markdown('''
-    # Land Use Optimization
-    This site is for demonstration purposes only.
+app.layout = html.Div([
+    dcc.Markdown('''
+# Land Use Optimization
+This site is for demonstration purposes only.
 
-    For a given context cell representing a portion of the earth,
-    identified by its latitude and longitude coordinates, and a given year:
-    * What changes can we make to the land usage
-    * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
-    in tons of carbon per hectare)
-    '''),
-        dcc.Markdown('''## Context'''),
-        html.Div([
-            dcc.Graph(id="map", figure=map_fig, style={"grid-column": "1"}),
-            html.Div([context_div], style={"grid-column": "2"}),
-            html.Div([legend_div], style={"grid-column": "3"})
-        ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
-        dcc.Markdown('''## Actions'''),
-        html.Div([
-            html.Div([presc_select_div], style={"grid-column": "1"}),
-            html.Div([chart_select_div], style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
-        ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
-        html.Div([
-            html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
-            html.Div(sliders_div, style={'grid-column': '2'}),
-            dcc.Graph(id='context-fig', figure=utils.create_treemap(type_context=True), style={'grid-column': '3'}),
-            dcc.Graph(id='presc-fig', figure=utils.create_treemap(type_context=False), style={'grid-clumn': '4'})
-        ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
-        html.Div([
-            frozen_div,
-            html.Button("Sum to 100%", id='sum-button', n_clicks=0),
-            html.Div(id='sum-warning')
-        ]),
-        dcc.Markdown('''## Outcomes'''),
-        predict_div,
-        dcc.Markdown('''## Trivia'''),
-        trivia_div,
-        dcc.Markdown('''## References'''),
-        references_div
-    ], style={'padding-left': '10px'},)
-
-    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)
+For a given context cell representing a portion of the earth,
+identified by its latitude and longitude coordinates, and a given year:
+* What changes can we make to the land usage
+* In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
+in tons of carbon per hectare)
+'''),
+    dcc.Markdown('''## Context'''),
+    html.Div([
+        dcc.Graph(id="map", figure=map_fig, style={"grid-column": "1"}),
+        html.Div([context_div], style={"grid-column": "2"}),
+        html.Div([legend_div], style={"grid-column": "3"})
+    ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
+    dcc.Markdown('''## Actions'''),
+    html.Div([
+        html.Div([presc_select_div], style={"grid-column": "1"}),
+        html.Div([chart_select_div], style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
+    ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
+    html.Div([
+        html.Div(checklist_div, style={"grid-column": "1", "height": "100%"}),
+        html.Div(sliders_div, style={'grid-column': '2'}),
+        dcc.Graph(id='context-fig', figure=utils.create_treemap(type_context=True), style={'grid-column': '3'}),
+        dcc.Graph(id='presc-fig', figure=utils.create_treemap(type_context=False), style={'grid-clumn': '4'})
+    ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
+    html.Div([
+        frozen_div,
+        html.Button("Sum to 100%", id='sum-button', n_clicks=0),
+        html.Div(id='sum-warning')
+    ]),
+    dcc.Markdown('''## Outcomes'''),
+    predict_div,
+    dcc.Markdown('''## Trivia'''),
+    trivia_div,
+    dcc.Markdown('''## References'''),
+    references_div
+], style={'padding-left': '10px'},)
 
 
 if __name__ == '__main__':
-    main()
+    app.run_server(host='0.0.0.0', debug=True, port=4057, use_reloader=False, threaded=False)

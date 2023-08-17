@@ -4,17 +4,41 @@ This is a demo of the MVP Climate Change app. It allows users to select a locati
 
 ## Dependencies:
 
-The demo relies on the `unileaf_util` package. This has to be manually installed from the `.whl` file.
-The requirements.txt is set up for M1 macs. Your installations of tensorflow and pytorch may differ.
+This application relies on the ``unileaf-util`` package which can be downloaded from git. Save your authentication token in ``$LEAF_PRIVATE_SOURCE_CREDENTIAL`` in order to be able to ``pip install -r requirements.txt`` for the dependencies.
 
-## Running the app:
+## Downloading the data:
 
-To run the app use: ``python app.py``
+In ``data/`` there is a script called ``process_data.py``. This will download the entire 2.5GB data file from HuggingFace then process it into a 500MB csv that is used by the app. A token is required to download the data and must be saved in ``$HF_TOKEN``.
 
 ## Predictors:
 
-Saved predictors can be found in `predictors/`. The XGBoost predictor's weights are stored in a `.json` file whereas the LSTM predictor's weights are stored in a `.pt` file and its configuration is saved in the corresponding `.json` file.
+The RandomForest model is 1.7GB and is also saved on HuggingFace. To download it run ``download_predictors.py`` in ``predictors/``. This downloads a ``.joblib`` file that is loaded in the app.
 
 ## Prescriptors:
 
-Prescriptors are stored in `prescriptors/` as well as the pareto front image and a CSV of pareto info from training the prescriptors.
+Prescriptors are already stored in `prescriptors/` as well as the pareto front image and a CSV of pareto info from training the prescriptors.
+
+## Testing:
+
+Testing can be done with ``python -m unittest discover``
+
+## Running the app:
+
+To run the app call the app module with ``python -m app.app``
+
+## Deployment:
+
+Once ``process_data.py`` and ``download_predictors.py`` have been run, the app can be deployed by building with:
+```
+docker build \
+--build-arg leaf_private_source_credentials=$LEAF_PRIVATE_SOURCE_CREDENTIALS \
+-t eluc-demo .
+```
+then the container can be run with:
+```
+docker run \
+-v PATH_TO_PROJECT/mvp/demo/data/processed:/usr/local/cognizant/eluc/data/processed:ro \
+-v PATH_TO_PROJECT/mvp/demo/predictors:/usr/local/congizant/eluc/predictors:ro \
+-p 8080:4057 eluc-demo
+```
+Note: This mounts your local directories to the docker container, different steps may have to be taken for different setups.

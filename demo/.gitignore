@@ -1,0 +1,3 @@
+predictors/*.joblib
+data/*.zip
+data/processed/*.csv

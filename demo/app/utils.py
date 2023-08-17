@@ -3,47 +3,40 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from constants import ALL_LAND_USE_COLS
-from constants import CHART_COLS
-from constants import LAND_USE_COLS
-from constants import C3
-from constants import C4
-from constants import PRIMARY
-from constants import SECONDARY
-from constants import FIELDS
+from . import constants
 
-def add_nonland(df: pd.DataFrame) -> pd.DataFrame:
+def add_nonland(data: pd.Series) -> pd.Series:
     """
     Adds a nonland column that is the difference between 1 and
-    ALL_LAND_USE_COLS.
+    LAND_USE_COLS.
     Note: Since sum isn't exactly 1 we just set to 0 if we get a negative.
-    :param df: DataFrame of all land usage.
-    :return: DataFrame with nonland column.
+    :param data: pd Series containing land use data.
+    :return: pd Series with nonland column added.
     """
-    data = df[ALL_LAND_USE_COLS]
-    nonland = 1 - data.sum(axis=1)
-    nonland[nonland < 0] = 0
-    assert (nonland >= 0).all()
+    data = data[constants.LAND_USE_COLS]
+    nonland = 1 - data.sum() if data.sum() <= 1 else 0
     data['nonland'] = nonland
-    return data[CHART_COLS]
+    return data[constants.CHART_COLS]
 
 
 def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, color_idx = None) -> go.Figure:
     """
     Creates map figure with data centered and zoomed in with appropriate point marked.
-    :param df: DataFrame of data to plot.
+    :param df: DataFrame of data to plot. This dataframe has its index reset.
     :param lat_center: Latitude to center map on.
     :param lon_center: Longitude to center map on.
     :param zoom: Zoom level of map.
-    :param color_idx: Index of point to color red.
+    :param color_idx: Index of point to color red in reset index.
     :return: Plotly figure
     """
+    color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
+
+    # Add color column    
     color = ["blue" for _ in range(len(df))]
     if color_idx:
         color[color_idx] = "red"
-    color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
-    # TODO: Is this modification going to break things?
     df["color"] = color
+
     map_fig = px.scatter_geo(
         df,
         lat="lat",
@@ -54,6 +47,7 @@ def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, 
         center={"lat": lat_center, "lon": lon_center},
         size_max=10
     )
+
     map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
     map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
     return map_fig
@@ -73,21 +67,32 @@ def create_check_options(values: list) -> list:
     return options
 
 
-def compute_percent_change(context: pd.DataFrame, presc: pd.DataFrame) -> float:
+def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
     """
     Computes percent land use change from context to presc
     :param context: Context land use data
     :param presc: Prescribed land use data
     :return: Percent land use change
     """
-    diffs = presc[LAND_USE_COLS].reset_index(drop=True) - context[LAND_USE_COLS].reset_index(drop=True)
-    percent_changed = diffs[diffs > 0].sum(axis=1)
-    percent_changed = percent_changed / context[LAND_USE_COLS].sum(axis=1)
+    diffs = presc[constants.RECO_COLS] - context[constants.RECO_COLS]
+    change = diffs[diffs > 0].sum()
+    total = context[constants.LAND_USE_COLS].sum()
+    assert total > 0
+    percent_changed = change / total
+    assert percent_changed <= 1
 
-    return percent_changed[0]
+    return percent_changed
 
 
-def create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
+def _create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
+    """
+    Helper function that formats the hover text for the treemap to be 2 decimals.
+    :param labels: Labels according to treemap format.
+    :param parents: Parents for each label according to treemap format.
+    :param values: Values for each label according to treemap format.
+    :param title: Title of treemap, root node's name.
+    :return: List of hover text strings.
+    """
     hovertext = []
     for i, label in enumerate(labels):
         v = values[i] * 100
@@ -127,13 +132,13 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         values = [1]
 
     else:
-        total = data[ALL_LAND_USE_COLS].sum()
-        c3 = data[C3].sum()
-        c4 = data[C4].sum()
+        total = data[constants.LAND_USE_COLS].sum()
+        c3 = data[constants.C3].sum()
+        c4 = data[constants.C4].sum()
         crops = c3 + c4
-        primary = data[PRIMARY].sum()
-        secondary = data[SECONDARY].sum()
-        fields = data[FIELDS].sum()
+        primary = data[constants.PRIMARY].sum()
+        secondary = data[constants.SECONDARY].sum()
+        fields = data[constants.FIELDS].sum()
 
         labels = [title, "Nonland",
                 "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
@@ -155,7 +160,7 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
                     data["urban"],
                     fields, data["pastr"], data["range"]]
 
-        tree_params["customdata"] = create_hovertext(labels, parents, values, title)
+        tree_params["customdata"] = _create_hovertext(labels, parents, values, title)
         tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
  
     assert len(labels) == len(parents)
@@ -188,13 +193,13 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     # Sum for case where all zeroes, which allows us to display pie even when presc is reset
     if data.empty or data.sum() == 0:
-        values = [0 for _ in range(len(CHART_COLS))]
+        values = [0 for _ in range(len(constants.CHART_COLS))]
         values[-1] = 1
 
     else:
-        values = data[CHART_COLS].tolist()
+        values = data[constants.CHART_COLS].tolist()
 
-    assert(len(values) == len(CHART_COLS))
+    assert(len(values) == len(constants.CHART_COLS))
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
@@ -207,7 +212,7 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     fig = go.Figure(
         go.Pie(
             values = values,
-            labels = CHART_COLS,
+            labels = constants.CHART_COLS,
             textposition = "inside",
             sort = False,
             marker_colors = colors,
@@ -235,14 +240,14 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     """
     fig = go.Figure(
             go.Scatter(
-                x=pareto_df['Change'] * 100,
+                x=pareto_df['change'] * 100,
                 y=pareto_df['ELUC'],
                 # marker='o',
             )
         )
     # Highlight the selected prescriptor
     presc_df = pareto_df[pareto_df["id"] == presc_id]
-    fig.add_scatter(x=presc_df['Change'] * 100,
+    fig.add_scatter(x=presc_df['change'] * 100,
                     y=presc_df['ELUC'],
                     marker={
                         "color": 'red',

@@ -1,7 +1,7 @@
 import os
 from huggingface_hub import hf_hub_download
 
-PREDICTOR_LIST = ["ELUC_forest.joblib"]
+PREDICTOR_LIST = ["ELUC_forest.joblib", "ELUC_linreg.joblib"]
 
 def main():
     for predictor_name in PREDICTOR_LIST:

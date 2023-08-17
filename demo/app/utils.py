@@ -255,11 +255,11 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
                     })
     # Name axes and hide legend
     fig.update_layout(xaxis_title={"text": "Change (%)"},
-                      yaxis_title={"text": 'ELUC (tC/ha/yr)'},
+                      yaxis_title={"text": 'ELUC (tC/ha)'},
                       showlegend=False,
                       title="Prescriptors",
                       )
     fig.update_traces(hovertemplate="Average Change: %{x} <span>&#37;</span>"
                                     "<br>"
-                                    " Average ELUC: %{y} tC/ha/yr<extra></extra>")
+                                    " Average ELUC: %{y} tC/ha<extra></extra>")
     return fig

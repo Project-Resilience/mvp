@@ -47,7 +47,8 @@ lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
 map_fig = go.Figure()
 
 #TODO: Is this allowed?
-random_forest_predictor = Predictor.RandomForestPredictor()
+random_forest_predictor = Predictor.SkLearnPredictor(constants.RANDOM_FOREST_PATH)
+linear_predictor = Predictor.SkLearnPredictor(constants.LINEAR_PATH)
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -597,6 +598,11 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     prediction = 0
     if predictor_name == "Random Forest":
         predictor = random_forest_predictor
+        prediction = predictor.predict(diff_df)
+        return f"{prediction:.4f}"
+    
+    elif predictor_name == "Linear Regression":
+        predictor = linear_predictor
         prediction = predictor.predict(diff_df)
         return f"{prediction:.4f}"
 

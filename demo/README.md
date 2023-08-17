@@ -24,7 +24,7 @@ Testing can be done with ``python -m unittest discover``
 
 ## Running the app:
 
-To run the app call the app module with ``python -m app.app``
+To run the app call the app module with ``python -m app.app`` or use gunicorn with ``gunicorn -b 0.0.0.0:4057 app.app:server``.
 
 ## Deployment:
 

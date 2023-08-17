@@ -97,3 +97,10 @@ class TestUtils(unittest.TestCase):
 
         percent_change = utils.compute_percent_change(context, presc)
         self.assertAlmostEqual(percent_change, 0.333333, delta=constants.SLIDER_PRECISION)
+
+    def test_create_treemap(self):
+        context_data = [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.04]
+        context = pd.Series(dict(zip(constants.LAND_USE_COLS, context_data)))
+        fig = utils.create_treemap(context)
+        print(fig)
+        self.assertEqual(0, 1)

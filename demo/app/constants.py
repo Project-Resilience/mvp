@@ -54,9 +54,6 @@ RECO_MAP = dict(zip(RECO_COLS, DIFF_RECO_COLS))
 NO_CHANGE_COLS = ["primf", "primn", "urban"]
 CHART_COLS = LAND_USE_COLS + ["nonland"]
 
-DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change
-PREDICTOR_LIST = ["Random Forest"]
-
 SLIDER_PRECISION = 1e-5
 
 MAP_COORDINATE_DICT = {
@@ -83,5 +80,8 @@ PARETO_CSV_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto.csv")
 PARETO_FRONT_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto_front.png")
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
+PREDICTOR_LIST = ["Random Forest", "Linear Regression"]
 RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
+LINEAR_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_linreg.joblib")
 PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")
+DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change

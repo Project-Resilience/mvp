@@ -639,6 +639,7 @@ def update_trivia(eluc_str, year, lat, lon):
             f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
                 f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
 
+
 app.title = 'Land Use Optimization'
 app.css.config.serve_locally = False
 # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!

@@ -80,7 +80,7 @@ PARETO_CSV_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto.csv")
 PARETO_FRONT_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto_front.png")
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
-PREDICTOR_LIST = ["Random Forest", "Linear Regression"]
+PREDICTOR_LIST = ["Linear Regression", "Random Forest"]
 RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
 LINEAR_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_linreg.joblib")
 PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")

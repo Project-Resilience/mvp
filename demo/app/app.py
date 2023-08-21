@@ -26,14 +26,12 @@ server = app.server
 # TODO: should we load all our data into a store?
 # This seems more secure.
 df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
-#df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+
+# Prescriptor list should be in order of least to most change
 pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
-# We have to reverse for some reason?
 prescriptor_list = list(pareto_df["id"])
-prescriptor_list.reverse()
 
 # Cells
-GRID_STEP = 0.25
 min_lat = df.index.get_level_values("lat").min()
 max_lat = df.index.get_level_values("lat").max()
 min_lon = df.index.get_level_values("lon").min()
@@ -41,8 +39,8 @@ max_lon = df.index.get_level_values("lon").max()
 min_time = df.index.get_level_values("time").min()
 max_time = df.index.get_level_values("time").max()
 
-lat_list = list(np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP))
-lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
+lat_list = list(np.arange(min_lat, max_lat + constants.GRID_STEP, constants.GRID_STEP))
+lon_list = list(np.arange(min_lon, max_lon + constants.GRID_STEP, constants.GRID_STEP))
 
 map_fig = go.Figure()
 

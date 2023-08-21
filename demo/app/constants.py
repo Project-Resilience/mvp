@@ -39,6 +39,8 @@ cao_mapping = {
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/gb_br_ch_eluc.csv")
 
+GRID_STEP = 0.25
+
 INDEX_COLS = ["time", "lat", "lon"]
 
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
@@ -84,4 +86,4 @@ PREDICTOR_LIST = ["Linear Regression", "Random Forest"]
 RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
 LINEAR_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_linreg.joblib")
 PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")
-DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change
+DEFAULT_PRESCRIPTOR_IDX = 2  # By default we select the third prescriptor that minimizes change

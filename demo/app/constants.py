@@ -37,7 +37,7 @@ cao_mapping = {
     'outcomes': ['ELUC', 'Change']}
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/gb_br_ch_eluc.csv")
+DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/eluc_test.csv")
 
 GRID_STEP = 0.25
 
@@ -85,5 +85,6 @@ PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('as
 PREDICTOR_LIST = ["Linear Regression", "Random Forest"]
 RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
 LINEAR_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_linreg.joblib")
+ZONE_PATH = os.path.join(ROOT_DIR, "../predictors/linear_zones/")
 PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")
 DEFAULT_PRESCRIPTOR_IDX = 2  # By default we select the third prescriptor that minimizes change

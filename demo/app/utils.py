@@ -44,12 +44,12 @@ def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, 
         color="color",
         color_discrete_sequence=color_seq,
         hover_data={"lat": True, "lon": True, "color": False},
-        center={"lat": lat_center, "lon": lon_center},
+        #center={"lat": lat_center, "lon": lon_center},
         size_max=10
     )
 
     map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
-    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
+    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True, fitbounds="locations")
     return map_fig
 
 

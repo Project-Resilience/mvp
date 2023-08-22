@@ -14,28 +14,30 @@ LAND_DIFF_FEATURES = ['c3ann_diff', 'c3nfx_diff', 'c3per_diff','c4ann_diff', 'c4
 FEATURES = LAND_FEATURES + LAND_DIFF_FEATURES
 LABEL = "ELUC"
 
-COUNTRY_LIST = ["GB", "BR", "CH"]
+PATH_TO_DATASET = "merged_aggregated_dataset_1850_2022.zarr.zip"
 
 
-def process_ds(path):
+def process_ds(path, countries):
     ds = xr.open_zarr(path, consolidated=True)
 
     # Shift diffs back a year instead of context/eluc up a year
     ds[LAND_DIFF_FEATURES] = ds[LAND_DIFF_FEATURES].shift(time=-1)
 
-    country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(ds)
-    ds = ds.assign_coords(country=country_mask)
-    
+    mask = ds["ELUC_diff"].isnull().compute()
+    ds = ds.where(~mask, drop=True)
+
+    country_mask = countries.mask(ds)
+    ds["country"] = country_mask
     return ds
 
 
 def convert_to_dataframe(da):
     df = da.to_dataframe()
     df = df.dropna()
-    return df[FEATURES + [LABEL]]
+    return df[FEATURES + ["country"] + [LABEL]]
 
 
-def main():
+def process_data(country_list=None):
     print("Processing data...")
     print("Downloading data...")
     if not os.path.exists("merged_aggregated_dataset_1850_2022.zarr.zip"):
@@ -47,26 +49,36 @@ def main():
             local_dir="./",
             local_dir_use_symlinks=False)
     print("Downloaded data")
-    PATH_TO_DATASET = "merged_aggregated_dataset_1850_2022.zarr.zip"
-    ds = process_ds(PATH_TO_DATASET)
+
     countries = regionmask.defined_regions.natural_earth_v5_0_0.countries_110
     countries_df = countries.to_dataframe()
-    country_id_list = countries_df.index[countries_df['abbrevs'].isin(COUNTRY_LIST)].tolist()
+    ds = process_ds(PATH_TO_DATASET, countries)
 
-    da = ds.where(ds.country.isin(country_id_list), drop=True)
-    df = convert_to_dataframe(da)
-    print(df.head())
+    # Filter by country
+    if country_list:
+        country_id_list = countries_df.index[countries_df['abbrevs'].isin(country_list)].tolist()
+        ds = ds.where(ds["country"].isin(country_id_list), drop=True)
+
+    print("Converting to dataframe...")
+    df = convert_to_dataframe(ds)
+    print(df.shape)
+
     path = ""
-    for c in COUNTRY_LIST:
-        path += c + "_"
+    if country_list:
+        for c in country_list:
+            path += c + "_"
     path += "eluc.csv"
-    print(path)
+    print(f"Writing data to {path}")
     if not os.path.isdir("processed/"):
         print("mkdir")
         os.mkdir("processed/")
-    print('to csv')
     df.to_csv(f"processed/{path.lower()}", index=True)
-    print('done')
+
+
+def main():
+    # country_list = ["GB", "BR", "CH"]
+    process_data()
+
 
 if __name__ == "__main__":
     main()

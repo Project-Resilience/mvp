@@ -45,13 +45,8 @@ lon_list = list(np.arange(min_lon, max_lon + constants.GRID_STEP, constants.GRID
 
 map_fig = go.Figure()
 
-#TODO: Is this allowed?
-random_forest_predictor = Predictor.SkLearnPredictor(constants.RANDOM_FOREST_PATH)
-#linear_predictor = Predictor.SkLearnPredictor(constants.LINEAR_PATH)
-# Load linear zone predictors
-linear_predictors = []
-for filename in os.listdir(constants.ZONE_PATH):
-    linear_predictors.append(Predictor.SkLearnPredictor(os.path.join(constants.ZONE_PATH, filename)))
+# Load predictors
+predictors = utils.load_predictors()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -197,7 +192,7 @@ frozen_div = html.Div([
 ])
 
 predict_div = html.Div([
-    dcc.Dropdown(constants.PREDICTOR_LIST, constants.PREDICTOR_LIST[0], id="pred-select", style={"width": "200px"}),
+    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
     html.Button("Predict", id='predict-button', n_clicks=0,),
     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
     dcc.Input(
@@ -351,7 +346,7 @@ def update_map(year, lat, lon, location):
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
     idx = data[lat_lon].index[0]
 
-    return utils.create_map(data, lat, lon, 10, idx)
+    return utils.create_map(data, 10, idx)
 
 
 @app.callback(
@@ -621,29 +616,9 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     diff = diff.rename(constants.COLS_MAP)
     diff_df = pd.DataFrame([diff])
 
-    predictor = None
-    prediction = 0
-    if predictor_name == "Random Forest":
-        predictor = random_forest_predictor
-        prediction = predictor.predict(diff_df)
-        return f"{prediction:.4f}"
-    
-    elif predictor_name == "Linear Regression":
-        # Select correct predictor based on latitude
-        pred_idx = 0
-        if abs(lat) >= 23.5 and abs(lat) < 40:
-            pred_idx = 1
-        elif abs(lat) >= 40 and abs(lat) < 60:
-            pred_idx = 2
-        elif abs(lat) >= 60:
-            pred_idx = 3
-        predictor = linear_predictors[pred_idx]
-        
-        prediction = predictor.predict(diff_df)
-        return f"{prediction:.4f}"
-
-    else:
-        return "0"
+    predictor = predictors[predictor_name]
+    eluc = predictor.predict(diff_df)
+    return f"{eluc:.4f}"
 
 
 @app.callback(
@@ -694,6 +669,8 @@ identified by its latitude and longitude coordinates, and a given year:
 * What changes can we make to the land usage
 * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare)
+
+*Note: the prescriptor model is currently only trained on Western Europe*
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([
@@ -727,4 +704,4 @@ in tons of carbon per hectare)
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True, port=4057, use_reloader=False, threaded=False)
+    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)

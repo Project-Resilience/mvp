@@ -37,7 +37,7 @@ cao_mapping = {
     'outcomes': ['ELUC', 'Change']}
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/eluc_test.csv")
+DATA_FILE_PATH = os.path.join(ROOT_DIR, "../data/processed/eluc_1982.csv")
 
 GRID_STEP = 0.25
 
@@ -58,12 +58,6 @@ CHART_COLS = LAND_USE_COLS + ["nonland"]
 
 SLIDER_PRECISION = 1e-5
 
-MAP_COORDINATE_DICT = {
-    "UK": {"lat": 54.5, "lon": -2.5, "zoom": 20}, 
-    "Brazil": {"lat": -12, "lon": -51.2, "zoom": 4},
-    "Switzerland": {"lat": 47, "lon": 8.15, "zoom": 20}
-}
-
 # Tonnes of CO2 per person for a flight from JFK to Geneva
 CO2_JFK_GVA = 2.2
 CO2_PERSON = 4
@@ -82,9 +76,6 @@ PARETO_CSV_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto.csv")
 PARETO_FRONT_PATH = os.path.join(ROOT_DIR, "../prescriptors/pareto_front.png")
 PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
-PREDICTOR_LIST = ["Linear Regression", "Random Forest"]
-RANDOM_FOREST_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_forest.joblib")
-LINEAR_PATH = os.path.join(ROOT_DIR, "../predictors/ELUC_linreg.joblib")
-ZONE_PATH = os.path.join(ROOT_DIR, "../predictors/linear_zones/")
+PREDICTOR_PATH = os.path.join(ROOT_DIR, "../predictors/")
 PRESCRIPTOR_PATH = os.path.join(ROOT_DIR, "../prescriptors/")
-DEFAULT_PRESCRIPTOR_IDX = 2  # By default we select the third prescriptor that minimizes change
+DEFAULT_PRESCRIPTOR_IDX = 3  # By default we select the fourth prescriptor that minimizes change

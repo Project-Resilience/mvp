@@ -38,9 +38,7 @@ class TestUtils(unittest.TestCase):
         lat = present.iloc[idx]["lat"]
         lon = present.iloc[idx]["lon"]
         fig = utils.create_map(
-            present, 
-            constants.MAP_COORDINATE_DICT["UK"]["lat"], 
-            constants.MAP_COORDINATE_DICT["UK"]["lon"], 
+            present,
             zoom=constants.MAP_COORDINATE_DICT["UK"]["zoom"], 
             color_idx=idx
         )
@@ -80,11 +78,24 @@ class TestUtils(unittest.TestCase):
         Tests compute percent change when nothing changes.
         """
         context_data = [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.12]
+        presc_data = context_data[0:6] + context_data [8:11]
         context = pd.Series(dict(zip(constants.LAND_USE_COLS, context_data)))
-        presc = pd.Series(dict(zip(constants.RECO_COLS, context_data)))
+        presc = pd.Series(dict(zip(constants.RECO_COLS, presc_data)))
 
         percent_change = utils.compute_percent_change(context, presc)
         self.assertAlmostEqual(percent_change, 0, delta=constants.SLIDER_PRECISION)
+
+    def test_compute_percent_change_all_nonreco(self):
+        """
+        Tests compute change when there is only urban/primf/primn.
+        """
+        context_data = [0, 0, 0, 0, 0, 0, 0.33, 0.33, 0, 0, 0, 0.34]
+        presc_data = context_data[0:6] + context_data [8:11]
+        context = pd.Series(dict(zip(constants.LAND_USE_COLS, context_data)))
+        presc = pd.Series(dict(zip(constants.RECO_COLS, presc_data)))
+
+        percent_change = utils.compute_percent_change(context, presc)
+        self.assertEqual(percent_change, 0)
 
     def test_compute_percent_change_not_sum_to_one(self):
         """
@@ -97,10 +108,3 @@ class TestUtils(unittest.TestCase):
 
         percent_change = utils.compute_percent_change(context, presc)
         self.assertAlmostEqual(percent_change, 0.333333, delta=constants.SLIDER_PRECISION)
-
-    def test_create_treemap(self):
-        context_data = [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.04]
-        context = pd.Series(dict(zip(constants.LAND_USE_COLS, context_data)))
-        fig = utils.create_treemap(context)
-        print(fig)
-        self.assertEqual(0, 1)

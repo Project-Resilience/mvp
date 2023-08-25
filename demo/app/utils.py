@@ -1,9 +1,12 @@
 import pandas as pd
+import json
+import os
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
 from . import constants
+from . import Predictor
 
 def add_nonland(data: pd.Series) -> pd.Series:
     """
@@ -19,7 +22,7 @@ def add_nonland(data: pd.Series) -> pd.Series:
     return data[constants.CHART_COLS]
 
 
-def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, color_idx = None) -> go.Figure:
+def create_map(df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
     """
     Creates map figure with data centered and zoomed in with appropriate point marked.
     :param df: DataFrame of data to plot. This dataframe has its index reset.
@@ -44,12 +47,11 @@ def create_map(df: pd.DataFrame, lat_center: float, lon_center: float, zoom=10, 
         color="color",
         color_discrete_sequence=color_seq,
         hover_data={"lat": True, "lon": True, "color": False},
-        center={"lat": lat_center, "lon": lon_center},
         size_max=10
     )
 
     map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
-    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True)
+    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True, fitbounds="locations")
     return map_fig
 
 
@@ -77,7 +79,11 @@ def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
     diffs = presc[constants.RECO_COLS] - context[constants.RECO_COLS]
     change = diffs[diffs > 0].sum()
     total = context[constants.LAND_USE_COLS].sum()
-    assert total > 0
+
+    # If we can't change the land use just return 0.
+    if total <= 0:
+        return 0
+    
     percent_changed = change / total
     assert percent_changed <= 1
 
@@ -255,11 +261,24 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
                     })
     # Name axes and hide legend
     fig.update_layout(xaxis_title={"text": "Change (%)"},
-                      yaxis_title={"text": 'ELUC (tC/ha/yr)'},
+                      yaxis_title={"text": 'ELUC (tC/ha)'},
                       showlegend=False,
                       title="Prescriptors",
                       )
     fig.update_traces(hovertemplate="Average Change: %{x} <span>&#37;</span>"
                                     "<br>"
-                                    " Average ELUC: %{y} tC/ha/yr<extra></extra>")
+                                    " Average ELUC: %{y} tC/ha<extra></extra>")
     return fig
+
+
+def load_predictors() -> dict:
+    """
+    Loads in predictors from json file according to config.
+    :return: dict of predictor name -> predictor object.
+    """
+    predictor_cfg = json.load(open(os.path.join(constants.PREDICTOR_PATH, "predictors.json")))
+    predictors = dict()
+    # This is ok because python dicts are ordered.
+    for row in predictor_cfg["predictors"]:
+        predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
+    return predictors

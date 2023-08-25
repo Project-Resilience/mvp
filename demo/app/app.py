@@ -1,7 +1,9 @@
 from math import isclose
 
+import os
 import numpy as np
 import pandas as pd
+import regionmask
 import plotly.graph_objects as go
 from dash import ALL
 from dash import MATCH
@@ -23,17 +25,14 @@ app = Dash(__name__,
            prevent_initial_callbacks="initial_duplicate")
 server = app.server
 
-# TODO: should we load all our data into a store?
-# This seems more secure.
 df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
-#df = pd.read_csv("../data/gcb/processed/uk_eluc.csv")
+countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
+
+# Prescriptor list should be in order of least to most change
 pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
-# We have to reverse for some reason?
 prescriptor_list = list(pareto_df["id"])
-prescriptor_list.reverse()
 
 # Cells
-GRID_STEP = 0.25
 min_lat = df.index.get_level_values("lat").min()
 max_lat = df.index.get_level_values("lat").max()
 min_lon = df.index.get_level_values("lon").min()
@@ -41,13 +40,13 @@ max_lon = df.index.get_level_values("lon").max()
 min_time = df.index.get_level_values("time").min()
 max_time = df.index.get_level_values("time").max()
 
-lat_list = list(np.arange(min_lat, max_lat + GRID_STEP, GRID_STEP))
-lon_list = list(np.arange(min_lon, max_lon + GRID_STEP, GRID_STEP))
+lat_list = list(np.arange(min_lat, max_lat + constants.GRID_STEP, constants.GRID_STEP))
+lon_list = list(np.arange(min_lon, max_lon + constants.GRID_STEP, constants.GRID_STEP))
 
 map_fig = go.Figure()
 
-#TODO: Is this allowed?
-random_forest_predictor = Predictor.RandomForestPredictor()
+# Load predictors
+predictors = utils.load_predictors()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -93,8 +92,8 @@ context_div = html.Div(
         html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
         dcc.Dropdown(
             id="loc-dropdown",
-            options=list(constants.MAP_COORDINATE_DICT.keys()),
-            value=list(constants.MAP_COORDINATE_DICT.keys())[0],
+            options=list(countries_df["names"]),
+            value=list(countries_df["names"])[143],
             style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         ),
         html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
@@ -193,7 +192,7 @@ frozen_div = html.Div([
 ])
 
 predict_div = html.Div([
-    dcc.Dropdown(constants.PREDICTOR_LIST, constants.PREDICTOR_LIST[0], id="pred-select", style={"width": "200px"}),
+    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
     html.Button("Predict", id='predict-button', n_clicks=0,),
     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
     dcc.Input(
@@ -301,29 +300,53 @@ def click_map(click_data):
     """
     return click_data["points"][0]["lat"], click_data["points"][0]["lon"]
 
+@app.callback(
+    Output("lat-dropdown", "value", allow_duplicate=True),
+    Output("lon-dropdown", "value", allow_duplicate=True),
+    Input("loc-dropdown", "value"),
+    State("year-input", "value"),
+    prevent_initial_call=True
+)
+def select_country(location, year):
+    """
+    Changes the selected country and relocates map to a valid lat/lon.
+    This makes the update_map function only load the current country's data.
+    :param location: Selected country name.
+    :param year: Used to get proper # of points to sample from.
+    :return: A sample latitude/longitude point within the selected country.
+    """
+    country_idx = countries_df[countries_df["names"] == location].index[0]
+    samples = df[df["country"] == country_idx].loc[year]
+    example = samples.iloc[len(samples) // 2]
+    return example.name[0], example.name[1]
+
 
 @app.callback(
     Output("map", "figure"),
-    Input("loc-dropdown", "value"),
     Input("year-input", "value"),
     Input("lat-dropdown", "value"),
-    Input("lon-dropdown", "value")
+    Input("lon-dropdown", "value"),
+    State("loc-dropdown", "value"),
 )
-def update_map(location, year, lat, lon):
+def update_map(year, lat, lon, location):
     """
     Updates map data behind the scenes when year is clicked.
     Changes focus when region is selected.
-    :param location: The name of the country selected from the dropdown.
+    :param location: Selected country name.
     :param year: The selected year.
     :return: A newly created map.
     """
-    coord_dict = constants.MAP_COORDINATE_DICT[location]
+    country_idx = countries_df[countries_df["names"] == location].index[0]
+    # Filter data by year and location
     data = df.loc[year]
+    data = data[data["country"] == country_idx]
     data = data.copy().reset_index()
+
+    # Find colored point
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
     idx = data[lat_lon].index[0]
 
-    return utils.create_map(data, coord_dict["lat"], coord_dict["lon"], coord_dict["zoom"], idx)
+    return utils.create_map(data, 10, idx)
 
 
 @app.callback(
@@ -593,15 +616,9 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     diff = diff.rename(constants.COLS_MAP)
     diff_df = pd.DataFrame([diff])
 
-    predictor = None
-    prediction = 0
-    if predictor_name == "Random Forest":
-        predictor = random_forest_predictor
-        prediction = predictor.predict(diff_df)
-        return f"{prediction:.4f}"
-
-    else:
-        return "0"
+    predictor = predictors[predictor_name]
+    eluc = predictor.predict(diff_df)
+    return f"{eluc:.4f}"
 
 
 @app.callback(
@@ -633,6 +650,7 @@ def update_trivia(eluc_str, year, lat, lon):
             f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
                 f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
 
+
 app.title = 'Land Use Optimization'
 app.css.config.serve_locally = False
 # Don't be afraid of the 3rd party URLs: chriddyp is the author of Dash!
@@ -651,6 +669,8 @@ identified by its latitude and longitude coordinates, and a given year:
 * What changes can we make to the land usage
 * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare)
+
+*Note: the prescriptor model is currently only trained on Western Europe*
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([
@@ -684,4 +704,4 @@ in tons of carbon per hectare)
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=True, port=4057, use_reloader=False, threaded=False)
+    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)

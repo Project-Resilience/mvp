@@ -9,16 +9,20 @@ from . import constants
 warnings.filterwarnings("ignore")
 
 class Predictor(ABC):
+    """
+    Abstract class for predictor models to inherit.
+    """
 
     @abstractmethod
     def predict(self, input):
         pass
 
 
-class RandomForestPredictor(Predictor):
-    def __init__(self, load_path=constants.RANDOM_FOREST_PATH):
+class SkLearnPredictor(Predictor):
+    def __init__(self, load_path):
         self.model = load(load_path)
 
     def predict(self, input):
         pred = self.model.predict(input)
         return pred[0]
+    

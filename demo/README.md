@@ -38,7 +38,7 @@ then the container can be run with:
 ```
 docker run \
 -v PATH_TO_PROJECT/mvp/demo/data/processed:/usr/local/cognizant/eluc/data/processed:ro \
--v PATH_TO_PROJECT/mvp/demo/predictors:/usr/local/congizant/eluc/predictors:ro \
+-v PATH_TO_PROJECT/mvp/demo/predictors:/usr/local/cognizant/eluc/predictors:ro \
 -p 8080:4057 eluc-demo
 ```
 Note: This mounts your local directories to the docker container, different steps may have to be taken for different setups.

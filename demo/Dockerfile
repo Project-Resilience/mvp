@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 4057
 
 # Run main UI
-ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:4057", "app.app:server"]
+ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:4057", "--timeout", "45", "app.app:server"]

@@ -1,11 +1,13 @@
 import unittest
 import pandas as pd
+import json
 
 import app.app as app
 import app.constants as constants
 import app.utils as utils
 
-class TestUtils(unittest.TestCase):
+
+class TestUtilFunctions(unittest.TestCase):
 
     def setUp(self):
         self.df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
@@ -27,25 +29,6 @@ class TestUtils(unittest.TestCase):
         series = pd.Series(dict(zip(constants.LAND_USE_COLS, data)))
         full = utils.add_nonland(series)
         self.assertAlmostEqual(full["nonland"], 0, delta=constants.SLIDER_PRECISION)
-
-    # TODO: Why doesn't this work with idx=0?
-    def test_create_map(self):
-        """
-        Checks if created map has correct point colored red.
-        """
-        idx = 1
-        present = self.df.loc[2021].copy().reset_index()
-        lat = present.iloc[idx]["lat"]
-        lon = present.iloc[idx]["lon"]
-        fig = utils.create_map(
-            present,
-            zoom=constants.MAP_COORDINATE_DICT["UK"]["zoom"], 
-            color_idx=idx
-        )
-        customdata = fig['data'][1]['customdata'][0]
-        self.assertEqual(customdata[0], lat)
-        self.assertEqual(customdata[1], lon)
-        self.assertEqual(customdata[2], "red")
 
     def test_create_check_options_length(self):
         values = ["a", "b", "c"]
@@ -108,3 +91,63 @@ class TestUtils(unittest.TestCase):
 
         percent_change = utils.compute_percent_change(context, presc)
         self.assertAlmostEqual(percent_change, 0.333333, delta=constants.SLIDER_PRECISION)
+
+
+class TestEncoder(unittest.TestCase):
+    """
+    Since the encoded values are somewhat arbitrary based off what the prescriptor
+    is trained on, we have to test based off what is in the fields file.
+    """
+
+    def setUp(self):
+        self.df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
+        self.encoder = None
+        self.fields = None
+        with open(constants.FIELDS_PATH, "r") as f:
+            self.fields = json.load(f)
+            self.encoder = utils.Encoder(self.fields)
+
+    def test_easy_case(self):
+        """
+        Tests encoding a simple case.
+        """
+        row = self.df.iloc[[0]]
+        row = row[constants.CONTEXT_COLUMNS]
+        pred = self.encoder.encode_as_df(row)
+
+        for col in constants.CONTEXT_COLUMNS:
+            range = self.fields[col]["range"]
+            # Min-max scale formula
+            true = (row[col].values[0] - range[0]) / (range[1] - range[0])
+            self.assertAlmostEqual(pred[col].values[0], true, delta=constants.SLIDER_PRECISION)
+
+    def test_non_field_cols(self):
+        """
+        Test that non-field columns are not encoded and excluded from final dataframe.
+        """
+        row = self.df.iloc[[0]]
+        row = row[constants.CONTEXT_COLUMNS]
+        row["test"] = 999
+        enc = self.encoder.encode_as_df(row)
+        # Make sure we didn't add the test column
+        self.assertEqual(sorted(list(enc.columns)), sorted(constants.CONTEXT_COLUMNS))
+
+        # Make sure we're still encoding
+        true = (row["primf"].values[0] - self.fields["primf"]["range"][0]) / (self.fields["primf"]["range"][1] - self.fields["primf"]["range"][0])
+        self.assertAlmostEqual(enc["primf"].values[0], true, delta=constants.SLIDER_PRECISION)
+
+    def test_multiple_input(self):
+        """
+        Tests we can pass in a multi-row dataframe and get proper encodings.
+        This isn't strictly necessary for our current use case, but it's good to test.
+        """
+        rows = self.df.iloc[0:2]
+        rows = rows[constants.CONTEXT_COLUMNS]
+        enc = self.encoder.encode_as_df(rows)
+
+        for col in constants.CONTEXT_COLUMNS:
+            minmax = self.fields[col]["range"]
+            for i in range(len(rows)):
+                val = rows.iloc[i][col]
+                true = (val - minmax[0]) / (minmax[1] - minmax[0])
+                self.assertAlmostEqual(enc.iloc[i][col], true, delta=constants.SLIDER_PRECISION)

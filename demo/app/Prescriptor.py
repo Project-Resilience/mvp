@@ -1,42 +1,12 @@
 import os
+import json
 from typing import List
 import pandas as pd
 import numpy as np
 from keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
 
 from . import constants
-
-class Encoder:
-    """
-    A mini version of the unileaf-util DataEncoder.
-    Takes a field dictionary and creates min/max scalers using their ranges.
-    """
-    def __init__(self, fields):
-        self.transformers = {}
-        for field in fields:
-            field_values = fields[field]["range"]
-            self.transformers[field] = MinMaxScaler(clip=True)
-            data_df = pd.DataFrame({field: field_values})
-            self.transformers[field].fit(data_df)
-
-
-    def encode_as_df(self, df):
-        """
-        Encodes a given dataframe using the min max scalers.
-        :param df: a dataframe to encode
-        :return: a dataframe of encoded values. Only returns columns in the transformer dictionary.
-        """
-        values_by_column = {}
-        for col in df:
-            if col in self.transformers:
-                encoded_values = self.transformers[col].transform(df[[col]])
-                values_by_column[col] = encoded_values.squeeze().tolist()
-
-        encoded_df = pd.DataFrame.from_records(values_by_column,
-                                               index=list(range(df.shape[0]))
-                                               )[values_by_column.keys()]
-        return encoded_df
+from . import utils
 
 
 class Prescriptor:
@@ -54,7 +24,10 @@ class Prescriptor:
         print(f'Loading prescriptor model: {prescriptor_model_filename}')
         self.prescriptor_model = load_model(prescriptor_model_filename, compile=False)
 
-        self.encoder = Encoder(constants.fields)
+        self.encoder = None
+        with open(constants.FIELDS_PATH, 'r') as f:
+            fields = json.load(f)
+            self.encoder = utils.Encoder(fields)
 
 
     def _is_single_action_prescriptor(self, actions):

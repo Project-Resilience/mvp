@@ -1,11 +1,13 @@
 import os
+import json
 from typing import List
 import pandas as pd
 import numpy as np
 from keras.models import load_model
-from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
 from . import constants
+from . import utils
+
 
 class Prescriptor:
     """
@@ -22,7 +24,10 @@ class Prescriptor:
         print(f'Loading prescriptor model: {prescriptor_model_filename}')
         self.prescriptor_model = load_model(prescriptor_model_filename, compile=False)
 
-        self.encoder = DataEncoder(constants.fields, constants.cao_mapping)
+        self.encoder = None
+        with open(constants.FIELDS_PATH, 'r') as f:
+            fields = json.load(f)
+            self.encoder = utils.Encoder(fields)
 
 
     def _is_single_action_prescriptor(self, actions):

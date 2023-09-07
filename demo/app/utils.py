@@ -1,12 +1,50 @@
 import pandas as pd
 import json
 import os
+from sklearn.preprocessing import MinMaxScaler
 import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
 from . import constants
 from . import Predictor
+
+
+class Encoder:
+    """
+    Takes a field dictionary and creates min/max scalers using their ranges.
+    Field dictionary needs to be in format (see prescriptors/fields.json):
+        {
+            "field a": {"range": [x, y]},
+            "field b": {"range": [z, s]}
+        }
+    """
+    def __init__(self, fields):
+        self.transformers = {}
+        for field in fields:
+            field_values = fields[field]["range"]
+            self.transformers[field] = MinMaxScaler(clip=True)
+            data_df = pd.DataFrame({field: field_values})
+            self.transformers[field].fit(data_df)
+
+
+    def encode_as_df(self, df):
+        """
+        Encodes a given dataframe using the min max scalers.
+        :param df: a dataframe to encode
+        :return: a dataframe of encoded values. Only returns columns in the transformer dictionary.
+        """
+        values_by_column = {}
+        for col in df:
+            if col in self.transformers:
+                encoded_values = self.transformers[col].transform(df[[col]])
+                values_by_column[col] = encoded_values.squeeze().tolist()
+
+        encoded_df = pd.DataFrame.from_records(values_by_column,
+                                               index=list(range(df.shape[0]))
+                                               )[values_by_column.keys()]
+        return encoded_df
+
 
 def add_nonland(data: pd.Series) -> pd.Series:
     """

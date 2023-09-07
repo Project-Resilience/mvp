@@ -14,10 +14,6 @@ RUN apt-get update -y && \
 # Set work directory
 WORKDIR ${ELUC_APP_HOME}
 
-# Token to download leaf-util
-ARG leaf_private_source_credentials
-ENV LEAF_PRIVATE_SOURCE_CREDENTIALS=${leaf_private_source_credentials}
-
 # Dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \

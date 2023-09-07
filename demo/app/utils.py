@@ -12,8 +12,12 @@ from . import Predictor
 
 class Encoder:
     """
-    A mini version of the unileaf-util DataEncoder.
     Takes a field dictionary and creates min/max scalers using their ranges.
+    Field dictionary needs to be in format (see prescriptors/fields.json):
+        {
+            "field a": {"range": [x, y]},
+            "field b": {"range": [z, s]}
+        }
     """
     def __init__(self, fields):
         self.transformers = {}

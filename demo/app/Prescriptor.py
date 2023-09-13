@@ -21,7 +21,6 @@ class Prescriptor:
         prescriptor_model_filename = os.path.join(constants.PRESCRIPTOR_PATH,
                                                 prescriptor_id + '.h5')
 
-        print(f'Loading prescriptor model: {prescriptor_model_filename}')
         self.prescriptor_model = load_model(prescriptor_model_filename, compile=False)
 
         self.encoder = None

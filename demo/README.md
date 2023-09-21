@@ -18,6 +18,8 @@ Prescriptors are already stored in `prescriptors/` as well as the pareto front i
 
 Testing can be done with ``python -m unittest discover``
 
+To run specific tests run ``python -m unittest tests.test_app TestCase.test_specific_case``
+
 ## Running the app:
 
 To run the app call the app module with ``python -m app.app`` or use gunicorn with ``gunicorn -b 0.0.0.0:4057 app.app:server``.

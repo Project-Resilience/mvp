@@ -5,6 +5,7 @@ import json
 import app.app as app
 import app.constants as constants
 import app.utils as utils
+import app.Prescriptor as Prescriptor
 
 
 class TestUtilFunctions(unittest.TestCase):
@@ -151,3 +152,43 @@ class TestEncoder(unittest.TestCase):
                 val = rows.iloc[i][col]
                 true = (val - minmax[0]) / (minmax[1] - minmax[0])
                 self.assertAlmostEqual(enc.iloc[i][col], true, delta=constants.SLIDER_PRECISION)
+
+
+class TestPrescriptor(unittest.TestCase):
+
+    def setUp(self):
+        self.df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
+        
+        pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
+        self.prescriptor_id_list = list(pareto_df["id"])
+
+    def test_load_all_prescriptors(self):
+        """
+        Checks if all the prescriptors are loadable
+        """
+        for presc_id in self.prescriptor_list:
+            presc = Prescriptor.Prescriptor(presc_id)
+            self.assertNotEqual(presc, None)
+
+    def test_prescribe_shape(self):
+        """
+        Tests if the prescribe function outputs something in the right shape
+        """
+        presc = Prescriptor.Prescriptor(self.prescriptor_id_list[0])
+        for i in range(1, 10):
+            sample_context_df = self.df.iloc[0:i][constants.CONTEXT_COLUMNS]
+
+            prescription = presc.run_prescriptor(sample_context_df)
+            self.assertEqual(set(prescription.columns), set(constants.RECO_COLS))
+            self.assertEqual(len(prescription), i)
+
+    def test_scale(self):
+        """
+        Tests if prescriptor properly scales land use back to what it should be.
+        """
+        presc = Prescriptor.Prescriptor(self.prescriptor_id_list[0])
+        sample_context_df = self.df.iloc[0:100][constants.CONTEXT_COLUMNS]
+        old_total = sample_context_df[constants.RECO_COLS].sum(axis=1).reset_index(drop=True)
+        prescription = presc.run_prescriptor(sample_context_df)
+        new_total = prescription.sum(axis=1)
+        self.assertEqual(old_total.equals(new_total), True)

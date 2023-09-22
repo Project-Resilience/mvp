@@ -1,6 +1,6 @@
 # MVP Climate Change Demo
 
-This is a demo of the MVP Climate Change app. It allows users to select a location and year from a map of the world, see its land use composition, and prescribe or manually make changes to it and see the predicted ELUC (Emissions from Land Use Change) and amount of land changed. It is a simple Dash app.
+This is a demo of the MVP Climate Change app. It allows users to select a location and year from a map of the world, see its land use composition, and prescribe or manually make changes to it and see the predicted ELUC (Emissions from Land Use Change) and amount of land changed. It is a simple Dash app. The demo can be found online at [landuse.evoluion.ml](https://landuse.evolution.ml)
 
 ## Downloading the data:
 
@@ -33,8 +33,8 @@ docker build -t eluc-demo .
 then the container can be run with:
 ```
 docker run \
--v PATH_TO_PROJECT/mvp/demo/data/processed:/usr/local/cognizant/eluc/data/processed:ro \
--v PATH_TO_PROJECT/mvp/demo/predictors:/usr/local/cognizant/eluc/predictors:ro \
+-v PATH_TO_PROJECT/mvp/use_cases/eluc/demo/data/processed:/usr/local/cognizant/eluc/data/processed:ro \
+-v PATH_TO_PROJECT/mvp/use_cases/eluc/demo/predictors:/usr/local/cognizant/eluc/predictors:ro \
 -p 8080:4057 eluc-demo
 ```
 Note: This mounts your local directories to the docker container, different steps may have to be taken for different setups.

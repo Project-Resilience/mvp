@@ -1,0 +1,627 @@
+country_name,country_code,neighbor_name,neighbor_code
+Afghanistan,AFG,China,CHN
+Afghanistan,AFG,Iran,IRN
+Afghanistan,AFG,Pakistan,PAK
+Afghanistan,AFG,Tajikistan,TJK
+Afghanistan,AFG,Turkmenistan,TKM
+Afghanistan,AFG,Uzbekistan,UZB
+Angola,AGO,Democratic Republic of the Congo,COD
+Angola,AGO,Republic of Congo,COG
+Angola,AGO,Namibia,NAM
+Angola,AGO,Zambia,ZMB
+Albania,ALB,Greece,GRC
+Albania,ALB,Kosovo,KOS
+Albania,ALB,Macedonia,MKD
+Albania,ALB,Montenegro,MNE
+United Arab Emirates,ARE,Oman,OMN
+United Arab Emirates,ARE,Saudi Arabia,SAU
+Argentina,ARG,Bolivia,BOL
+Argentina,ARG,Brazil,BRA
+Argentina,ARG,Chile,CHL
+Argentina,ARG,Paraguay,PRY
+Argentina,ARG,Uruguay,URY
+Armenia,ARM,Azerbaijan,AZE
+Armenia,ARM,Georgia,GEO
+Armenia,ARM,Iran,IRN
+Armenia,ARM,Turkey,TUR
+Austria,AUT,Switzerland,CHE
+Austria,AUT,Czech Republic,CZE
+Austria,AUT,Germany,DEU
+Austria,AUT,Hungary,HUN
+Austria,AUT,Italy,ITA
+Austria,AUT,Slovakia,SVK
+Austria,AUT,Slovenia,SVN
+Azerbaijan,AZE,Armenia,ARM
+Azerbaijan,AZE,Georgia,GEO
+Azerbaijan,AZE,Iran,IRN
+Azerbaijan,AZE,Russia,RUS
+Azerbaijan,AZE,Turkey,TUR
+Burundi,BDI,Democratic Republic of the Congo,COD
+Burundi,BDI,Rwanda,RWA
+Burundi,BDI,United Republic of Tanzania,TZA
+Belgium,BEL,Germany,DEU
+Belgium,BEL,France,FRA
+Belgium,BEL,Luxembourg,LUX
+Belgium,BEL,Netherlands,NLD
+Benin,BEN,Burkina Faso,BFA
+Benin,BEN,Niger,NER
+Benin,BEN,Nigeria,NGA
+Benin,BEN,Togo,TGO
+Burkina Faso,BFA,Benin,BEN
+Burkina Faso,BFA,Ivory Coast,CIV
+Burkina Faso,BFA,Ghana,GHA
+Burkina Faso,BFA,Mali,MLI
+Burkina Faso,BFA,Niger,NER
+Burkina Faso,BFA,Togo,TGO
+Bangladesh,BGD,India,IND
+Bangladesh,BGD,Myanmar,MMR
+Bulgaria,BGR,Greece,GRC
+Bulgaria,BGR,Macedonia,MKD
+Bulgaria,BGR,Romania,ROU
+Bulgaria,BGR,Republic of Serbia,SRB
+Bulgaria,BGR,Turkey,TUR
+Bosnia and Herzegovina,BIH,Croatia,HRV
+Bosnia and Herzegovina,BIH,Montenegro,MNE
+Bosnia and Herzegovina,BIH,Republic of Serbia,SRB
+Belarus,BLR,Lithuania,LTU
+Belarus,BLR,Latvia,LVA
+Belarus,BLR,Poland,POL
+Belarus,BLR,Russia,RUS
+Belarus,BLR,Ukraine,UKR
+Belize,BLZ,Guatemala,GTM
+Belize,BLZ,Mexico,MEX
+Bolivia,BOL,Argentina,ARG
+Bolivia,BOL,Brazil,BRA
+Bolivia,BOL,Chile,CHL
+Bolivia,BOL,Peru,PER
+Bolivia,BOL,Paraguay,PRY
+Brazil,BRA,Argentina,ARG
+Brazil,BRA,Bolivia,BOL
+Brazil,BRA,Colombia,COL
+Brazil,BRA,France,FRA
+Brazil,BRA,Guyana,GUY
+Brazil,BRA,Peru,PER
+Brazil,BRA,Paraguay,PRY
+Brazil,BRA,Suriname,SUR
+Brazil,BRA,Uruguay,URY
+Brazil,BRA,Venezuela,VEN
+Brunei,BRN,Malaysia,MYS
+Bhutan,BTN,China,CHN
+Bhutan,BTN,India,IND
+Botswana,BWA,Namibia,NAM
+Botswana,BWA,South Africa,ZAF
+Botswana,BWA,Zambia,ZMB
+Botswana,BWA,Zimbabwe,ZWE
+Central African Republic,CAF,Cameroon,CMR
+Central African Republic,CAF,Democratic Republic of the Congo,COD
+Central African Republic,CAF,Republic of Congo,COG
+Central African Republic,CAF,Sudan,SDN
+Central African Republic,CAF,Chad,TCD
+Canada,CAN,United States of America,USA
+Switzerland,CHE,Austria,AUT
+Switzerland,CHE,Germany,DEU
+Switzerland,CHE,France,FRA
+Switzerland,CHE,Italy,ITA
+Chile,CHL,Argentina,ARG
+Chile,CHL,Bolivia,BOL
+Chile,CHL,Peru,PER
+China,CHN,Afghanistan,AFG
+China,CHN,Bhutan,BTN
+China,CHN,India,IND
+China,CHN,Kazakhstan,KAZ
+China,CHN,Kyrgyzstan,KGZ
+China,CHN,Laos,LAO
+China,CHN,Myanmar,MMR
+China,CHN,Mongolia,MNG
+China,CHN,Nepal,NPL
+China,CHN,Pakistan,PAK
+China,CHN,North Korea,PRK
+China,CHN,Russia,RUS
+China,CHN,Tajikistan,TJK
+China,CHN,Vietnam,VNM
+Ivory Coast,CIV,Burkina Faso,BFA
+Ivory Coast,CIV,Ghana,GHA
+Ivory Coast,CIV,Guinea,GIN
+Ivory Coast,CIV,Liberia,LBR
+Ivory Coast,CIV,Mali,MLI
+Cameroon,CMR,Central African Republic,CAF
+Cameroon,CMR,Republic of Congo,COG
+Cameroon,CMR,Gabon,GAB
+Cameroon,CMR,Equatorial Guinea,GNQ
+Cameroon,CMR,Niger,NER
+Cameroon,CMR,Nigeria,NGA
+Cameroon,CMR,Chad,TCD
+Democratic Republic of the Congo,COD,Angola,AGO
+Democratic Republic of the Congo,COD,Burundi,BDI
+Democratic Republic of the Congo,COD,Central African Republic,CAF
+Democratic Republic of the Congo,COD,Republic of Congo,COG
+Democratic Republic of the Congo,COD,Rwanda,RWA
+Democratic Republic of the Congo,COD,South Sudan,SDS
+Democratic Republic of the Congo,COD,United Republic of Tanzania,TZA
+Democratic Republic of the Congo,COD,Uganda,UGA
+Democratic Republic of the Congo,COD,Zambia,ZMB
+Republic of Congo,COG,Angola,AGO
+Republic of Congo,COG,Central African Republic,CAF
+Republic of Congo,COG,Cameroon,CMR
+Republic of Congo,COG,Democratic Republic of the Congo,COD
+Republic of Congo,COG,Gabon,GAB
+Colombia,COL,Brazil,BRA
+Colombia,COL,Ecuador,ECU
+Colombia,COL,Panama,PAN
+Colombia,COL,Peru,PER
+Colombia,COL,Venezuela,VEN
+Costa Rica,CRI,Nicaragua,NIC
+Costa Rica,CRI,Panama,PAN
+Northern Cyprus,CYN,Cyprus,CYP
+Cyprus,CYP,Northern Cyprus,CYN
+Czech Republic,CZE,Austria,AUT
+Czech Republic,CZE,Germany,DEU
+Czech Republic,CZE,Poland,POL
+Czech Republic,CZE,Slovakia,SVK
+Germany,DEU,Austria,AUT
+Germany,DEU,Belgium,BEL
+Germany,DEU,Switzerland,CHE
+Germany,DEU,Czech Republic,CZE
+Germany,DEU,Denmark,DNK
+Germany,DEU,France,FRA
+Germany,DEU,Luxembourg,LUX
+Germany,DEU,Netherlands,NLD
+Germany,DEU,Poland,POL
+Djibouti,DJI,Eritrea,ERI
+Djibouti,DJI,Ethiopia,ETH
+Djibouti,DJI,Somaliland,SOL
+Denmark,DNK,Germany,DEU
+Dominican Republic,DOM,Haiti,HTI
+Algeria,DZA,Libya,LBY
+Algeria,DZA,Morocco,MAR
+Algeria,DZA,Mali,MLI
+Algeria,DZA,Mauritania,MRT
+Algeria,DZA,Niger,NER
+Algeria,DZA,Western Sahara,SAH
+Algeria,DZA,Tunisia,TUN
+Ecuador,ECU,Colombia,COL
+Ecuador,ECU,Peru,PER
+Egypt,EGY,Israel,ISR
+Egypt,EGY,Libya,LBY
+Egypt,EGY,Sudan,SDN
+Eritrea,ERI,Djibouti,DJI
+Eritrea,ERI,Ethiopia,ETH
+Eritrea,ERI,Sudan,SDN
+Spain,ESP,France,FRA
+Spain,ESP,Portugal,PRT
+Estonia,EST,Latvia,LVA
+Estonia,EST,Russia,RUS
+Ethiopia,ETH,Djibouti,DJI
+Ethiopia,ETH,Eritrea,ERI
+Ethiopia,ETH,Kenya,KEN
+Ethiopia,ETH,Sudan,SDN
+Ethiopia,ETH,South Sudan,SDS
+Ethiopia,ETH,Somaliland,SOL
+Ethiopia,ETH,Somalia,SOM
+Finland,FIN,Norway,NOR
+Finland,FIN,Russia,RUS
+Finland,FIN,Sweden,SWE
+France,FRA,Belgium,BEL
+France,FRA,Brazil,BRA
+France,FRA,Switzerland,CHE
+France,FRA,Germany,DEU
+France,FRA,Spain,ESP
+France,FRA,Italy,ITA
+France,FRA,Luxembourg,LUX
+France,FRA,Suriname,SUR
+Gabon,GAB,Cameroon,CMR
+Gabon,GAB,Republic of Congo,COG
+Gabon,GAB,Equatorial Guinea,GNQ
+United Kingdom,GBR,Ireland,IRL
+Georgia,GEO,Armenia,ARM
+Georgia,GEO,Azerbaijan,AZE
+Georgia,GEO,Russia,RUS
+Georgia,GEO,Turkey,TUR
+Ghana,GHA,Burkina Faso,BFA
+Ghana,GHA,Ivory Coast,CIV
+Ghana,GHA,Togo,TGO
+Guinea,GIN,Ivory Coast,CIV
+Guinea,GIN,Guinea Bissau,GNB
+Guinea,GIN,Liberia,LBR
+Guinea,GIN,Mali,MLI
+Guinea,GIN,Senegal,SEN
+Guinea,GIN,Sierra Leone,SLE
+Gambia,GMB,Senegal,SEN
+Guinea Bissau,GNB,Guinea,GIN
+Guinea Bissau,GNB,Senegal,SEN
+Equatorial Guinea,GNQ,Cameroon,CMR
+Equatorial Guinea,GNQ,Gabon,GAB
+Greece,GRC,Albania,ALB
+Greece,GRC,Bulgaria,BGR
+Greece,GRC,Macedonia,MKD
+Greece,GRC,Turkey,TUR
+Guatemala,GTM,Belize,BLZ
+Guatemala,GTM,Honduras,HND
+Guatemala,GTM,Mexico,MEX
+Guatemala,GTM,El Salvador,SLV
+Guyana,GUY,Brazil,BRA
+Guyana,GUY,Suriname,SUR
+Guyana,GUY,Venezuela,VEN
+Honduras,HND,Guatemala,GTM
+Honduras,HND,Nicaragua,NIC
+Honduras,HND,El Salvador,SLV
+Croatia,HRV,Bosnia and Herzegovina,BIH
+Croatia,HRV,Hungary,HUN
+Croatia,HRV,Montenegro,MNE
+Croatia,HRV,Republic of Serbia,SRB
+Croatia,HRV,Slovenia,SVN
+Haiti,HTI,Dominican Republic,DOM
+Hungary,HUN,Austria,AUT
+Hungary,HUN,Croatia,HRV
+Hungary,HUN,Romania,ROU
+Hungary,HUN,Republic of Serbia,SRB
+Hungary,HUN,Slovakia,SVK
+Hungary,HUN,Slovenia,SVN
+Hungary,HUN,Ukraine,UKR
+Indonesia,IDN,Malaysia,MYS
+Indonesia,IDN,Papua New Guinea,PNG
+Indonesia,IDN,East Timor,TLS
+India,IND,Bangladesh,BGD
+India,IND,Bhutan,BTN
+India,IND,China,CHN
+India,IND,Myanmar,MMR
+India,IND,Nepal,NPL
+India,IND,Pakistan,PAK
+Ireland,IRL,United Kingdom,GBR
+Iran,IRN,Afghanistan,AFG
+Iran,IRN,Armenia,ARM
+Iran,IRN,Azerbaijan,AZE
+Iran,IRN,Iraq,IRQ
+Iran,IRN,Pakistan,PAK
+Iran,IRN,Turkmenistan,TKM
+Iran,IRN,Turkey,TUR
+Iraq,IRQ,Iran,IRN
+Iraq,IRQ,Jordan,JOR
+Iraq,IRQ,Kuwait,KWT
+Iraq,IRQ,Saudi Arabia,SAU
+Iraq,IRQ,Syria,SYR
+Iraq,IRQ,Turkey,TUR
+Israel,ISR,Egypt,EGY
+Israel,ISR,Jordan,JOR
+Israel,ISR,Lebanon,LBN
+Israel,ISR,Palestine,PSX
+Israel,ISR,Syria,SYR
+Italy,ITA,Austria,AUT
+Italy,ITA,Switzerland,CHE
+Italy,ITA,France,FRA
+Italy,ITA,Slovenia,SVN
+Jordan,JOR,Iraq,IRQ
+Jordan,JOR,Israel,ISR
+Jordan,JOR,Palestine,PSX
+Jordan,JOR,Saudi Arabia,SAU
+Jordan,JOR,Syria,SYR
+Kazakhstan,KAZ,China,CHN
+Kazakhstan,KAZ,Kyrgyzstan,KGZ
+Kazakhstan,KAZ,Russia,RUS
+Kazakhstan,KAZ,Turkmenistan,TKM
+Kazakhstan,KAZ,Uzbekistan,UZB
+Kenya,KEN,Ethiopia,ETH
+Kenya,KEN,South Sudan,SDS
+Kenya,KEN,Somalia,SOM
+Kenya,KEN,United Republic of Tanzania,TZA
+Kenya,KEN,Uganda,UGA
+Kyrgyzstan,KGZ,China,CHN
+Kyrgyzstan,KGZ,Kazakhstan,KAZ
+Kyrgyzstan,KGZ,Tajikistan,TJK
+Kyrgyzstan,KGZ,Uzbekistan,UZB
+Cambodia,KHM,Laos,LAO
+Cambodia,KHM,Thailand,THA
+Cambodia,KHM,Vietnam,VNM
+South Korea,KOR,North Korea,PRK
+Kosovo,KOS,Albania,ALB
+Kosovo,KOS,Macedonia,MKD
+Kosovo,KOS,Montenegro,MNE
+Kosovo,KOS,Republic of Serbia,SRB
+Kuwait,KWT,Iraq,IRQ
+Kuwait,KWT,Saudi Arabia,SAU
+Laos,LAO,China,CHN
+Laos,LAO,Cambodia,KHM
+Laos,LAO,Myanmar,MMR
+Laos,LAO,Thailand,THA
+Laos,LAO,Vietnam,VNM
+Lebanon,LBN,Israel,ISR
+Lebanon,LBN,Syria,SYR
+Liberia,LBR,Ivory Coast,CIV
+Liberia,LBR,Guinea,GIN
+Liberia,LBR,Sierra Leone,SLE
+Libya,LBY,Algeria,DZA
+Libya,LBY,Egypt,EGY
+Libya,LBY,Niger,NER
+Libya,LBY,Sudan,SDN
+Libya,LBY,Chad,TCD
+Libya,LBY,Tunisia,TUN
+Lesotho,LSO,South Africa,ZAF
+Lithuania,LTU,Belarus,BLR
+Lithuania,LTU,Latvia,LVA
+Lithuania,LTU,Poland,POL
+Lithuania,LTU,Russia,RUS
+Luxembourg,LUX,Belgium,BEL
+Luxembourg,LUX,Germany,DEU
+Luxembourg,LUX,France,FRA
+Latvia,LVA,Belarus,BLR
+Latvia,LVA,Estonia,EST
+Latvia,LVA,Lithuania,LTU
+Latvia,LVA,Russia,RUS
+Morocco,MAR,Algeria,DZA
+Morocco,MAR,Western Sahara,SAH
+Moldova,MDA,Romania,ROU
+Moldova,MDA,Ukraine,UKR
+Mexico,MEX,Belize,BLZ
+Mexico,MEX,Guatemala,GTM
+Mexico,MEX,United States of America,USA
+Macedonia,MKD,Albania,ALB
+Macedonia,MKD,Bulgaria,BGR
+Macedonia,MKD,Greece,GRC
+Macedonia,MKD,Kosovo,KOS
+Macedonia,MKD,Republic of Serbia,SRB
+Mali,MLI,Burkina Faso,BFA
+Mali,MLI,Ivory Coast,CIV
+Mali,MLI,Algeria,DZA
+Mali,MLI,Guinea,GIN
+Mali,MLI,Mauritania,MRT
+Mali,MLI,Niger,NER
+Mali,MLI,Senegal,SEN
+Myanmar,MMR,Bangladesh,BGD
+Myanmar,MMR,China,CHN
+Myanmar,MMR,India,IND
+Myanmar,MMR,Laos,LAO
+Myanmar,MMR,Thailand,THA
+Montenegro,MNE,Albania,ALB
+Montenegro,MNE,Bosnia and Herzegovina,BIH
+Montenegro,MNE,Croatia,HRV
+Montenegro,MNE,Kosovo,KOS
+Montenegro,MNE,Republic of Serbia,SRB
+Mongolia,MNG,China,CHN
+Mongolia,MNG,Russia,RUS
+Mozambique,MOZ,Malawi,MWI
+Mozambique,MOZ,Swaziland,SWZ
+Mozambique,MOZ,United Republic of Tanzania,TZA
+Mozambique,MOZ,South Africa,ZAF
+Mozambique,MOZ,Zambia,ZMB
+Mozambique,MOZ,Zimbabwe,ZWE
+Mauritania,MRT,Algeria,DZA
+Mauritania,MRT,Mali,MLI
+Mauritania,MRT,Western Sahara,SAH
+Mauritania,MRT,Senegal,SEN
+Malawi,MWI,Mozambique,MOZ
+Malawi,MWI,United Republic of Tanzania,TZA
+Malawi,MWI,Zambia,ZMB
+Malaysia,MYS,Brunei,BRN
+Malaysia,MYS,Indonesia,IDN
+Malaysia,MYS,Thailand,THA
+Namibia,NAM,Angola,AGO
+Namibia,NAM,Botswana,BWA
+Namibia,NAM,South Africa,ZAF
+Namibia,NAM,Zambia,ZMB
+Niger,NER,Benin,BEN
+Niger,NER,Burkina Faso,BFA
+Niger,NER,Cameroon,CMR
+Niger,NER,Algeria,DZA
+Niger,NER,Libya,LBY
+Niger,NER,Mali,MLI
+Niger,NER,Nigeria,NGA
+Niger,NER,Chad,TCD
+Nigeria,NGA,Benin,BEN
+Nigeria,NGA,Cameroon,CMR
+Nigeria,NGA,Niger,NER
+Nicaragua,NIC,Costa Rica,CRI
+Nicaragua,NIC,Honduras,HND
+Netherlands,NLD,Belgium,BEL
+Netherlands,NLD,Germany,DEU
+Norway,NOR,Finland,FIN
+Norway,NOR,Russia,RUS
+Norway,NOR,Sweden,SWE
+Nepal,NPL,China,CHN
+Nepal,NPL,India,IND
+Oman,OMN,United Arab Emirates,ARE
+Oman,OMN,Saudi Arabia,SAU
+Oman,OMN,Yemen,YEM
+Pakistan,PAK,Afghanistan,AFG
+Pakistan,PAK,China,CHN
+Pakistan,PAK,India,IND
+Pakistan,PAK,Iran,IRN
+Panama,PAN,Colombia,COL
+Panama,PAN,Costa Rica,CRI
+Peru,PER,Bolivia,BOL
+Peru,PER,Brazil,BRA
+Peru,PER,Chile,CHL
+Peru,PER,Colombia,COL
+Peru,PER,Ecuador,ECU
+Papua New Guinea,PNG,Indonesia,IDN
+Poland,POL,Belarus,BLR
+Poland,POL,Czech Republic,CZE
+Poland,POL,Germany,DEU
+Poland,POL,Lithuania,LTU
+Poland,POL,Russia,RUS
+Poland,POL,Slovakia,SVK
+Poland,POL,Ukraine,UKR
+North Korea,PRK,China,CHN
+North Korea,PRK,South Korea,KOR
+North Korea,PRK,Russia,RUS
+Portugal,PRT,Spain,ESP
+Paraguay,PRY,Argentina,ARG
+Paraguay,PRY,Bolivia,BOL
+Paraguay,PRY,Brazil,BRA
+Palestine,PSX,Israel,ISR
+Palestine,PSX,Jordan,JOR
+Qatar,QAT,Saudi Arabia,SAU
+Romania,ROU,Bulgaria,BGR
+Romania,ROU,Hungary,HUN
+Romania,ROU,Moldova,MDA
+Romania,ROU,Republic of Serbia,SRB
+Romania,ROU,Ukraine,UKR
+Russia,RUS,Azerbaijan,AZE
+Russia,RUS,Belarus,BLR
+Russia,RUS,China,CHN
+Russia,RUS,Estonia,EST
+Russia,RUS,Finland,FIN
+Russia,RUS,Georgia,GEO
+Russia,RUS,Kazakhstan,KAZ
+Russia,RUS,Lithuania,LTU
+Russia,RUS,Latvia,LVA
+Russia,RUS,Mongolia,MNG
+Russia,RUS,Norway,NOR
+Russia,RUS,Poland,POL
+Russia,RUS,North Korea,PRK
+Russia,RUS,Ukraine,UKR
+Rwanda,RWA,Burundi,BDI
+Rwanda,RWA,Democratic Republic of the Congo,COD
+Rwanda,RWA,United Republic of Tanzania,TZA
+Rwanda,RWA,Uganda,UGA
+Western Sahara,SAH,Algeria,DZA
+Western Sahara,SAH,Morocco,MAR
+Western Sahara,SAH,Mauritania,MRT
+Saudi Arabia,SAU,United Arab Emirates,ARE
+Saudi Arabia,SAU,Iraq,IRQ
+Saudi Arabia,SAU,Jordan,JOR
+Saudi Arabia,SAU,Kuwait,KWT
+Saudi Arabia,SAU,Oman,OMN
+Saudi Arabia,SAU,Qatar,QAT
+Saudi Arabia,SAU,Yemen,YEM
+Sudan,SDN,Central African Republic,CAF
+Sudan,SDN,Egypt,EGY
+Sudan,SDN,Eritrea,ERI
+Sudan,SDN,Ethiopia,ETH
+Sudan,SDN,Libya,LBY
+Sudan,SDN,South Sudan,SDS
+Sudan,SDN,Chad,TCD
+South Sudan,SDS,Democratic Republic of the Congo,COD
+South Sudan,SDS,Ethiopia,ETH
+South Sudan,SDS,Kenya,KEN
+South Sudan,SDS,Sudan,SDN
+South Sudan,SDS,Uganda,UGA
+Senegal,SEN,Guinea,GIN
+Senegal,SEN,Gambia,GMB
+Senegal,SEN,Guinea Bissau,GNB
+Senegal,SEN,Mali,MLI
+Senegal,SEN,Mauritania,MRT
+Sierra Leone,SLE,Guinea,GIN
+Sierra Leone,SLE,Liberia,LBR
+El Salvador,SLV,Guatemala,GTM
+El Salvador,SLV,Honduras,HND
+Somaliland,SOL,Djibouti,DJI
+Somaliland,SOL,Ethiopia,ETH
+Somaliland,SOL,Somalia,SOM
+Somalia,SOM,Ethiopia,ETH
+Somalia,SOM,Kenya,KEN
+Somalia,SOM,Somaliland,SOL
+Republic of Serbia,SRB,Bulgaria,BGR
+Republic of Serbia,SRB,Bosnia and Herzegovina,BIH
+Republic of Serbia,SRB,Croatia,HRV
+Republic of Serbia,SRB,Hungary,HUN
+Republic of Serbia,SRB,Kosovo,KOS
+Republic of Serbia,SRB,Macedonia,MKD
+Republic of Serbia,SRB,Montenegro,MNE
+Republic of Serbia,SRB,Romania,ROU
+Suriname,SUR,Brazil,BRA
+Suriname,SUR,France,FRA
+Suriname,SUR,Guyana,GUY
+Slovakia,SVK,Austria,AUT
+Slovakia,SVK,Czech Republic,CZE
+Slovakia,SVK,Hungary,HUN
+Slovakia,SVK,Poland,POL
+Slovakia,SVK,Ukraine,UKR
+Slovenia,SVN,Austria,AUT
+Slovenia,SVN,Croatia,HRV
+Slovenia,SVN,Hungary,HUN
+Slovenia,SVN,Italy,ITA
+Sweden,SWE,Finland,FIN
+Sweden,SWE,Norway,NOR
+Swaziland,SWZ,Mozambique,MOZ
+Swaziland,SWZ,South Africa,ZAF
+Syria,SYR,Iraq,IRQ
+Syria,SYR,Israel,ISR
+Syria,SYR,Jordan,JOR
+Syria,SYR,Lebanon,LBN
+Syria,SYR,Turkey,TUR
+Chad,TCD,Central African Republic,CAF
+Chad,TCD,Cameroon,CMR
+Chad,TCD,Libya,LBY
+Chad,TCD,Niger,NER
+Chad,TCD,Sudan,SDN
+Togo,TGO,Benin,BEN
+Togo,TGO,Burkina Faso,BFA
+Togo,TGO,Ghana,GHA
+Thailand,THA,Cambodia,KHM
+Thailand,THA,Laos,LAO
+Thailand,THA,Myanmar,MMR
+Thailand,THA,Malaysia,MYS
+Tajikistan,TJK,Afghanistan,AFG
+Tajikistan,TJK,China,CHN
+Tajikistan,TJK,Kyrgyzstan,KGZ
+Tajikistan,TJK,Uzbekistan,UZB
+Turkmenistan,TKM,Afghanistan,AFG
+Turkmenistan,TKM,Iran,IRN
+Turkmenistan,TKM,Kazakhstan,KAZ
+Turkmenistan,TKM,Uzbekistan,UZB
+East Timor,TLS,Indonesia,IDN
+Tunisia,TUN,Algeria,DZA
+Tunisia,TUN,Libya,LBY
+Turkey,TUR,Armenia,ARM
+Turkey,TUR,Azerbaijan,AZE
+Turkey,TUR,Bulgaria,BGR
+Turkey,TUR,Georgia,GEO
+Turkey,TUR,Greece,GRC
+Turkey,TUR,Iran,IRN
+Turkey,TUR,Iraq,IRQ
+Turkey,TUR,Syria,SYR
+United Republic of Tanzania,TZA,Burundi,BDI
+United Republic of Tanzania,TZA,Democratic Republic of the Congo,COD
+United Republic of Tanzania,TZA,Kenya,KEN
+United Republic of Tanzania,TZA,Mozambique,MOZ
+United Republic of Tanzania,TZA,Malawi,MWI
+United Republic of Tanzania,TZA,Rwanda,RWA
+United Republic of Tanzania,TZA,Uganda,UGA
+United Republic of Tanzania,TZA,Zambia,ZMB
+Uganda,UGA,Democratic Republic of the Congo,COD
+Uganda,UGA,Kenya,KEN
+Uganda,UGA,Rwanda,RWA
+Uganda,UGA,South Sudan,SDS
+Uganda,UGA,United Republic of Tanzania,TZA
+Ukraine,UKR,Belarus,BLR
+Ukraine,UKR,Hungary,HUN
+Ukraine,UKR,Moldova,MDA
+Ukraine,UKR,Poland,POL
+Ukraine,UKR,Romania,ROU
+Ukraine,UKR,Russia,RUS
+Ukraine,UKR,Slovakia,SVK
+Uruguay,URY,Argentina,ARG
+Uruguay,URY,Brazil,BRA
+United States of America,USA,Canada,CAN
+United States of America,USA,Mexico,MEX
+Uzbekistan,UZB,Afghanistan,AFG
+Uzbekistan,UZB,Kazakhstan,KAZ
+Uzbekistan,UZB,Kyrgyzstan,KGZ
+Uzbekistan,UZB,Tajikistan,TJK
+Uzbekistan,UZB,Turkmenistan,TKM
+Venezuela,VEN,Brazil,BRA
+Venezuela,VEN,Colombia,COL
+Venezuela,VEN,Guyana,GUY
+Vietnam,VNM,China,CHN
+Vietnam,VNM,Cambodia,KHM
+Vietnam,VNM,Laos,LAO
+Yemen,YEM,Oman,OMN
+Yemen,YEM,Saudi Arabia,SAU
+South Africa,ZAF,Botswana,BWA
+South Africa,ZAF,Lesotho,LSO
+South Africa,ZAF,Mozambique,MOZ
+South Africa,ZAF,Namibia,NAM
+South Africa,ZAF,Swaziland,SWZ
+South Africa,ZAF,Zimbabwe,ZWE
+Zambia,ZMB,Angola,AGO
+Zambia,ZMB,Botswana,BWA
+Zambia,ZMB,Democratic Republic of the Congo,COD
+Zambia,ZMB,Mozambique,MOZ
+Zambia,ZMB,Malawi,MWI
+Zambia,ZMB,Namibia,NAM
+Zambia,ZMB,United Republic of Tanzania,TZA
+Zambia,ZMB,Zimbabwe,ZWE
+Zimbabwe,ZWE,Botswana,BWA
+Zimbabwe,ZWE,Mozambique,MOZ
+Zimbabwe,ZWE,South Africa,ZAF
+Zimbabwe,ZWE,Zambia,ZMB

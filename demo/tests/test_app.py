@@ -166,7 +166,7 @@ class TestPrescriptor(unittest.TestCase):
         """
         Checks if all the prescriptors are loadable
         """
-        for presc_id in self.prescriptor_list:
+        for presc_id in self.prescriptor_id_list:
             presc = Prescriptor.Prescriptor(presc_id)
             self.assertNotEqual(presc, None)
 

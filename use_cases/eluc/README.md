@@ -172,7 +172,7 @@ Ensemble models can be constructed from predicition models.
 
 A user interface for decision makers is available here: https://landuse.evolution.ml/
 
-TODO: point to the demo code
+See [demo/README.md](demo/README.md])
 
 ## References
 

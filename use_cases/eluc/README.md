@@ -17,7 +17,7 @@ BLUE simulations with committed emissions could be used to estimate the long-ter
 "Committed emissions" means all the emissions that are caused by a land-use change event are attributed to the year
 of the event.
 BLUE (bookkeeping of land use emissions) is a bookkeeping model that attributes carbon fluxes to land use activities.
-See [(BLUE: Bookkeeping of land use emissions)](https://doi.org/10.1002/2014GB004997) for more details.  
+See [BLUE: Bookkeeping of land use emissions](https://doi.org/10.1002/2014GB004997) for more details.  
 
 The team in charge of the BLUE model performed such simulations with BLUE and generated the file
 `BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc` available in
@@ -54,12 +54,12 @@ Primary: Vegetation that is untouched by humans
 - **primf**: Primary forest
 - **primn**: Primary nonforest vegetation
 
-- Secondary: Vegetation that has been touched by humans
+Secondary: Vegetation that has been touched by humans
 - **secdf**: Secondary forest
 - **secdn**: Secondary nonforest vegetation
 
 Urban
-- **Urban**: Urban areas
+- **urban**: Urban areas
 
 Crop
 - **c3ann**: Annual C3 crops (e.g. wheat)
@@ -77,7 +77,7 @@ Pasture
 
 A decision can be represented by 3 constituents: **context**, **actions** and **outcomes**
 
-> In a particular **context**, what was the **outcomes** of the decision maker **actions**?
+> In a particular **context**, what were the **outcomes** of the decision maker's **actions**?
 
 In other words, in a particular situation, what were the results of the decisions of the decision maker?
 
@@ -142,7 +142,9 @@ the percentage of land that was change. In other words decision makers have to:
 
 ### Predictions
 
-Given **context** and **actions** -> predict **outcomes**
+Given **context** and **actions** -> predict **outcomes**  
+Given the land usage of a specific location, and the changes that were made during a specific year,
+predict the CO2 long term emissions directly caused by these changes (ELUC).
 
 This is a prediction problem.
 
@@ -150,6 +152,18 @@ Anyone can contribute a prediction model, as long as it complies with the `predi
 and its inputs and outputs.
 
 TODO: point to code that trains predictor models
+
+### Ensembling
+
+Ensemble models can be constructed from predicition models.
+
+TODO: see task #53
+
+### Uncertainty
+
+Evaluate point-prediction uncertainty
+
+TODO: see task #55
 
 ### Prescriptions
 
@@ -164,19 +178,20 @@ and its inputs and outputs.
 "Robojudge" is an interactive tool that can be used to compare predictors.
 Some models perform better depending on the evaluation metric, the countries or the years on which they are evaluated.   
 
-## Ensembling
-
-Ensemble models can be constructed from predicition models.
+TODO: see task #49
 
 ## Demo
 
 A user interface for decision makers is available here: https://landuse.evolution.ml/
 
-See [demo/README.md](demo/README.md])
+See [demo/README.md](demo/README.md)
 
 ## References
 
 ELUC data provided by the BLUE model [(BLUE: Bookkeeping of land use emissions)](https://doi.org/10.1002/2014GB004997)
+
 Land use change data provided by the LUH2 project [(LUH2: Land Use Harmonization 2)](https://luh.umd.edu/)
+
 Setup is described in Appendix C2.1 of the GCB 2022 report [(Global Carbon Budget 2022 report)](https://doi.org/10.5194/essd-14-4811-2022)
+
 The Global Carbon Budget report assesses the global CO2 budget for the Intergovernmental Panel on Climate Change [(IPCC)](https://www.ipcc.ch/)

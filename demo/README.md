@@ -1,6 +1,6 @@
 # MVP Climate Change Demo
 
-This is a demo of the MVP Climate Change app. It allows users to select a location and year from a map of the world, see its land use composition, and prescribe or manually make changes to it and see the predicted ELUC (Emissions from Land Use Change) and amount of land changed. It is a simple Dash app.
+This is a demo of the MVP Climate Change app. It allows users to select a location and year from a map of the world, see its land use composition, and prescribe or manually make changes to it and see the predicted ELUC (Emissions from Land Use Change) and amount of land changed. It is a simple Dash app. The demo can be found online at [landuse.evoluion.ml](https://landuse.evolution.ml)
 
 ## Downloading the data:
 

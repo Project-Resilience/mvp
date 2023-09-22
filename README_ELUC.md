@@ -7,6 +7,8 @@ The tools should help decisions makers with their choices:
 made to reduce CO2 emissions?
 - What will be the long term CO2 impact of changing the land usage in a particular way?
 
+It is possible to learn from historical decisions made by decision makers all around the world if they can be compared. 
+
 ## Data
 
 ### ELUC
@@ -140,7 +142,37 @@ the percentage of land that was change. In other words decision makers have to:
 
 ### Predictions
 
+Given **context** and **actions** -> predict **outcomes**
+
+This is a prediction problem.
+
+Anyone can contribute a prediction model, as long as it complies with the `predict` interface
+and its inputs and outputs.
+
+TODO: point to code that trains predictor models
+
 ### Prescriptions
+
+Given **context** -> prescribe **actions** that optimize **outcomes**
+
+This is an optimization problem.
+Anyone can contribute a prescription model, as long as it complies with the `prescribe` interface
+and its inputs and outputs.
+
+## Robojudge
+
+"Robojudge" is an interactive tool that can be used to compare predictors.
+Some models perform better depending on the evaluation metric, the countries or the years on which they are evaluated.   
+
+## Ensembling
+
+Ensemble models can be constructed from predicition models.
+
+## Demo
+
+A user interface for decision makers is available here: https://landuse.evolution.ml/
+
+TODO: point to the demo code
 
 ## References
 

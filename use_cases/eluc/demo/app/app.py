@@ -243,6 +243,16 @@ trivia_div = html.Div([
 
 references_div = html.Div([
     html.Div(className="parent", children=[
+        html.P("Code for this project can be found here:  ",
+               className="child", style=inline_block),
+        html.A("(Project Resilience MVP repo)", href="https://github.com/Project-Resilience/mvp/tree/main/use_cases/eluc\n"),
+    ]),
+    html.Div(className="parent", children=[
+        html.P("The paper for this project can be found here:  ",
+               className="child", style=inline_block),
+        html.A("(arXiv link)", href="https://arxiv.org/abs/2311.12304\n"),
+    ]),
+    html.Div(className="parent", children=[
         html.P("ELUC data provided by the BLUE model  ",
                className="child", style=inline_block),
         html.A("(BLUE: Bookkeeping of land use emissions)", href="https://agupubs.onlinelibrary.wiley.com/doi/10.1002/2014GB004997\n"),

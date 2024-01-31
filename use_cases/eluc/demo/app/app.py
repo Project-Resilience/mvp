@@ -26,6 +26,13 @@ app = Dash(__name__,
 server = app.server
 
 df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
+# TODO: Preprocess the data like this in the file so we don't have to do it here
+df["crop"] = df[constants.CROP_COLS].sum(axis=1)
+df["crop_diff"] = df[[f"{col}_diff" for col in constants.CROP_COLS]].sum(axis=1)
+df["time"] = df.index.get_level_values("time")
+df["lat"] = df.index.get_level_values("lat")
+df["lon"] = df.index.get_level_values("lon")
+
 countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
 # Prescriptor list should be in order of least to most change
@@ -350,7 +357,7 @@ def update_map(year, lat, lon, location):
     # Filter data by year and location
     data = df.loc[year]
     data = data[data["country"] == country_idx]
-    data = data.copy().reset_index()
+    data = data.copy().reset_index(drop=True)
 
     # Find colored point
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
@@ -618,16 +625,19 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     :return: Predicted ELUC.
     """
     context = df.loc[year, lat, lon]
+
     presc = pd.Series(sliders, index=constants.RECO_COLS)
 
     # Preprocess presc into diffs
     presc = presc.combine_first(context[constants.NO_CHANGE_COLS])
     diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
     diff = diff.rename(constants.COLS_MAP)
-    diff_df = pd.DataFrame([diff])
+
+    input = context.copy()
+    input[constants.DIFF_LAND_USE_COLS] = diff[constants.DIFF_LAND_USE_COLS]
 
     predictor = predictors[predictor_name]
-    eluc = predictor.predict(diff_df)
+    eluc = predictor.predict(pd.DataFrame([input]))
     return f"{eluc:.4f}"
 
 
@@ -679,8 +689,6 @@ identified by its latitude and longitude coordinates, and a given year:
 * What changes can we make to the land usage
 * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare)
-
-*Note: the prescriptor model is currently only trained on Western Europe*
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([

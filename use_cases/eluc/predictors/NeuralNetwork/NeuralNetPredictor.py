@@ -1,0 +1,222 @@
+import numpy as np
+import pandas as pd
+from tqdm import tqdm
+import copy
+import time
+import os
+import joblib
+import json
+
+from sklearn.preprocessing import StandardScaler
+
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torch.utils.tensorboard import SummaryWriter
+
+from predictor import Predictor
+
+class CustomDS(Dataset):
+    """
+    Simple custom torch dataset.
+    :param X: data
+    :param y: labels
+    """
+    def __init__(self, X, y):
+        super().__init__()   
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y = torch.tensor(y)
+
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        return self.X[idx], self.y[idx]
+
+
+class ELUCNeuralNet(torch.nn.Module):
+    """
+    Custom torch neural network module.
+    :param in_size: number of input features
+    :param hidden_sizes: list of hidden layer sizes
+    :param linear_skip: whether to concatenate input to hidden layer output
+    :param dropout: dropout probability
+    """
+    class EncBlock(torch.nn.Module):
+        def __init__(self, in_size, out_size, dropout):
+            super().__init__()
+            self.model = torch.nn.Sequential(
+                torch.nn.Linear(in_size, out_size),
+                torch.nn.ReLU(),
+                torch.nn.Dropout(p=dropout)
+            )
+        def forward(self, X):
+            return self.model(X)
+
+    def __init__(self, in_size, hidden_sizes, linear_skip, dropout):
+        super().__init__()
+        self.linear_skip = linear_skip
+        hidden_sizes = [in_size] + hidden_sizes
+        enc_blocks = [self.EncBlock(hidden_sizes[i], hidden_sizes[i+1], dropout) for i in range(len(hidden_sizes) - 1)]
+        self.enc = torch.nn.Sequential(*enc_blocks)
+        out_size = hidden_sizes[-1] + in_size if linear_skip else hidden_sizes[-1]
+        self.linear = torch.nn.Linear(out_size, 1)
+
+    def forward(self, X):
+        hid = self.enc(X)
+        if self.linear_skip:
+            hid = torch.concatenate([hid, X], dim=1)
+        out = self.linear(hid)
+        return out
+
+
+class NeuralNetPredictor(Predictor):
+    def __init__(self, features=[], hidden_sizes=[4096], linear_skip=True, dropout=0, device="mps",
+            epochs=10, batch_size=2048, optim_params={}, train_pct=1, step_lr_params=None): 
+        
+        # Model setup params
+        self.model = None
+        self.features = features
+        self.hidden_sizes = hidden_sizes
+        self.linear_skip = linear_skip
+        self.dropout = dropout
+        self.device = device
+
+        # Training params
+        self.scaler = StandardScaler()
+        self.epochs = epochs
+        self.batch_size = batch_size
+        self.optim_params = optim_params
+        self.train_pct = train_pct
+        self.step_lr_params = step_lr_params
+        
+
+    def load(self, path: str):
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"Path {path} does not exist.")
+        
+        config = json.load(open(os.path.join(path, "config.json")))
+        self.features = config["features"]
+        self.model = ELUCNeuralNet(len(config["features"]), config["hidden_sizes"], config["linear_skip"], config["dropout"])
+        self.model.load_state_dict(torch.load(os.path.join(path, "model.pt")))
+        self.model.eval()
+        self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
+
+
+    def save(self, path: str):
+        if self.model is None:
+            raise ValueError("Model not fitted yet.")
+        os.makedirs(path, exist_ok=True)
+        torch.save(self.model.state_dict(), os.path.join(path, "model.pt"))
+        joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
+
+
+    def fit(self, X_train, y_train, X_val=None, y_val=None, X_test=None, y_test=None, log_path=None, verbose=False):
+        if self.features == []:
+            self.features = X_train.columns.tolist()
+        self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
+        self.model.to(self.device)
+        self.model.train()
+
+        s = time.time()
+
+        # Set up train set
+        X_train = self.scaler.fit_transform(X_train[self.features])
+        y_train = y_train.values
+        train_ds = CustomDS(X_train, y_train)
+        sampler = torch.utils.data.RandomSampler(train_ds, num_samples=int(len(train_ds) * self.train_pct))
+        train_dl = DataLoader(train_ds, self.batch_size, sampler=sampler)
+
+        if X_val is not None and y_val is not None:
+            X_val = self.scaler.transform(X_val[self.features])
+            y_val = y_val.values
+            val_ds = CustomDS(X_val, y_val)
+            val_dl = DataLoader(val_ds, self.batch_size, shuffle=False)
+
+        optimizer = torch.optim.AdamW(self.model.parameters(), **self.optim_params)
+        loss_fn = torch.nn.L1Loss()
+        if self.step_lr_params:
+            scheduler = torch.optim.lr_scheduler.StepLR(optimizer, **self.step_lr_params)
+
+        if log_path:
+            writer = SummaryWriter(log_path)
+
+        # Keeping track of best performance for validation
+        result_dict = {}
+        best_model = None
+        best_loss = np.inf
+        e = 0
+
+        step = 0
+        for epoch in range(self.epochs):
+            self.model.train()
+            # Standard training loop
+            iter = tqdm(train_dl) if verbose else train_dl
+            for X, y in train_dl:
+                X, y = X.to(self.device), y.to(self.device)
+                optimizer.zero_grad()
+                out = self.model(X).squeeze()
+                loss = loss_fn(out, y)
+                if log_path:
+                    writer.add_scalar("loss", loss.item(), step)
+                step += 1
+                loss.backward()
+                optimizer.step()
+            
+            # LR Decay
+            if self.step_lr_params:
+                scheduler.step()
+
+            # Evaluate epoch
+            if X_val is not None and y_val is not None:
+                total = 0
+                self.model.eval()
+                with torch.no_grad():
+                    for X, y in tqdm(val_dl):
+                        X, y = X.to(self.device), y.to(self.device)
+                        out = self.model(X).squeeze()
+                        loss = loss_fn(out, y)
+                        total += loss.item() * y.shape[0]
+                
+                if log_path:
+                    writer.add_scalar("val_loss", total / len(val_ds), step)
+                
+                if total < best_loss:
+                    best_model = copy.deepcopy(self.model.state_dict())
+                    best_loss = total
+                    e = time.time()
+                    result_dict["best_epoch"] = epoch
+                    result_dict["best_loss"] = total / len(val_ds)
+                    result_dict["time"] = e - s
+
+                print(f"epoch {epoch} mae {total / len(val_ds)}")
+        
+        if best_model:
+            self.model.load_state_dict(best_model)
+        else:
+            e = time.time()
+            result_dict["time"] = e - s
+
+        # If we provide a test dataset
+        if X_test is not None and y_test is not None:
+            y_pred = self.predict(X_test)
+            y_true = y_test.values
+            mae = np.mean(np.abs(y_pred - y_true))
+            result_dict["test_loss"] = mae
+
+        return result_dict
+
+
+    def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
+        X_test = self.scaler.transform(X_test[self.features])
+        test_ds = CustomDS(X_test, np.zeros(len(X_test)))
+        test_dl = DataLoader(test_ds, 2048, shuffle=False)
+        pred_list = []
+        with torch.no_grad():
+            self.model.eval()
+            for X, y in test_dl:
+                X = X.to(self.device)
+                pred_list.append(self.model(X).squeeze())
+
+        y_pred = torch.concatenate(pred_list, dim=0).cpu().numpy()
+        
+        return y_pred

@@ -1,9 +1,12 @@
 import pandas as pd
 import regionmask
+from pathlib import Path
 
 # TODO: This has to be changed for your local machine
-DATA_FILE_PATH = "../../../mvp/data/gcb/merged_aggregated_dataset_1850_2022.zarr.zip"
-UPDATE_FILE_PATH = "../../../mvp/data/gcb/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"
+ROOT_DIR = Path("/Users/964840/workspace/mvp/use_cases/eluc")
+DATA_FILE_PATH = ROOT_DIR / "data/merged_aggregated_dataset_1850_2022.zarr.zip"
+UPDATE_FILE_PATH = ROOT_DIR / "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"
+CODES_PATH = ROOT_DIR / "data/codes.csv"
 
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
 
@@ -69,7 +72,7 @@ MANUAL_MAP = {
 countries = regionmask.defined_regions.natural_earth_v5_0_0.countries_110
 COUNTRIES_DF = countries.to_dataframe()
 
-codes_df = pd.read_csv("../../../mvp/data/gcb/conversion/codes.csv")
+codes_df = pd.read_csv(CODES_PATH)
 
 # Replace all the bad codes with their real ones
 for i in range(len(COUNTRIES_DF)):

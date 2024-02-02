@@ -4,7 +4,7 @@ import warnings
 
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
-import constants
+from . import constants
 
 class ELUCData():
 

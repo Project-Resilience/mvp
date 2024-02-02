@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import pandas as pd
 import regionmask
-from pathlib import Path
 
 # TODO: This has to be changed for your local machine
 ROOT_DIR = Path("/Users/964840/workspace/mvp/use_cases/eluc")
@@ -44,7 +45,7 @@ MANUAL_MAP = {
     "J": 388,
     "NA": 516,
     "PAL": 275,
-    "J": 400,
+    # "J": 400,
     "IRQ": 368,
     "IND": 356,
     "IRN": 364,

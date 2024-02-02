@@ -1,0 +1,3 @@
+*.joblib
+*.pt
+predictors/**/*.json

@@ -13,7 +13,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from predictor import Predictor
+from predictors.predictor import Predictor
 
 class CustomDS(Dataset):
     """
@@ -270,3 +270,8 @@ class NeuralNetPredictor(Predictor):
 
         y_pred = torch.concatenate(pred_list, dim=0).cpu().numpy()
         return y_pred
+    
+if __name__ == "__main__":
+    print("a")
+    print("b")
+    print("c")

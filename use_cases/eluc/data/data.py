@@ -1,14 +1,29 @@
+import warnings
 import xarray as xr
 import regionmask
-import warnings
+import pandas as pd
+
+from datasets import load_dataset
 
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
 from . import constants
 
 class ELUCData():
+    """
+    Object to automatically handle the processing of ELUC data.
+    Load with import_data() then process into a df with da_to_df().
+    Maintains train and test dataframes, encoder for data, and encoded versions of train and test.
+    """
 
     def import_data(self, path, update_path):
+        """
+        Reads in raw data and update data and processes them into an xarray.
+        Replace ELUC and cell_area columns with updated ones.
+        Shift diffs back a year so they align in our CAO POV.
+            Originally: land use for 2021, what changed from 2020-2021, ELUC for end of 2021
+            Now: land use for 2021, what changed from 2021-2022, ELUC for end of 2021
+        """
         raw = None
         # TODO: This is a bit of a hack because I'm not sure how to handle the dask warnings
         with warnings.catch_warnings():
@@ -16,34 +31,50 @@ class ELUCData():
             raw = xr.open_zarr(path, consolidated=True, chunks="auto")
 
             # Get updated ELUC
-            if update_path:
-                eluc = xr.open_dataset(update_path)
-                raw = raw.drop_vars(["ELUC", "cell_area"])
-                raw = raw.merge(eluc)
+            eluc = xr.open_dataset(update_path)
+            raw = raw.drop_vars(["ELUC", "cell_area"])
+            raw = raw.merge(eluc)
 
             # Shift actions back a year
             raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
             raw_diffs = [f"{col}_diff" for col in raw_diffs]
             raw[raw_diffs] = raw[raw_diffs].shift(time=-1)
 
-            # Old time shifting
-            # raw['ELUC'] = raw['ELUC'].shift(time=1)
-            # raw['ELUC_diff'] = raw['ELUC_diff'].shift(time=1)
-            # raw['time'] = raw.time - 1
-            # assert(list(np.unique(raw.time)) == list(range(1849, 2022)))
-            # mask = raw["ELUC_diff"].isnull().compute()
-            # raw = raw.where(~mask, drop=True)
-
+            # I'm not entirely sure what this does but I'm scared to remove it
             country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(raw)
             raw["country"] = country_mask
         return raw
     
-    def __init__(self, path, update_path, start_year=1851, test_year=2012, end_year=2022, countries=None, merge_crop=False):
+
+    def hf_to_df(self, hf_repo):
+        """
+        Loads dataset from huggingface, converts to pandas, then sets indices appropriately to time/lat/lon.
+        Keep old time/lat/lon columns so we can use them as features later.
+        """
+        ds = load_dataset(hf_repo)["train"]
+        df = ds.to_pandas()
+        df = df.set_index(["time", "lat", "lon"], drop=False)
+        return df
+
+    
+    def __init__(self, path: str, update_path=None, start_year=1851, test_year=2012, end_year=2022, countries=None, merge_crop=False):
+        """
+        If update_path is given, load raw data the old way using 2 files that are merged.
+        Otherwise, path is taken to be a huggingface repo and we load the data from there.
+        """
         assert start_year < test_year and test_year < end_year
-        raw = self.import_data(path, update_path)
-        df = self.da_to_df(raw, start_year, end_year, countries, merge_crop)
-        self.train_df = df.loc[:test_year]
-        self.test_df = df.loc[test_year:]
+
+        if update_path:
+            raw = self.import_data(path, update_path)
+            df = self.da_to_df(raw, start_year, end_year, countries, merge_crop)
+
+        else:
+            df = self.hf_to_df(path)
+            if countries:
+                df = self.subset_countries(df, countries)
+
+        self.train_df = df.loc[start_year:test_year]
+        self.test_df = df.loc[test_year:end_year]
         
         self.encoder = DataEncoder(self.get_fields(), constants.CAO_MAPPING)
         self.encoded_train_df = None
@@ -58,7 +89,19 @@ class ELUCData():
         return df[df["country"].isin(idx)].copy()
 
 
-    def da_to_df(self, da, start_year=None, end_year=None, countries=None, merge_crop=False):
+    def da_to_df(self, da: xr.DataArray, start_year=None, end_year=None, countries=None, merge_crop=False) -> pd.DataFrame:
+        """
+        Converts an xarray DataArray to a pandas DataFrame.
+        Duplicates indices into columns so we can use them as features.
+        Adds country name column for easier access.
+        :param da: xarray DataArray to convert.
+        :param start_year: Year to start at (inclusive)
+        :param end_year: Year to end at (uninclusive)
+        :param countries: List of country abbreviations to subset by
+        :param merge_crop: Whether to merge crop columns into one column.
+            (Note: Still leaves crop types untouched, just adds merged crop column)
+        :return: pandas DataFrame
+        """
         df = da.to_dataframe()
         df = df.dropna()
 
@@ -85,7 +128,10 @@ class ELUCData():
         return df
     
 
-    def get_fields(self):
+    def get_fields(self) -> dict:
+        """
+        Creates fields json object for the data encoder/prescriptor.
+        """
         fields_df = self.train_df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]].astype("float64")
         fields = dict()
         # TODO: Right now this doesn't work because we don't have separate CAO mappings for merged and not merged crops

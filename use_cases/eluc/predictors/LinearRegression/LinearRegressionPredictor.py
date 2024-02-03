@@ -34,6 +34,8 @@ class LinearRegressionPredictor(Predictor):
     def fit(self, X_train, y_train):
         if self.features:
             X_train = X_train[self.features]
+        else:
+            self.features = list(X_train.columns)
         self.model.fit(X_train, y_train)
 
     def predict(self, X_test):

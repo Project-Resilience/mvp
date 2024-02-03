@@ -6,7 +6,7 @@ from sklearn.ensemble import RandomForestRegressor
 
 from predictors.predictor import Predictor
 
-class LinearRegressionPredictor(Predictor):
+class RandomForestPredictor(Predictor):
     """
     Simple linear regression predictor.
     """

@@ -1,32 +1,22 @@
 {"predictors": [
     {
-        "name": "Neural Network (Global)",
-        "filename": "ALL-nn-loctime-crop.pt",
-        "model_type": "NeuralNet"
-    },
-    {
         "name": "Linear Regression (West Europe)",
-        "filename": "143_linear.joblib",
-        "model_type": "SKLearn"
+        "filename": "143_linear.joblib"
     },
     {
         "name": "Linear Regression (USA)",
-        "filename": "4_linear.joblib",
-        "model_type": "SKLearn"
+        "filename": "4_linear.joblib"
     },
     {
         "name": "Linear Regression (Brazil)",
-        "filename": "29_linear.joblib",
-        "model_type": "SKLearn"
+        "filename": "29_linear.joblib"
     },
     {
         "name": "Linear Regression (General)",
-        "filename": "ELUC_linear.joblib",
-        "model_type": "SKLearn"
+        "filename": "ELUC_linear.joblib"
     },
     {
         "name": "Random Forest (West Europe)",
-        "filename": "ELUC_forest.joblib",
-        "model_type": "SKLearn"
+        "filename": "ELUC_forest.joblib"
     }
 ]}

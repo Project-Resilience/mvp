@@ -107,11 +107,6 @@ class Prescriptor:
         reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
                                     columns=constants.RECO_COLS)
 
-        # We removed softmax from model so we have to scale them to sum to 1
-        reco_land_use_df = reco_land_use_df.clip(0, None)
-        reco_land_use_df[reco_land_use_df.sum(axis=1) == 0] = 1
-        reco_land_use_df = reco_land_use_df.div(reco_land_use_df.sum(axis=1), axis=0)
-
         # Re-scales our prescribed land to match the amount of land used in the sample
         used = sample_context_df[constants.RECO_COLS].iloc[0].sum()
         reco_land_use_df = reco_land_use_df[constants.RECO_COLS].mul(used, axis=0)

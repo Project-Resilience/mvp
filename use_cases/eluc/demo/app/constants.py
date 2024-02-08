@@ -9,14 +9,13 @@ GRID_STEP = 0.25
 
 INDEX_COLS = ["time", "lat", "lon"]
 
-CROP_COLS = ["c3ann", "c3nfx", "c3per", "c4ann", "c4per"]
-LAND_USE_COLS = ["crop", 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
-CONTEXT_COLUMNS = LAND_USE_COLS + ["cell_area", "lat", "lon", "time"]
+LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
+CONTEXT_COLUMNS = LAND_USE_COLS + ['cell_area']
 DIFF_LAND_USE_COLS = [f"{col}_diff" for col in LAND_USE_COLS]
 COLS_MAP = dict(zip(LAND_USE_COLS, DIFF_LAND_USE_COLS))
 
 # Prescriptor outputs
-RECO_COLS = ['crop', 'pastr', 'range', 'secdf', 'secdn']
+RECO_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'range', 'secdf', 'secdn']
 DIFF_RECO_COLS = [f"{col}_diff" for col in RECO_COLS]
 RECO_MAP = dict(zip(RECO_COLS, DIFF_RECO_COLS))
 
@@ -30,6 +29,8 @@ CO2_JFK_GVA = 2.2
 CO2_PERSON = 4
 
 # For creating treemap
+C3 = ['c3ann', 'c3nfx', 'c3per']
+C4 = ['c4ann', 'c4per']
 PRIMARY = ['primf', 'primn']
 SECONDARY = ['secdf', 'secdn']
 FIELDS = ['pastr', 'range']

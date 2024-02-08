@@ -177,29 +177,28 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     else:
         total = data[constants.LAND_USE_COLS].sum()
-        # c3 = data[constants.C3].sum()
-        # c4 = data[constants.C4].sum()
-        # crops = c3 + c4
-        crops = data["crop"].sum()
+        c3 = data[constants.C3].sum()
+        c4 = data[constants.C4].sum()
+        crops = c3 + c4
         primary = data[constants.PRIMARY].sum()
         secondary = data[constants.SECONDARY].sum()
         fields = data[constants.FIELDS].sum()
 
         labels = [title, "Nonland",
-                "Crops",
+                "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
                 "Primary Vegetation", "primf", "primn", 
                 "Secondary Vegetation", "secdf", "secdn",
                 "Urban",
                 "Fields", "pastr", "range"]
         parents = ["", title,
-                title,
+                title, "Crops", "Crops", "C3", "C3", "C3", "C4", "C4",
                 title, "Primary Vegetation", "Primary Vegetation",
                 title, "Secondary Vegetation", "Secondary Vegetation",
                 title,
                 title, "Fields", "Fields"]
 
         values =  [total + data["nonland"], data["nonland"],
-                    crops,
+                    crops, c3, c4, data["c3ann"], data["c3nfx"], data["c3per"], data["c4ann"], data["c4per"],
                     primary, data["primf"], data["primn"],
                     secondary, data["secdf"], data["secdn"],
                     data["urban"],
@@ -251,9 +250,9 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     p = px.colors.qualitative.Plotly
     ps = px.colors.qualitative.Pastel1
     d = px.colors.qualitative.Dark24
-    #['crop', 'pastr', 'primf', 'primn', 
+    #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 
     # 'range', 'secdf', 'secdn', 'urban', 'nonland]
-    colors = [p[4], p[0], p[2], d[14], p[5], p[7], d[2], p[3], p[1]]
+    colors = [p[4], d[8], ps[4], p[9], ps[5], p[0], p[2], d[14], p[5], p[7], d[2], p[3], p[1]]
     fig = go.Figure(
         go.Pie(
             values = values,
@@ -269,7 +268,7 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     if type_context:
         fig.update_layout(showlegend=False)
         # To make up for the hidden legend
-        fig.update_layout(margin={"t": 0, "b": 00, "l": 0, "r": 0})
+        fig.update_layout(margin={"t": 50, "b": 50, "l": 50, "r": 50})
 
     else:
         fig.update_layout(margin={"t": 0, "b": 0, "l": 0, "r": 0})
@@ -319,9 +318,5 @@ def load_predictors() -> dict:
     predictors = dict()
     # This is ok because python dicts are ordered.
     for row in predictor_cfg["predictors"]:
-        # TODO: Fix this to use polymorphism. This is just a hack until the figure is done.
-        if row["model_type"] == "NeuralNet":
-            predictors[row["name"]] = Predictor.NeuralNetPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
-        else:
-             predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
+        predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
     return predictors

@@ -4,7 +4,7 @@ import pandas as pd
 import regionmask
 
 # TODO: This has to be changed for your local machine
-ROOT_DIR = Path("/Users/964840/workspace/mvp/use_cases/eluc")
+ROOT_DIR = Path(".")
 DATA_FILE_PATH = ROOT_DIR / "data/merged_aggregated_dataset_1850_2022.zarr.zip"
 UPDATE_FILE_PATH = ROOT_DIR / "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"
 CODES_PATH = ROOT_DIR / "data/codes.csv"

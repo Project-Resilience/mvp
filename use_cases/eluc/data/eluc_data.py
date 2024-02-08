@@ -16,36 +16,6 @@ class ELUCData():
     Load with import_data() then process into a df with da_to_df().
     Maintains train and test dataframes, encoder for data, and encoded versions of train and test.
     """
-
-    def import_data(self, path, update_path):
-        """
-        Reads in raw data and update data and processes them into an xarray.
-        Replace ELUC and cell_area columns with updated ones.
-        Shift diffs back a year so they align in our CAO POV.
-            Originally: land use for 2021, what changed from 2020-2021, ELUC for end of 2021
-            Now: land use for 2021, what changed from 2021-2022, ELUC for end of 2021
-        """
-        raw = None
-        # TODO: This is a bit of a hack because I'm not sure how to handle the dask warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            raw = xr.open_zarr(path, consolidated=True, chunks="auto")
-
-            # Get updated ELUC
-            eluc = xr.open_dataset(update_path)
-            raw = raw.drop_vars(["ELUC", "cell_area"])
-            raw = raw.merge(eluc)
-
-            # Shift actions back a year
-            raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
-            raw_diffs = [f"{col}_diff" for col in raw_diffs]
-            raw[raw_diffs] = raw[raw_diffs].shift(time=-1)
-
-            # I'm not entirely sure what this does but I'm scared to remove it
-            country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(raw)
-            raw["country"] = country_mask
-        return raw
-
     
     def __init__(self, path: str, update_path=None, start_year=1851, test_year=2012, end_year=2022, countries=None):
         """
@@ -86,6 +56,35 @@ class ELUCData():
         df = ds.to_pandas()
         df = df.set_index(["time", "lat", "lon"], drop=False)
         return df
+
+    def import_data(self, path, update_path):
+        """
+        Reads in raw data and update data and processes them into an xarray.
+        Replace ELUC and cell_area columns with updated ones.
+        Shift diffs back a year so they align in our CAO POV.
+            Originally: land use for 2021, what changed from 2020-2021, ELUC for end of 2021
+            Now: land use for 2021, what changed from 2021-2022, ELUC for end of 2021
+        """
+        raw = None
+        # TODO: This is a bit of a hack because I'm not sure how to handle the dask warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            raw = xr.open_zarr(path, consolidated=True, chunks="auto")
+
+            # Get updated ELUC
+            eluc = xr.open_dataset(update_path)
+            raw = raw.drop_vars(["ELUC", "cell_area"])
+            raw = raw.merge(eluc)
+
+            # Shift actions back a year
+            raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
+            raw_diffs = [f"{col}_diff" for col in raw_diffs]
+            raw[raw_diffs] = raw[raw_diffs].shift(time=-1)
+
+            # I'm not entirely sure what this does but I'm scared to remove it
+            country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(raw)
+            raw["country"] = country_mask
+        return raw
 
     def da_to_df(self, da: xr.DataArray, start_year=None, end_year=None, countries=None) -> pd.DataFrame:
         """

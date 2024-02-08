@@ -4,9 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from predictors.NeuralNetwork.NeuralNetPredictor import NeuralNetPredictor
-from predictors.SKLearn.LinearRegressionPredictor import LinearRegressionPredictor
-from predictors.SKLearn.RandomForestPredictor import RandomForestPredictor
+from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
 class TestPredictors(unittest.TestCase):
     """

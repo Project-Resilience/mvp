@@ -1,7 +1,7 @@
 from sklearn.metrics import mean_absolute_error
 
-from data.data import ELUCData
-from predictors.Predictor import Predictor
+from data.eluc_data import ELUCData
+from predictors.predictor import Predictor
 
 class Evaluator():
     """

@@ -18,8 +18,10 @@ class Predictor(ABC):
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
         Fits the model to the training data.
-        @param X_train: dataframe with input data
-        @param y_train: series with target data
+        :param X_train: dataframe with input data:
+            The input data consists of a dataframe with columns found in the ELUC huggingface repo.
+            It is up to the model to decide which columns to use.
+        :param y_train: series with target data
         """
 
 
@@ -27,8 +29,8 @@ class Predictor(ABC):
     def predict(self, X_test: pd.DataFrame) -> np.array:
         """
         Creates a dataframe with predictions for the input dataframe.
-        @param X_test: dataframe with input data
-        @return: dataframe with predictions
+        :param X_test: dataframe with input data
+        :return: dataframe with predictions
         """
 
 
@@ -36,7 +38,7 @@ class Predictor(ABC):
     def save(self, path: str):
         """
         Saves the model to a path.
-        @param path: path to save the model
+        :param path: path to save the model
         """
 
 
@@ -44,5 +46,5 @@ class Predictor(ABC):
     def load(self, path: str):
         """
         Loads a model from a path.
-        @param path: path to the model
+        :param path: path to the model
         """

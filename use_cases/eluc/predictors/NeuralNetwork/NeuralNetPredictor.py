@@ -1,11 +1,13 @@
+import copy
+import json
+import time
+from pathlib import Path
+
+
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
-import copy
-import time
-import os
 import joblib
-import json
+from tqdm import tqdm
 
 from sklearn.preprocessing import StandardScaler
 
@@ -42,6 +44,10 @@ class ELUCNeuralNet(torch.nn.Module):
     :param dropout: dropout probability
     """
     class EncBlock(torch.nn.Module):
+        """
+        Encoding block for neural network.
+        Simple feed forward layer with ReLU activation and optional dropout.
+        """
         def __init__(self, in_size: int, out_size: int, dropout: float):
             super().__init__()
             self.model = torch.nn.Sequential(
@@ -49,7 +55,10 @@ class ELUCNeuralNet(torch.nn.Module):
                 torch.nn.ReLU(),
                 torch.nn.Dropout(p=dropout)
             )
-        def forward(self, X: torch.tensor):
+        def forward(self, X: torch.FloatTensor) -> torch.FloatTensor:
+            """
+            Passes input through the block.
+            """
             return self.model(X)
 
     def __init__(self, in_size: int, hidden_sizes: list[str], linear_skip: bool, dropout: float):
@@ -61,7 +70,7 @@ class ELUCNeuralNet(torch.nn.Module):
         out_size = hidden_sizes[-1] + in_size if linear_skip else hidden_sizes[-1]
         self.linear = torch.nn.Linear(out_size, 1)
 
-    def forward(self, X: torch.FloatTensor):
+    def forward(self, X: torch.FloatTensor) -> torch.FloatTensor:
         """
         Performs a forward pass of the neural net.
         :param X: input data
@@ -75,9 +84,13 @@ class ELUCNeuralNet(torch.nn.Module):
 
 
 class NeuralNetPredictor(Predictor):
-    def __init__(self, features=[], hidden_sizes=[4096], linear_skip=True, dropout=0, device="mps",
+    """
+    Simple feed-forward neural network predictor implemented in PyTorch.
+    Has the option to use wide and deep, concatenating the input to the output of the hidden layers
+    in order to take advantage of the linear relationship in the data.
+    """
+    def __init__(self, features=None, hidden_sizes=[4096], linear_skip=True, dropout=0, device="mps",
             epochs=3, batch_size=2048, optim_params={}, train_pct=1, step_lr_params={"step_size": 1, "gamma": 0.1}): 
-        
         # Model setup params
         self.model = None
         self.features = features
@@ -100,18 +113,20 @@ class NeuralNetPredictor(Predictor):
         Loads a model from a given folder containing a config.json, model.pt, and scaler.joblib.
         :param path: path to folder containing model files.
         """
-        if not os.path.exists(path):
+        load_path = Path(path)
+        if not load_path.exists():
             raise FileNotFoundError(f"Path {path} does not exist.")
         
         # Initialize model with config
-        config = json.load(open(os.path.join(path, "config.json")))
+        with open(load_path / "config.json", "r", encoding="utf-8") as f:
+            config = json.load(f)
         self.__init__(**config)
 
         self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
-        self.model.load_state_dict(torch.load(os.path.join(path, "model.pt")))
+        self.model.load_state_dict(torch.load(load_path / "model.pt"))
         self.model.to(self.device)
         self.model.eval()
-        self.scaler = joblib.load(os.path.join(path, "scaler.joblib"))
+        self.scaler = joblib.load(load_path / "scaler.joblib")
 
 
     def save(self, path: str):
@@ -122,7 +137,8 @@ class NeuralNetPredictor(Predictor):
         """
         if self.model is None:
             raise ValueError("Model not fitted yet.")
-        os.makedirs(path, exist_ok=True)
+        save_path = Path(path)
+        save_path.mkdir(parents=True, exist_ok=True)
 
         config = {
             "features": self.features,
@@ -136,9 +152,10 @@ class NeuralNetPredictor(Predictor):
             "train_pct": self.train_pct,
             "step_lr_params": self.step_lr_params
         }
-        json.dump(config, open(os.path.join(path, "config.json"), "w"))
-        torch.save(self.model.state_dict(), os.path.join(path, "model.pt"))
-        joblib.dump(self.scaler, os.path.join(path, "scaler.joblib"))
+        with open(save_path / "config.json", "w", encoding="utf-8") as f:
+            json.dump(config, f)
+        torch.save(self.model.state_dict(), save_path / "model.pt")
+        joblib.dump(self.scaler, save_path / "scaler.joblib")
 
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series, X_val=None, y_val=None, X_test=None, y_test=None, log_path=None, verbose=False) -> dict:
@@ -157,7 +174,7 @@ class NeuralNetPredictor(Predictor):
         :param verbose: whether to print progress bars.
         :return: dictionary of results from training containing time taken, best epoch, best loss, and test loss if applicable.
         """
-        if self.features == []:
+        if not self.features:
             self.features = X_train.columns.tolist()
         self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
         self.model.to(self.device)
@@ -196,12 +213,12 @@ class NeuralNetPredictor(Predictor):
         for epoch in range(self.epochs):
             self.model.train()
             # Standard training loop
-            iter = tqdm(train_dl) if verbose else train_dl
-            for X, y in iter:
+            train_iter = tqdm(train_dl) if verbose else train_dl
+            for X, y in train_iter:
                 X, y = X.to(self.device), y.to(self.device)
                 optimizer.zero_grad()
-                out = self.model(X).squeeze()
-                loss = loss_fn(out, y)
+                out = self.model(X)
+                loss = loss_fn(out.squeeze(), y.squeeze())
                 if log_path:
                     writer.add_scalar("loss", loss.item(), step)
                 step += 1
@@ -219,8 +236,8 @@ class NeuralNetPredictor(Predictor):
                 with torch.no_grad():
                     for X, y in tqdm(val_dl):
                         X, y = X.to(self.device), y.to(self.device)
-                        out = self.model(X).squeeze()
-                        loss = loss_fn(out, y)
+                        out = self.model(X)
+                        loss = loss_fn(out.squeeze(), y.squeeze())
                         total += loss.item() * y.shape[0]
                 
                 if log_path:
@@ -260,18 +277,16 @@ class NeuralNetPredictor(Predictor):
         """
         X_test = self.scaler.transform(X_test[self.features])
         test_ds = CustomDS(X_test, np.zeros(len(X_test)))
-        test_dl = DataLoader(test_ds, 2048, shuffle=False)
+        test_dl = DataLoader(test_ds, self.batch_size, shuffle=False)
         pred_list = []
         with torch.no_grad():
             self.model.eval()
             for X, _ in test_dl:
                 X = X.to(self.device)
-                pred_list.append(self.model(X).squeeze())
+                pred_list.append(self.model(X))
 
-        y_pred = torch.concatenate(pred_list, dim=0).cpu().numpy()
+        if len(pred_list) > 1:
+            y_pred = torch.concatenate(pred_list, dim=0).cpu().numpy()
+        else:
+            y_pred = pred_list[0].cpu().numpy()
         return y_pred
-    
-if __name__ == "__main__":
-    print("a")
-    print("b")
-    print("c")

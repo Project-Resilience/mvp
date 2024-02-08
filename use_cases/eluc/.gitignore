@@ -1,6 +1,4 @@
-*.joblib
-*.pt
-predictors/**/*.json
+predictors/*/*
 
 data/*.zip
 *.nc

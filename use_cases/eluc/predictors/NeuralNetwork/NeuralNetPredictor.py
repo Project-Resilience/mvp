@@ -15,7 +15,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from predictors.predictor import Predictor
+from predictors.Predictor import Predictor
 
 class CustomDS(Dataset):
     """

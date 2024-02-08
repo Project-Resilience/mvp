@@ -7,7 +7,7 @@ import joblib
 import pandas as pd
 import numpy as np
 
-from predictors.predictor import Predictor
+from predictors.Predictor import Predictor
 
 class SKLearnPredictor(Predictor, ABC):
     """

@@ -1,6 +1,9 @@
 # This should work if python path is set to use_cases/ELUC
 DATA_FILE_PATH = "data/merged_aggregated_dataset_1850_2022.zarr.zip"
 UPDATE_FILE_PATH = "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"
+# Country code conversion table from: https://gist.github.com/radcliff/f09c0f88344a7fcef373
+# TODO: Note: This table is not perfect and has some errors, we should consider manually fixing them.
+# I tried my best but I'm not 100% sure it's correct.
 CODES_PATH = "data/codes.csv"
 
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 

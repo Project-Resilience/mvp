@@ -12,7 +12,6 @@ from datasets import load_dataset, Dataset
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
 from data import constants
-
 from data.conversion import construct_countries_df
 
 class AbstractData(ABC):
@@ -154,6 +153,21 @@ class RawELUCData(AbstractData):
         
         self.encoder = DataEncoder(self.get_fields(), constants.CAO_MAPPING)
 
+
+class RawELUCData(AbstractData):
+    """
+    Takes in the raw ELUC data files and processes it.
+    """
+    def __init__(self, path, update_path, start_year=1851, test_year=2012, end_year=2022, countries=None):
+        super().__init__()
+        raw = self.import_data(path, update_path)
+        df = self.da_to_df(raw, start_year, end_year, countries)
+
+        self.train_df = df.loc[start_year:test_year]
+        self.test_df = df.loc[test_year:end_year]
+        
+        self.encoder = DataEncoder(self.get_fields(), constants.CAO_MAPPING)
+
     def import_data(self, path, update_path):
         """
         Reads in raw data and update data and processes them into an xarray.
@@ -224,3 +238,4 @@ class RawELUCData(AbstractData):
             
         return df
 
+    

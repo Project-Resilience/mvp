@@ -9,7 +9,7 @@ from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, Rand
 
 class TestPredictors(unittest.TestCase):
     """
-    Tests the Neural Net predictor.
+    Tests the 3 base predictor implementations' saving and loading behavior.
     """
     def setUp(self):
         """
@@ -28,7 +28,7 @@ class TestPredictors(unittest.TestCase):
             {'n_jobs': -1, "n_estimators": 10, "max_depth": 2}
         ]
         self.dummy_data = pd.DataFrame({"a": [1, 2, 3, 4], "b": [4, 5, 6, 4], "c": [7, 8, 9, 4]})
-        self.dummy_target = pd.Series([1, 2, 3, 4])
+        self.dummy_target = pd.Series([1, 2, 3, 4], name="label")
         self.temp_path = Path("tests/temp")
 
     def test_save_file_names(self):
@@ -62,10 +62,12 @@ class TestPredictors(unittest.TestCase):
                 predictor.fit(self.dummy_data.iloc[:2], self.dummy_target.iloc[:2])
                 output = predictor.predict(self.dummy_data.iloc[2:])
                 predictor.save(self.temp_path)
+
                 loaded = model(**config)
                 loaded.load(self.temp_path)
                 loaded_output = loaded.predict(self.dummy_data.iloc[2:])
-                self.assertTrue((output == loaded_output).all())
+
+                self.assertTrue((output == loaded_output).all().all()) # Pandas is so annoying why is this necessary?
                 shutil.rmtree(self.temp_path)
                 self.assertFalse(self.temp_path.exists())
 

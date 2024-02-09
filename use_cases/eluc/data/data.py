@@ -9,6 +9,7 @@ from datasets import load_dataset, Dataset
 from unileaf_util.framework.transformers.data_encoder import DataEncoder
 
 from data import constants
+from data.conversion import construct_countries_df
 
 class ELUCData():
     """
@@ -70,11 +71,13 @@ class ELUCData():
         self.encoded_train_df = None
         self.encoded_test_df = None
 
+        self.countries_df = construct_countries_df()
+
     def subset_countries(self, df, countries):
         """
         Subsets dataframe by country list
         """
-        idx = constants.COUNTRIES_DF[constants.COUNTRIES_DF["abbrevs"].isin(countries)].index.values
+        idx = self.countries_df[self.countries_df["abbrevs"].isin(countries)].index.values
         return df[df["country"].isin(idx)].copy()
 
     def hf_to_df(self, hf_repo):
@@ -121,7 +124,7 @@ class ELUCData():
         df["crop"] = df[constants.CROP_COLS].sum(axis=1)
         df["crop_diff"] = df[[f"{c}_diff" for c in constants.CROP_COLS]].sum(axis=1)
             
-        df['country_name'] = constants.COUNTRIES_DF.loc[df['country'], 'names'].values
+        df['country_name'] = self.countries_df.loc[df['country'], 'names'].values
         
         # Drop this column we used for preprocessing (?)
         df = df.drop("mask", axis=1)

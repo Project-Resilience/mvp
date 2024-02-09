@@ -1,4 +1,8 @@
-predictors/*/*/*
+# Ignores saved predictors
+predictors/*/*/**
+
+# Ignores saved predictors in experiments
+experiments/*/**
 
 data/*.zip
 *.nc

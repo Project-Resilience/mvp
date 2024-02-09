@@ -110,7 +110,7 @@ class ELUCData(AbstractData):
     Loads ELUC data from HuggingFace repo and processes it.
     """
     
-    def __init__(self, path: str, start_year=1851, test_year=2012, end_year=2022, countries=None):
+    def __init__(self, start_year=1851, test_year=2012, end_year=2022, countries=None):
         """
         If update_path is given, load raw data the old way using 2 files that are merged.
         Otherwise, path is taken to be a huggingface repo and we load the data from there.
@@ -119,7 +119,7 @@ class ELUCData(AbstractData):
 
         super().__init__()
 
-        df = self.hf_to_df(path)
+        df = self.hf_to_df(constants.HF_PATH)
         if countries:
             df = self.subset_countries(df, countries)
 

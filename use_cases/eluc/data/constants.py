@@ -1,3 +1,4 @@
+HF_PATH = "projectresilience/ELUC-committed"
 # This should work if python path is set to use_cases/ELUC
 DATA_FILE_PATH = "data/merged_aggregated_dataset_1850_2022.zarr.zip"
 UPDATE_FILE_PATH = "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"

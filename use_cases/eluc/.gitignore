@@ -3,6 +3,8 @@ predictors/*/*/**
 
 # Ignores saved predictors in experiments
 experiments/*/**
+# Ignores evaluation results in experiments
+experiments/*.csv
 
 data/*.zip
 *.nc

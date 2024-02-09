@@ -1,2 +1,4 @@
+predictors/*/*/*
+
 data/*.zip
-data/*.nc
+*.nc

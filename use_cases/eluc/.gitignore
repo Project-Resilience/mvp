@@ -2,9 +2,10 @@
 predictors/*/*/**
 
 # Ignores saved predictors in experiments
-experiments/*/**
-# Ignores evaluation results in experiments
-experiments/*.csv
+experiments/trained_predictors
+
+# Ignores predictor significance results
+experiments/predictor_significance
 
 data/*.zip
 *.nc

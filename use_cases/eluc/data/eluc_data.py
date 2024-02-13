@@ -9,10 +9,38 @@ import pandas as pd
 
 from datasets import load_dataset, Dataset
 
-from unileaf_util.framework.transformers.data_encoder import DataEncoder
-
 from data import constants
 from data.conversion import construct_countries_df
+
+class ELUCEncoder():
+    """
+    Encodes our ELUC dataset by using minmax scaling.
+    """
+    def __init__(self, fields):
+        self.fields = fields
+
+    def encode_as_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Encodes a dataframe using the fields given in the constructor.
+        Uses minmax scaling.
+        """
+        new_df = df.copy()
+        for col in new_df.columns:
+            if col in self.fields:
+                new_df[col] = (new_df[col] - self.fields[col]["range"][0]) / (self.fields[col]["range"][1] - self.fields[col]["range"][0])
+        return new_df
+    
+    def decode_as_df(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Decodes a dataframe using the fields given in the constructor.
+        Uses minmax scaling.
+        """
+        new_df = df.copy()
+        for col in new_df.columns:
+            if col in self.fields:
+                new_df[col] = new_df[col] * (self.fields[col]["range"][1] - self.fields[col]["range"][0]) + self.fields[col]["range"][0]
+        return new_df
+
 
 class AbstractData(ABC):
     """
@@ -59,8 +87,9 @@ class AbstractData(ABC):
         """
         fields_df = self.train_df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]].astype("float64")
         fields = dict()
-        # TODO: Right now this doesn't work because we don't have separate CAO mappings for merged and not merged crops
         for col in constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]:
+            # Set range of land and diff land uses manually to their true ranges because they
+            # do not need to be scaled
             if col in constants.LAND_USE_COLS:
                 ran = [0, 1]
             elif col in constants.DIFF_LAND_USE_COLS:
@@ -126,7 +155,7 @@ class ELUCData(AbstractData):
         self.train_df = df.loc[start_year:test_year]
         self.test_df = df.loc[test_year:end_year]
         
-        self.encoder = DataEncoder(self.get_fields(), constants.CAO_MAPPING)
+        self.encoder = ELUCEncoder(self.get_fields())
 
     def hf_to_df(self, hf_repo):
         """
@@ -151,7 +180,7 @@ class RawELUCData(AbstractData):
         self.train_df = df.loc[start_year:test_year]
         self.test_df = df.loc[test_year:end_year]
         
-        self.encoder = DataEncoder(self.get_fields(), constants.CAO_MAPPING)
+        self.encoder = ELUCEncoder(self.get_fields())
 
     def import_data(self, path, update_path):
         """

@@ -1,0 +1,145 @@
+{
+    "evolution": {
+      "fitness": [
+        {
+          "maximize": false,
+          "metric_name": "ELUC"
+        },
+        {
+          "maximize": false,
+          "metric_name": "change"
+        }
+      ],
+      "nb_elites": 10,
+      "mutation_type": "gaussian_noise_percentage",
+      "nb_generations": 100,
+      "mutation_factor": 0.2,
+      "population_size": 100,
+      "parent_selection": "tournament",
+      "initialization_range": 1,
+      "mutation_probability": 0.2,
+      "remove_population_pct": 0.8,
+      "initialization_distribution": "orthogonal",
+      "seed_weights_dir": "prescriptors/seeds/loctime-crop-nosoft"
+    },
+    "network": {
+      "inputs": [
+        {
+          "name": "crop",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "pastr",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "primf",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "primn",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "range",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "secdf",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "secdn",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "urban",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+          "name": "cell_area",
+          "size": 1,
+          "values": [
+            "float"
+          ]
+        },
+        {
+            "name": "lat",
+            "size": 1,
+            "values": [
+              "float"
+            ]
+          },
+          {
+            "name": "lon",
+            "size": 1,
+            "values": [
+              "float"
+            ]
+          },
+          {
+            "name": "time",
+            "size": 1,
+            "values": [
+              "float"
+            ]
+          }
+      ],
+      "outputs": [
+        {
+          "name": "reco_land_use",
+          "size": 5,
+          "activation": "linear",
+          "use_bias": true,
+          "values": [
+            "float"
+          ]
+        }
+      ],
+      "hidden_layers": [
+        {
+          "layer_name": "hidden_1",
+          "layer_type": "Dense",
+          "layer_params": {
+            "units": 16,
+            "use_bias": true,
+            "activation": "tanh"
+          }
+        }
+      ]
+    },
+    "LEAF": {
+      "representation": "NNWeights",
+      "experiment_id": "test",
+      "version": "1.0",
+      "persistence_dir": "prescriptors/trained_prescriptors/",
+      "candidates_to_persist": "pareto",
+      "esp_host": "localhost",
+      "esp_port": "50051",
+      "secure": false
+    }
+  }

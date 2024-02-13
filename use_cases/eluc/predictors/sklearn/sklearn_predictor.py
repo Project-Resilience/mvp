@@ -84,10 +84,26 @@ class LinearRegressionPredictor(SKLearnPredictor):
     
 class RandomForestPredictor(SKLearnPredictor):
     """
-    Simple linear regression predictor.
+    Simple random forest predictor.
     See SKLearnPredictor for more details.
+    Overrides save method in order to compress it.
     """
     def __init__(self, features=None, **kwargs):
         super().__init__(features)
         self.model = RandomForestRegressor(**kwargs)
+
+    def save(self, path: str, compression=0):
+        """
+        Overrides save method to compress file since Random Forests are extremely large.
+        :param path: path to folder to save model files.
+        """
+        save_path = Path(path)
+        save_path.mkdir(parents=True, exist_ok=True)
+        config = {
+            "features": self.features,
+            "label": self.label
+        }
+        with open(save_path / "config.json", "w", encoding="utf-8") as f:
+            json.dump(config, f)
+        joblib.dump(self.model, save_path / "model.joblib", compress=compression)
         

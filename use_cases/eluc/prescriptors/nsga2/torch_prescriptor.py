@@ -10,7 +10,7 @@ from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
-from prescriptors import nsga2
+from prescriptors.nsga2 import nsga2
 
 class Candidate(torch.nn.Module):
     """
@@ -68,10 +68,10 @@ class Candidate(torch.nn.Module):
         """
         for layer in self.model:
             if isinstance(layer, torch.nn.Linear):
-                mask = torch.rand_like(layer.weight) < p_mutation
-                layer.weight.data += mask * torch.randn_like(layer.weight) * 0.1
-                mask = torch.rand_like(layer.bias) < p_mutation
-                layer.bias.data += mask * torch.randn_like(layer.bias) * 0.1
+                mask = torch.rand(size=layer.weight.shape) < p_mutation
+                layer.weight.data += mask * torch.randn(size=layer.weight.shape) * 0.1
+                mask = torch.rand(size=layer.bias.shape) < p_mutation
+                layer.bias.data += mask * torch.randn(size=layer.bias.shape) * 0.1
 
 class TorchPrescriptor():
     """
@@ -86,13 +86,15 @@ class TorchPrescriptor():
                  encoder: ELUCEncoder,
                  predictor: Predictor,
                  batch_size: int,
-                 **candidate_params):
+                 candidate_params: dict,
+                 seed_dir=None):
         
         self.candidate_params = candidate_params
         self.pop_size = pop_size
         self.n_generations = n_generations
         self.n_elites = n_elites
         self.p_mutation = p_mutation
+        self.seed_dir=seed_dir
 
         self.eval_df = eval_df
         self.encoded_eval_df = encoder.encode_as_df(eval_df)
@@ -168,10 +170,12 @@ class TorchPrescriptor():
             candidate.rank = rank
         parents = []
         for front in fronts:
+            # Compute crowding distance here even though it's technically not necessary now
+            # so that later we can sort by distance
+            crowding_distance = nsga2.calculate_crowding_distance(front)
+            for candidate, distance in zip(front, crowding_distance):
+                candidate.distance = distance
             if len(parents) + len(front) > n_parents:  # If adding this front exceeds num_parents
-                crowding_distance = nsga2.calculate_crowding_distance(front)
-                for candidate, distance in zip(front, crowding_distance):
-                    candidate.distance = distance
                 front = sorted(front, key=lambda c: c.distance, reverse=True)
                 parents += front[:n_parents - len(parents)]
                 break
@@ -209,8 +213,14 @@ class TorchPrescriptor():
         2. Select parents
         3. Make new population from parents
         """
+        save_path.mkdir(parents=True, exist_ok=True)
         results = []
         parents = [Candidate(**self.candidate_params) for _ in range(self.pop_size)]
+        # Seeding the first generation with trained models
+        if self.seed_dir:
+            seed_paths = list(self.seed_dir.glob("*.pt"))
+            for i, seed_path in enumerate(seed_paths):
+                parents[i].load_state_dict(torch.load(seed_path))
         offspring = []
         for gen in tqdm(range(self.n_generations)):
             # Set up candidates by merging parent and offspring populations
@@ -219,13 +229,20 @@ class TorchPrescriptor():
 
             # On the first generation we want to record the performance of the initial population
             if gen == 0:
-                results.extend([{"gen": gen, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents])
+                results.append(self._record_candidate_avgs(gen, candidates))
+                gen_results = [{"rank": c.rank, "distance": c.distance, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents]
+                gen_results_df = pd.DataFrame(gen_results)
+                gen_results_df.to_csv(save_path / f"gen_{gen}.csv", index=False)
 
             # NSGA-II parent selection
             parents = self.select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
-            results.extend([{"gen": gen+1, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents])
+            gen_results = [{"rank": c.rank, "distance": c.distance, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents]
+            gen_results_df = pd.DataFrame(gen_results)
+            gen_results_df.to_csv(save_path / f"gen_{gen+1}.csv", index=False)
+
+            results.append(self._record_candidate_avgs(gen+1, parents))
 
             # If we aren't on the last generation, make a new population
             if gen < self.n_generations - 1:
@@ -233,7 +250,12 @@ class TorchPrescriptor():
 
         results_df = pd.DataFrame(results)
         print(results_df)
-        results_df.to_csv(save_path / "results.csv")
+        results_df.to_csv(save_path / "results.csv", index=False)
 
         return parents
+    
+    def _record_candidate_avgs(self, gen, candidates):
+        avg_eluc = np.mean([c.metrics[0] for c in candidates])
+        avg_change = np.mean([c.metrics[1] for c in candidates])
+        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
     

@@ -5,8 +5,8 @@ predictors/*/trained_models/
 experiments/predictor_significance
 
 # Ignores trained prescriptors and seeds
-prescriptors/trained_prescriptors
-prescriptors/seeds
+prescriptors/*/trained_prescriptors
+prescriptors/*/seeds
 
 data/*.zip
 *.nc

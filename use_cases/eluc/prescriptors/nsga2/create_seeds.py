@@ -14,7 +14,6 @@ def supervised_backprop(save_path: Path, ds: TorchDataset):
     Performs supervised backpropagation on the given dataset to create a Candidate.
     """
     train_ds, val_ds = random_split(ds, [int(len(ds) * 0.8), len(ds) - int(len(ds) * 0.8)])
-    print(len(train_ds), len(val_ds), len(ds))
     train_dl = DataLoader(train_ds, batch_size=4096, shuffle=True)
     val_dl = DataLoader(val_ds, batch_size=4096, shuffle=True)
 
@@ -24,15 +23,13 @@ def supervised_backprop(save_path: Path, ds: TorchDataset):
     optimizer = torch.optim.Adam(seed.model.parameters(), lr=0.001)
     loss_fn = torch.nn.L1Loss()
 
-    pbar = tqdm(range(10))
+    pbar = tqdm(range(300))
     for _ in pbar:
         seed.train()
         for X, Y in train_dl:
             optimizer.zero_grad()
             reco_tensor = seed(X)
             loss = loss_fn(reco_tensor, Y)
-            total_loss += loss.item() * len(X)
-            n += len(X)
             loss.backward()
             optimizer.step()
 
@@ -46,7 +43,7 @@ def supervised_backprop(save_path: Path, ds: TorchDataset):
                 total_loss += loss.item() * len(X)
                 n += len(X)
 
-        pbar.set_postfix({"epoch loss": total_loss / n})
+        pbar.set_postfix({"val loss": total_loss / n})
     
     torch.save(seed.state_dict(), save_path)
 
@@ -77,6 +74,5 @@ if __name__ == "__main__":
     dataset = ELUCData()
     train_df = dataset.train_df.sample(10000)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    print(len(train_df), len(encoded_train_df))
     seed_no_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)
     seed_max_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)

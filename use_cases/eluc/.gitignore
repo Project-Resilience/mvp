@@ -3,6 +3,8 @@ predictors/*/trained_models/
 
 # Ignores predictor significance results
 experiments/predictor_significance
+# Ignores figures for paper
+experiments/figures
 
 # Ignores trained prescriptors and seeds
 prescriptors/trained_prescriptors

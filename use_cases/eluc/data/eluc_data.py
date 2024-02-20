@@ -152,8 +152,9 @@ class ELUCData(AbstractData):
         if countries:
             df = self.subset_countries(df, countries)
 
-        self.train_df = df.loc[start_year:test_year]
-        self.test_df = df.loc[test_year:end_year]
+        self.train_df = df.loc[start_year:test_year-1]
+        self.test_df = df.loc[test_year:end_year-1]
+        assert self.train_df['time'].max() == self.test_df["time"].min() - 1
         
         self.encoder = ELUCEncoder(self.get_fields())
 
@@ -177,8 +178,8 @@ class RawELUCData(AbstractData):
         raw = self.import_data(path, update_path)
         df = self.da_to_df(raw, start_year, end_year, countries)
 
-        self.train_df = df.loc[start_year:test_year]
-        self.test_df = df.loc[test_year:end_year]
+        self.train_df = df.loc[start_year:test_year-1]
+        self.test_df = df.loc[test_year:end_year-1]
         
         self.encoder = ELUCEncoder(self.get_fields())
 

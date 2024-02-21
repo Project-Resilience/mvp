@@ -10,7 +10,7 @@ from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
-from prescriptors.nsga2 import nsga2
+from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
 
 class TorchPrescriptor():
@@ -108,14 +108,14 @@ class TorchPrescriptor():
         """
         NSGA-II parent selection using fast non-dominated sort and crowding distance.
         """
-        fronts, ranks = nsga2.fast_non_dominated_sort(candidates)
+        fronts, ranks = nsga2_utils.fast_non_dominated_sort(candidates)
         for candidate, rank in zip(candidates, ranks):
             candidate.rank = rank
         parents = []
         for front in fronts:
             # Compute crowding distance here even though it's technically not necessary now
             # so that later we can sort by distance
-            crowding_distance = nsga2.calculate_crowding_distance(front)
+            crowding_distance = nsga2_utils.calculate_crowding_distance(front)
             for candidate, distance in zip(front, crowding_distance):
                 candidate.distance = distance
             if len(parents) + len(front) > n_parents:  # If adding this front exceeds num_parents

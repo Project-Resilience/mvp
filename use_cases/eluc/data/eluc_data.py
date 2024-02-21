@@ -27,7 +27,13 @@ class ELUCEncoder():
         new_df = df.copy()
         for col in new_df.columns:
             if col in self.fields:
-                new_df[col] = (new_df[col] - self.fields[col]["range"][0]) / (self.fields[col]["range"][1] - self.fields[col]["range"][0])
+                min_val = self.fields[col]["range"][0]
+                max_val = self.fields[col]["range"][1]
+                # If min and max are the same, just set value to 0
+                if min_val == max_val:
+                    new_df[col] = 0
+                else:
+                    new_df[col] = (new_df[col] - self.fields[col]["range"][0]) / (self.fields[col]["range"][1] - self.fields[col]["range"][0])
         return new_df
     
     def decode_as_df(self, df: pd.DataFrame) -> pd.DataFrame:

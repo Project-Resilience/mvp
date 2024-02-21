@@ -1,3 +1,9 @@
+"""
+Utilities for NSGA-II implementation.
+"""
+
+from prescriptors.nsga2.candidate import Candidate
+
 def fast_non_dominated_sort(candidates: list):
     """
     Fast non-dominated sort algorithm from ChatGPT
@@ -64,7 +70,7 @@ def calculate_crowding_distance(front):
 
     return distances
 
-def dominates(candidate1, candidate2):
+def dominates(candidate1: Candidate, candidate2: Candidate):
     """
     Determine if one individual dominates another.
     """

@@ -12,67 +12,6 @@ from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2
 
-class Candidate(torch.nn.Module):
-    """
-    Simple fixed topology 1 hidden layer feed-forward nn candidate
-    """
-    def __init__(self, in_size: int, hidden_size: int, out_size: int, device="cpu"):
-        super().__init__()
-        self.in_size = in_size
-        self.hidden_size = hidden_size
-        self.out_size = out_size
-
-        self.model = torch.nn.Sequential(
-            torch.nn.Linear(in_size, hidden_size),
-            torch.nn.Tanh(),
-            torch.nn.Linear(hidden_size, out_size))
-        
-        self.device = device
-        self.model.to(device)
-        self.model.eval()
-        
-        # Orthogonal initialization
-        for layer in self.model:
-            if isinstance(layer, torch.nn.Linear):
-                torch.nn.init.orthogonal_(layer.weight)
-                layer.bias.data.fill_(0.01)
-
-        # To keep track of metrics
-        self.metrics = None
-        self.rank = None
-        self.distance = -1
-
-    @classmethod
-    def from_crossover(cls, parent1, parent2, p_mutation: float):
-        """
-        Crossover two parents to create a child.
-        Take a random 50/50 choice of either parent's weights
-        """
-        # TODO: This is slower than it could be
-        child = cls(in_size=parent1.in_size, hidden_size=parent1.hidden_size, out_size=parent1.out_size, device=parent1.device)
-        for child_param, parent1_param, parent2_param in zip(child.parameters(), parent1.parameters(), parent2.parameters()):
-            mask = torch.rand(size=child_param.data.shape) < 0.5
-            child_param.data = torch.where(mask, parent1_param.data, parent2_param.data)
-        child.mutate(p_mutation)
-        return child
-        
-    def forward(self, X: torch.Tensor) -> torch.Tensor:
-        """
-        Forward pass of the simple nn
-        """
-        return self.model(X)
-    
-    def mutate(self, p_mutation: float):
-        """
-        Randomly mutates each weight with probability p_mutation with gaussian noise mu=0, sigma=0.1
-        """
-        for layer in self.model:
-            if isinstance(layer, torch.nn.Linear):
-                mask = torch.rand(size=layer.weight.shape) < p_mutation
-                layer.weight.data += mask * torch.randn(size=layer.weight.shape) * 0.1
-                mask = torch.rand(size=layer.bias.shape) < p_mutation
-                layer.bias.data += mask * torch.randn(size=layer.bias.shape) * 0.1
-
 class TorchPrescriptor():
     """
     Handles prescriptor candidate evolution
@@ -99,7 +38,8 @@ class TorchPrescriptor():
         self.eval_df = eval_df
         self.encoded_eval_df = encoder.encode_as_df(eval_df)
         self.encoder = encoder
-        context_ds = TorchDataset(self.encoded_eval_df[constants.CAO_MAPPING["context"]].values, np.zeros(len(self.encoded_eval_df)))
+        context_ds = TorchDataset(self.encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
+                                  np.zeros((len(self.encoded_eval_df), len(constants.RECO_COLS))))
         self.context_dl = torch.utils.data.DataLoader(context_ds, batch_size=batch_size, shuffle=False)
         self.batch_size = batch_size
 
@@ -159,7 +99,9 @@ class TorchPrescriptor():
             # Compute metrics
             eluc_df = self.predictor.predict(context_actions_df)
             change_df = self._compute_percent_changed(context_actions_df)
-            candidate.metrics = [eluc_df["ELUC"].mean(), change_df["change"].mean()]
+            eluc = eluc_df["ELUC"].mean()
+            change = change_df["change"].mean()
+            candidate.metrics = [eluc, change]
 
     def select_parents(self, candidates, n_parents):
         """
@@ -190,7 +132,7 @@ class TorchPrescriptor():
         idx2 = min(random.choices(range(len(sorted_parents)), k=2))
         return sorted_parents[idx1], sorted_parents[idx2]
 
-    def make_new_pop(self, parents: list, pop_size: int) -> list:
+    def make_new_pop(self, parents: list, pop_size: int, gen:int) -> list:
         """
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
@@ -199,9 +141,9 @@ class TorchPrescriptor():
         sorted_parents = sorted(parents, key=lambda c: (c.rank, -c.distance))
         elites = sorted_parents[:self.n_elites]
         children = []
-        for _ in range(pop_size - self.n_elites):
+        for i in range(pop_size - self.n_elites):
             parent1, parent2 = self.tournament_selection(sorted_parents)
-            child = Candidate.from_crossover(parent1, parent2, self.p_mutation)
+            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, gen, i)
             children.append(child)
         return elites + children
 
@@ -215,12 +157,12 @@ class TorchPrescriptor():
         """
         save_path.mkdir(parents=True, exist_ok=True)
         results = []
-        parents = [Candidate(**self.candidate_params) for _ in range(self.pop_size)]
+        parents = [Candidate(**self.candidate_params, gen=0, cand_id=i) for i in range(self.pop_size)]
         # Seeding the first generation with trained models
-        if self.seed_dir:
-            seed_paths = list(self.seed_dir.glob("*.pt"))
-            for i, seed_path in enumerate(seed_paths):
-                parents[i].load_state_dict(torch.load(seed_path))
+        # if self.seed_dir:
+        #     seed_paths = list(self.seed_dir.glob("*.pt"))
+        #     for i, seed_path in enumerate(seed_paths):
+        #         parents[i].load_state_dict(torch.load(seed_path))
         offspring = []
         for gen in tqdm(range(self.n_generations)):
             # Set up candidates by merging parent and offspring populations
@@ -246,10 +188,9 @@ class TorchPrescriptor():
 
             # If we aren't on the last generation, make a new population
             if gen < self.n_generations - 1:
-                offspring = self.make_new_pop(parents, self.pop_size)
+                offspring = self.make_new_pop(parents, self.pop_size, gen)
 
         results_df = pd.DataFrame(results)
-        print(results_df)
         results_df.to_csv(save_path / "results.csv", index=False)
 
         return parents

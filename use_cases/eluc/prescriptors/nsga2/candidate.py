@@ -73,3 +73,13 @@ class Candidate(torch.nn.Module):
                 layer.weight.data += mask * torch.randn(size=layer.weight.shape) * 0.1
                 mask = torch.rand(size=layer.bias.shape) < p_mutation
                 layer.bias.data += mask * torch.randn(size=layer.bias.shape) * 0.1
+
+    def record_state(self) -> dict:
+        """
+        Record the state of the candidate for logging purposes
+        """
+        return {"id": self.cand_id,
+                "parents": self.parents,
+                "rank": self.rank,
+                "distance": self.distance,
+                "metrics": self.metrics}

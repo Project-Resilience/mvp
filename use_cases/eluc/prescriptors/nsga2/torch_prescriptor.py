@@ -127,7 +127,9 @@ class TorchPrescriptor():
     
     def tournament_selection(self, sorted_parents: list) -> tuple:
         """
-        Same implementation as in ESP
+        Same implementation as in ESP.
+        Takes two random parents and compares their indices since this is a measure of their performance.
+        Note: It is possible for this function to select the same parent twice.
         """
         idx1 = min(random.choices(range(len(sorted_parents)), k=2))
         idx2 = min(random.choices(range(len(sorted_parents)), k=2))
@@ -160,10 +162,11 @@ class TorchPrescriptor():
         results = []
         parents = [Candidate(**self.candidate_params, gen=0, cand_id=i) for i in range(self.pop_size)]
         # Seeding the first generation with trained models
-        # if self.seed_dir:
-        #     seed_paths = list(self.seed_dir.glob("*.pt"))
-        #     for i, seed_path in enumerate(seed_paths):
-        #         parents[i].load_state_dict(torch.load(seed_path))
+        if self.seed_dir:
+            seed_paths = list(self.seed_dir.glob("*.pt"))
+            for i, seed_path in enumerate(seed_paths):
+                parents[i].load_state_dict(torch.load(seed_path))
+
         offspring = []
         for gen in tqdm(range(self.n_generations)):
             # Set up candidates by merging parent and offspring populations
@@ -173,7 +176,7 @@ class TorchPrescriptor():
             # On the first generation we want to record the performance of the initial population
             if gen == 0:
                 results.append(self._record_candidate_avgs(gen, candidates))
-                gen_results = [{"rank": c.rank, "distance": c.distance, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents]
+                gen_results = [c.record_state() for c in parents]
                 gen_results_df = pd.DataFrame(gen_results)
                 gen_results_df.to_csv(save_path / f"gen_{gen}.csv", index=False)
 
@@ -181,7 +184,7 @@ class TorchPrescriptor():
             parents = self.select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
-            gen_results = [{"rank": c.rank, "distance": c.distance, "eluc": c.metrics[0], "change": c.metrics[1]} for c in parents]
+            gen_results = [c.record_state() for c in parents]
             gen_results_df = pd.DataFrame(gen_results)
             gen_results_df.to_csv(save_path / f"gen_{gen+1}.csv", index=False)
 

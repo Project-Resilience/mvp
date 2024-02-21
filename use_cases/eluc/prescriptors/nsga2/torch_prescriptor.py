@@ -11,6 +11,7 @@ from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2
+from prescriptors.nsga2.candidate import Candidate
 
 class TorchPrescriptor():
     """
@@ -103,7 +104,7 @@ class TorchPrescriptor():
             change = change_df["change"].mean()
             candidate.metrics = [eluc, change]
 
-    def select_parents(self, candidates, n_parents):
+    def select_parents(self, candidates: list, n_parents: int):
         """
         NSGA-II parent selection using fast non-dominated sort and crowding distance.
         """

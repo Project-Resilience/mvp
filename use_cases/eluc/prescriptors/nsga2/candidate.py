@@ -48,7 +48,7 @@ class Candidate(torch.nn.Module):
                     device=parent1.device,
                     gen=gen,
                     cand_id=cand_id,
-                    parents=(parent1.cand_id, parent2.cand_id))
+                    parents=((parent1.gen, parent1.cand_id), (parent2.gen, parent2.cand_id)))
         
         for child_param, parent1_param, parent2_param in zip(child.parameters(), parent1.parameters(), parent2.parameters()):
             mask = torch.rand(size=child_param.data.shape) < 0.5
@@ -78,8 +78,13 @@ class Candidate(torch.nn.Module):
         """
         Record the state of the candidate for logging purposes
         """
-        return {"id": self.cand_id,
-                "parents": self.parents,
-                "rank": self.rank,
-                "distance": self.distance,
-                "metrics": self.metrics}
+        if self.metrics is None:
+            raise ValueError("Candidate has not been evaluated yet")
+        else:
+            return {"gen": self.gen,
+                    "id": self.cand_id,
+                    "parents": self.parents,
+                    "NSGA-II_rank": self.rank, # Named this to match ESP
+                    "distance": self.distance,
+                    "ELUC": self.metrics[0],
+                    "change": self.metrics[1]}

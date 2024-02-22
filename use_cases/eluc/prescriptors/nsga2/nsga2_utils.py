@@ -41,6 +41,7 @@ def fast_non_dominated_sort(candidates: list):
         i = i+1
         front.append(Q)
 
+    # With this implementation the final front will be empty
     del front[len(front)-1]
 
     # Convert front indices to candidates
@@ -51,11 +52,14 @@ def fast_non_dominated_sort(candidates: list):
             cands.append(candidates[idx])
         candidate_fronts.append(cands)
 
+    # Manually increment all ranks by 1 to match NSGA-II convention
+    rank = [r + 1 for r in rank]
+
     return candidate_fronts, rank
 
 def calculate_crowding_distance(front):
     """
-    Calculate crowding distance of front.
+    Calculate crowding distance of each candidate in front.
     """
     n_objectives = len(front[0].metrics)
     distances = [0 for _ in range(len(front))]

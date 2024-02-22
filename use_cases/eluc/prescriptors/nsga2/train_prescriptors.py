@@ -18,14 +18,13 @@ if __name__ == "__main__":
     tp = TorchPrescriptor(
         pop_size=100,
         n_generations=100,
-        n_elites=10,
         p_mutation=0.2,
         eval_df=dataset.train_df.sample(frac=0.00001, random_state=42),
         encoder=dataset.encoder,
         predictor=nnp,
         batch_size=4096,
         candidate_params=candidate_params,
-        seed_dir=None
+        seed_dir=Path("prescriptors/nsga2/seeds/test")
     )
     print("Training prescriptors...")
     save_path = Path("prescriptors/nsga2/trained_prescriptors/test")

@@ -1,4 +1,5 @@
 import random
+import shutil
 from pathlib import Path
 
 from tqdm import tqdm
@@ -20,7 +21,6 @@ class TorchPrescriptor():
     def __init__(self,
                  pop_size: int,
                  n_generations: int,
-                 n_elites: int,
                  p_mutation: float,
                  eval_df: pd.DataFrame,
                  encoder: ELUCEncoder,
@@ -32,7 +32,6 @@ class TorchPrescriptor():
         self.candidate_params = candidate_params
         self.pop_size = pop_size
         self.n_generations = n_generations
-        self.n_elites = n_elites
         self.p_mutation = p_mutation
         self.seed_dir=seed_dir
 
@@ -79,30 +78,36 @@ class TorchPrescriptor():
         percent_changed = percent_changed / context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
         change_df = pd.DataFrame(percent_changed, columns=["change"])
         return change_df
+    
+    def prescribe_and_predict(self, candidate: Candidate) -> tuple:
+        """
+        Takes a candidate and prescribes actions, then predicts metrics.
+        """
+        # Aggregate recommendations
+        reco_list = []
+        with torch.no_grad():
+            for X, _ in self.context_dl:
+                recos = candidate(X)
+                reco_list.append(recos)
+            reco_tensor = torch.concatenate(reco_list, dim=0)
+
+            # Convert reccomendations into context + actions
+            reco_df = self._reco_tensor_to_df(reco_tensor)
+        
+        context_actions_df = self._reco_to_context_actions(reco_df)
+        # Compute metrics
+        eluc_df = self.predictor.predict(context_actions_df)
+        change_df = self._compute_percent_changed(context_actions_df)
+        
+        return eluc_df["ELUC"].mean(), change_df["change"].mean()
 
     def evaluate_candidates(self, candidates: list):
         """
-        Evaluates candidates on the eval_df and sets their metrics attribute.
+        Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
         for candidate in candidates:
-            # Aggregate recommendations
-            reco_list = []
-            with torch.no_grad():
-                for X, _ in self.context_dl:
-                    recos = candidate(X)
-                    reco_list.append(recos)
-                reco_tensor = torch.concatenate(reco_list, dim=0)
-
-                # Convert reccomendations into context + actions
-                reco_df = self._reco_tensor_to_df(reco_tensor)
-            
-            context_actions_df = self._reco_to_context_actions(reco_df)
-            # Compute metrics
-            eluc_df = self.predictor.predict(context_actions_df)
-            change_df = self._compute_percent_changed(context_actions_df)
-            eluc = eluc_df["ELUC"].mean()
-            change = change_df["change"].mean()
-            candidate.metrics = [eluc, change]
+            eluc, change = self.prescribe_and_predict(candidate)
+            candidate.metrics = (eluc, change)
 
     def select_parents(self, candidates: list, n_parents: int):
         """
@@ -139,16 +144,14 @@ class TorchPrescriptor():
         """
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
-        We also maintain the top n_elites parents in the new population.
         """
         sorted_parents = sorted(parents, key=lambda c: (c.rank, -c.distance))
-        elites = sorted_parents[:self.n_elites]
         children = []
-        for i in range(pop_size - self.n_elites):
+        for i in range(pop_size):
             parent1, parent2 = self.tournament_selection(sorted_parents)
             child = Candidate.from_crossover(parent1, parent2, self.p_mutation, gen, i)
             children.append(child)
-        return elites + children
+        return children
 
     def neuroevolution(self, save_path: Path):
         """
@@ -158,40 +161,32 @@ class TorchPrescriptor():
         2. Select parents
         3. Make new population from parents
         """
-        save_path.mkdir(parents=True, exist_ok=True)
+        shutil.rmtree(save_path)
+        save_path.mkdir(parents=True, exist_ok=False)
         results = []
-        parents = [Candidate(**self.candidate_params, gen=0, cand_id=i) for i in range(self.pop_size)]
+        parents = [Candidate(**self.candidate_params, gen=1, cand_id=i) for i in range(self.pop_size)]
         # Seeding the first generation with trained models
         if self.seed_dir:
             seed_paths = list(self.seed_dir.glob("*.pt"))
             for i, seed_path in enumerate(seed_paths):
+                print(f"Seeding with {seed_path}...")
                 parents[i].load_state_dict(torch.load(seed_path))
 
         offspring = []
-        for gen in tqdm(range(self.n_generations)):
+        for gen in tqdm(range(1, self.n_generations+1)):
             # Set up candidates by merging parent and offspring populations
             candidates = parents + offspring
             self.evaluate_candidates(candidates)
-
-            # On the first generation we want to record the performance of the initial population
-            if gen == 0:
-                results.append(self._record_candidate_avgs(gen, candidates))
-                gen_results = [c.record_state() for c in parents]
-                gen_results_df = pd.DataFrame(gen_results)
-                gen_results_df.to_csv(save_path / f"gen_{gen}.csv", index=False)
 
             # NSGA-II parent selection
             parents = self.select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
-            gen_results = [c.record_state() for c in parents]
-            gen_results_df = pd.DataFrame(gen_results)
-            gen_results_df.to_csv(save_path / f"gen_{gen+1}.csv", index=False)
-
             results.append(self._record_candidate_avgs(gen+1, parents))
+            self._record_gen_results(gen, parents, save_path)
 
             # If we aren't on the last generation, make a new population
-            if gen < self.n_generations - 1:
+            if gen < self.n_generations:
                 offspring = self.make_new_pop(parents, self.pop_size, gen)
 
         results_df = pd.DataFrame(results)
@@ -199,6 +194,18 @@ class TorchPrescriptor():
 
         return parents
     
+    def _record_gen_results(self, gen: int, candidates: list, save_path: Path):
+        # Save statistics of candidates
+        gen_results = [c.record_state() for c in candidates]
+        gen_results_df = pd.DataFrame(gen_results)
+        gen_results_df.to_csv(save_path / f"{gen}.csv", index=False)
+
+        # Save rank 1 candidate state dicts
+        (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
+        pareto_candidates = [c for c in candidates if c.rank == 1]
+        for c in pareto_candidates:
+            torch.save(c.state_dict(), save_path / f"{gen}" / f"{c.gen}_{c.cand_id}.pt")
+
     def _record_candidate_avgs(self, gen, candidates):
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])

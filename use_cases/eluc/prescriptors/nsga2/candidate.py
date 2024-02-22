@@ -1,8 +1,13 @@
+"""
+Contains the Candidate class, which is a simple feed-forward neural network that keeps track
+of its own metrics and logging information.
+"""
 import torch
 
 class Candidate(torch.nn.Module):
     """
-    Simple fixed topology 1 hidden layer feed-forward nn candidate
+    Simple fixed topology 1 hidden layer feed-forward nn candidate.
+    Keeps track of its own metrics and evolution logging information.
     """
     def __init__(self, in_size: int, hidden_size: int, out_size: int, device="cpu", gen=-1, cand_id=-1, parents=(None, None)):
         super().__init__()

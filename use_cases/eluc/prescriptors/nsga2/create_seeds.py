@@ -1,5 +1,9 @@
-import pandas as pd
+"""
+Generates PyTorch seeds for the NSGA-II prescriptor.
+"""
 from pathlib import Path
+
+import pandas as pd
 import torch
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
@@ -58,6 +62,7 @@ def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
 def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     """
     Creates a seed that attempts to prescribe the max change to secdf.
+    Does so by creating artificial labels that are max change to secdf.
     """
     # Create max change labels
     max_change_recos = df[constants.RECO_COLS].copy()
@@ -66,7 +71,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     max_change_recos["secdf"] = reco_use
 
     ds = TorchDataset(encoded_df[constants.CAO_MAPPING["context"]].to_numpy(), max_change_recos[constants.RECO_COLS].to_numpy())
-    
+
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds)
 

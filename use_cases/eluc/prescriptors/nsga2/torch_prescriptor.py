@@ -1,3 +1,7 @@
+"""
+PyTorch implementation of NSGA-II.
+"""
+
 import random
 import shutil
 from pathlib import Path
@@ -55,7 +59,7 @@ class TorchPrescriptor():
         reco_df = reco_df.div(reco_df.sum(axis=1), axis=0) # Normalize to sum to 1
         reco_df = reco_df.mul(self.eval_df[constants.RECO_COLS].sum(axis=1), axis=0) # Rescale to match original sum
         return reco_df
-    
+
     def _reco_to_context_actions(self, reco_df: pd.DataFrame) -> pd.DataFrame:
         """
         Converts recommendation dataframe to context + actions dataframe.
@@ -79,9 +83,9 @@ class TorchPrescriptor():
         change_df = pd.DataFrame(percent_changed, columns=["change"])
         return change_df
     
-    def prescribe_and_predict(self, candidate: Candidate) -> tuple:
+    def prescribe(self, candidate: Candidate) -> pd.DataFrame:
         """
-        Takes a candidate and prescribes actions, then predicts metrics.
+        Prescribes actions for all context given candidate.
         """
         # Aggregate recommendations
         reco_list = []
@@ -91,27 +95,34 @@ class TorchPrescriptor():
                 reco_list.append(recos)
             reco_tensor = torch.concatenate(reco_list, dim=0)
 
-            # Convert reccomendations into context + actions
+            # Convert recommendations into context + actions
             reco_df = self._reco_tensor_to_df(reco_tensor)
         
         context_actions_df = self._reco_to_context_actions(reco_df)
-        # Compute metrics
+        return context_actions_df
+
+    def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Computes ELUC and change for each sample in a context_actions_df.
+        """
         eluc_df = self.predictor.predict(context_actions_df)
         change_df = self._compute_percent_changed(context_actions_df)
         
-        return eluc_df["ELUC"].mean(), change_df["change"].mean()
+        return eluc_df, change_df
 
     def evaluate_candidates(self, candidates: list):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
         for candidate in candidates:
-            eluc, change = self.prescribe_and_predict(candidate)
-            candidate.metrics = (eluc, change)
+            context_actions_df = self.prescribe(candidate)
+            eluc_df, change_df = self.predict(context_actions_df)
+            candidate.metrics = (eluc_df["ELUC"].mean(), change_df["ELUC"].mean())
 
     def select_parents(self, candidates: list, n_parents: int):
         """
         NSGA-II parent selection using fast non-dominated sort and crowding distance.
+        Sets candidates' ranks and distance attributes.
         """
         fronts, ranks = nsga2_utils.fast_non_dominated_sort(candidates)
         for candidate, rank in zip(candidates, ranks):
@@ -159,6 +170,7 @@ class TorchPrescriptor():
         After initializing the first population randomly, goes through 3 steps in each generation:
         1. Evaluate candidates
         2. Select parents
+        2a Log performance of parents
         3. Make new population from parents
         """
         shutil.rmtree(save_path)
@@ -195,6 +207,10 @@ class TorchPrescriptor():
         return parents
     
     def _record_gen_results(self, gen: int, candidates: list, save_path: Path):
+        """
+        Records the state of all the candidates.
+        Save the pareto front to disk.
+        """
         # Save statistics of candidates
         gen_results = [c.record_state() for c in candidates]
         gen_results_df = pd.DataFrame(gen_results)
@@ -206,7 +222,10 @@ class TorchPrescriptor():
         for c in pareto_candidates:
             torch.save(c.state_dict(), save_path / f"{gen}" / f"{c.gen}_{c.cand_id}.pt")
 
-    def _record_candidate_avgs(self, gen, candidates):
+    def _record_candidate_avgs(self, gen: int, candidates: list):
+        """
+        Gets the average eluc and change for a population of candidates.
+        """
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
         return {"gen": gen, "eluc": avg_eluc, "change": avg_change}

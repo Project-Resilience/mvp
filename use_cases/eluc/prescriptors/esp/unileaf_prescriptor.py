@@ -2,57 +2,19 @@ from typing import Any
 from typing import Dict
 from typing import List
 
+from pathlib import Path
+
 import pandas as pd
 import numpy as np
+from keras.models import load_model
 
 from esp_sdk.esp_evaluator import EspEvaluator
 
 from data import constants
 from data.eluc_data import ELUCEncoder
+from prescriptors.prescriptor import Prescriptor
 
-def reco_to_context_actions(reco_df: pd.DataFrame, 
-                            encoded_context_df: pd.DataFrame, 
-                            data_encoder: pd.DataFrame) -> pd.DataFrame:
-    """
-    Converts a dataframe containing recommended land use proportions to a dataframe containing
-    the context and prescribed actions.
-    """
-    # This is gacky but has to happen sooner or later
-    reco_df = reco_df.reset_index(drop=True)
-    encoded_context_df = encoded_context_df.reset_index(drop=True)
-
-    context_df = data_encoder.decode_as_df(encoded_context_df)
-
-    # Linear scaling is implemented here:
-    # Do ReLU here since we no longer softmax
-    reco_df = reco_df.clip(0, None)
-    # If all outputs 0, set to be uniform
-    reco_df[reco_df.sum(axis=1) == 0] = 1 # Could be any positive constant, 1 for simplicity
-    prescribed_total_df = reco_df.sum(axis=1)
-    prescribed_total_df = prescribed_total_df.replace(0, 1)
-    # Since we are no longer using softmax, do a linear scaling
-    reco_df = reco_df.div(prescribed_total_df, axis=0)
-
-    # Scale encoded_reco_df to context_df minus primf/primn
-    # Multiply proportions by sum of non primn/primf cols
-    reco_df = reco_df.mul(context_df[constants.RECO_COLS].sum(axis=1), axis=0)
-
-    # Compute the diff
-    # Note: the index need to match in order to subtract. Otherwise we get NaN
-    prescribed_actions_df = reco_df[constants.RECO_COLS].reset_index(drop=True) - context_df[constants.RECO_COLS].reset_index(drop=True)
-
-    # Rename the columns to match what the predictor expects
-    prescribed_actions_df = prescribed_actions_df.rename(constants.RECO_MAP, axis=1)
-    prescribed_actions_df[constants.NO_CHANGE_COLS] = 0
-    
-    # Aggregate the context and actions dataframes.
-    context_actions_df = pd.concat([context_df,
-                                            prescribed_actions_df[constants.DIFF_LAND_USE_COLS]],
-                                            axis=1)
-    
-    return context_actions_df
-
-class UnileafPrescriptor(EspEvaluator):
+class UnileafPrescriptor(EspEvaluator, Prescriptor):
     """
     An Unileaf Prescriptor makes prescriptions given an ESP candidate and a context DataFrame.
     It is also an EspEvaluator implementation that returns metrics for ESP candidates.
@@ -106,6 +68,46 @@ class UnileafPrescriptor(EspEvaluator):
                                range(len(context_as_nn_input))]
         return context_as_nn_input
 
+    def _reco_to_context_actions(self, reco_df: pd.DataFrame, encoded_context_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Converts a dataframe containing recommended land use proportions to a dataframe containing
+        the context and prescribed actions.
+        """
+        # This is gacky but has to happen sooner or later
+        reco_df = reco_df.reset_index(drop=True)
+        encoded_context_df = encoded_context_df.reset_index(drop=True)
+
+        context_df = self.data_encoder.decode_as_df(encoded_context_df)
+
+        # Linear scaling is implemented here:
+        # Do ReLU here since we no longer softmax
+        reco_df = reco_df.clip(0, None)
+        # If all outputs 0, set to be uniform
+        reco_df[reco_df.sum(axis=1) == 0] = 1 # Could be any positive constant, 1 for simplicity
+        prescribed_total_df = reco_df.sum(axis=1)
+        prescribed_total_df = prescribed_total_df.replace(0, 1)
+        # Since we are no longer using softmax, do a linear scaling
+        reco_df = reco_df.div(prescribed_total_df, axis=0)
+
+        # Scale encoded_reco_df to context_df minus primf/primn
+        # Multiply proportions by sum of non primn/primf cols
+        reco_df = reco_df.mul(context_df[constants.RECO_COLS].sum(axis=1), axis=0)
+
+        # Compute the diff
+        # Note: the index need to match in order to subtract. Otherwise we get NaN
+        prescribed_actions_df = reco_df[constants.RECO_COLS].reset_index(drop=True) - context_df[constants.RECO_COLS].reset_index(drop=True)
+
+        # Rename the columns to match what the predictor expects
+        prescribed_actions_df = prescribed_actions_df.rename(constants.RECO_MAP, axis=1)
+        prescribed_actions_df[constants.NO_CHANGE_COLS] = 0
+        
+        # Aggregate the context and actions dataframes.
+        context_actions_df = pd.concat([context_df,
+                                                prescribed_actions_df[constants.DIFF_LAND_USE_COLS]],
+                                                axis=1)
+        
+        return context_actions_df
+
     def evaluate_candidate(self, candidate):
         """
         Evaluates a single Prescriptor candidate and returns its metrics.
@@ -125,7 +127,7 @@ class UnileafPrescriptor(EspEvaluator):
         reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
                                 columns=constants.RECO_COLS)
         
-        context_actions_df = reco_to_context_actions(reco_land_use_df, self.context_df, self.data_encoder)
+        context_actions_df = self.reco_to_context_actions(reco_land_use_df, self.context_df, self.data_encoder)
 
         # Compute the metrics
         metrics = self._compute_metrics(context_actions_df)
@@ -278,4 +280,26 @@ class UnileafPrescriptor(EspEvaluator):
         metrics = config["evolution"]["fitness"]
         fitness_metrics = [metric["metric_name"] for metric in metrics]
         return fitness_metrics
+    
+    def prescribe_land_use(self, cand_id: str, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
+        gen = int(cand_id.split('_')[0])
+        candidate_filename = results_dir / f"{gen}" / f"{cand_id}.h5"
+        candidate = load_model(candidate_filename, compile=False)
+        
+        encoded_context_df = self.data_encoder.encode_as_df(context_df)
+
+        reco_land_use = self.prescribe(candidate, encoded_context_df)
+        reco_df = pd.DataFrame(reco_land_use["reco_land_use"].tolist(), columns=constants.RECO_COLS)
+        context_actions_df = self._reco_to_context_actions(reco_df, encoded_context_df)
+
+        context_actions_df = context_actions_df.set_index(context_df.index)
+
+        return context_actions_df
+    
+    def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
+        eluc_df = self.predict_eluc(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
+
+        return eluc_df, change_df
+        
 

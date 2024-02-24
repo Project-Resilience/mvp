@@ -12,6 +12,7 @@ class TorchDataset(Dataset):
         super().__init__()   
         self.X = torch.tensor(X, dtype=torch.float32, device=device)
         self.y = torch.tensor(y, device=device)
+        assert len(self.X) == len(self.y), "X and y must have the same length"
 
     def __len__(self):
         return len(self.X)

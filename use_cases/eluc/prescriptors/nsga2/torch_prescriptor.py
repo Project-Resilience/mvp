@@ -15,10 +15,11 @@ from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
+from prescriptors.prescriptor import Prescriptor
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
 
-class TorchPrescriptor():
+class TorchPrescriptor(Prescriptor):
     """
     Handles prescriptor candidate evolution
     """
@@ -49,25 +50,28 @@ class TorchPrescriptor():
 
         self.predictor = predictor
 
-    def _reco_tensor_to_df(self, reco_tensor: torch.Tensor) -> pd.DataFrame:
+    def _reco_tensor_to_df(self, reco_tensor: torch.Tensor, context_df: pd.Index) -> pd.DataFrame:
         """
         Converts neural network output tensor to scaled dataframe.
+        Sets the indices of the recommendations so that we can subtract from the context to get
+        the land diffs.
         """
-        reco_df = pd.DataFrame(reco_tensor.cpu().numpy(), index=self.eval_df.index, columns=constants.RECO_COLS)
+        reco_df = pd.DataFrame(reco_tensor.cpu().numpy(), index=context_df.index, columns=constants.RECO_COLS)
         reco_df = reco_df.clip(0, None) # ReLU
         reco_df[reco_df.sum(axis=1) == 0] = 1 # Rows of all 0s are set to 1s
         reco_df = reco_df.div(reco_df.sum(axis=1), axis=0) # Normalize to sum to 1
-        reco_df = reco_df.mul(self.eval_df[constants.RECO_COLS].sum(axis=1), axis=0) # Rescale to match original sum
+        reco_df = reco_df.mul(context_df[constants.RECO_COLS].sum(axis=1), axis=0) # Rescale to match original sum
         return reco_df
 
-    def _reco_to_context_actions(self, reco_df: pd.DataFrame) -> pd.DataFrame:
+    def _reco_to_context_actions(self, reco_df: pd.DataFrame, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Converts recommendation dataframe to context + actions dataframe.
+        Uses old context to compute diffs based on recommendations - old context.
         """
-        presc_actions_df = reco_df - self.eval_df[constants.RECO_COLS]
+        presc_actions_df = reco_df - context_df[constants.RECO_COLS]
         presc_actions_df = presc_actions_df.rename(constants.RECO_MAP, axis=1)
         presc_actions_df[constants.NO_CHANGE_COLS] = 0
-        context_actions_df = pd.concat([self.eval_df[constants.CAO_MAPPING["context"]],
+        context_actions_df = pd.concat([context_df[constants.CAO_MAPPING["context"]],
                                             presc_actions_df[constants.CAO_MAPPING["actions"]]],
                                             axis=1)
         return context_actions_df
@@ -79,29 +83,45 @@ class TorchPrescriptor():
         # Sum the positive diffs
         percent_changed = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0][constants.DIFF_LAND_USE_COLS].sum(axis=1)
         # Divide by sum of used land
-        percent_changed = percent_changed / context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
+        total_land = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
+        total_land = total_land.replace(0, 1) # Avoid division by 0
+        percent_changed = percent_changed / total_land
         change_df = pd.DataFrame(percent_changed, columns=["change"])
         return change_df
     
-    def prescribe(self, candidate: Candidate) -> pd.DataFrame:
+    def _prescribe(self, candidate: Candidate, context_df=None) -> pd.DataFrame:
         """
-        Prescribes actions for all context given candidate.
+        Prescribes actions given a candidate.
+        If we don't provide a context_df, we use the stored context_dl. Otherwise, we create
+        a new dataloader from the given context_df.
         """
+
+        # Either create context_dl or used stored one
+        context_dl = None
+        if context_df is not None:
+            encoded_context_df = self.encoder.encode_as_df(context_df[constants.CAO_MAPPING["context"]])
+            context_ds = TorchDataset(encoded_context_df.to_numpy(),
+                                      np.zeros((len(encoded_context_df), len(constants.RECO_COLS))))
+            context_dl = torch.utils.data.DataLoader(context_ds, batch_size=self.batch_size, shuffle=False)
+        else:
+            context_df = self.eval_df
+            context_dl = self.context_dl
+
         # Aggregate recommendations
         reco_list = []
         with torch.no_grad():
-            for X, _ in self.context_dl:
+            for X, _ in context_dl:
                 recos = candidate(X)
                 reco_list.append(recos)
             reco_tensor = torch.concatenate(reco_list, dim=0)
 
             # Convert recommendations into context + actions
-            reco_df = self._reco_tensor_to_df(reco_tensor)
-        
-        context_actions_df = self._reco_to_context_actions(reco_df)
+            reco_df = self._reco_tensor_to_df(reco_tensor, context_df)
+
+        context_actions_df = self._reco_to_context_actions(reco_df, context_df)
         return context_actions_df
 
-    def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
+    def predict_metrics(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Computes ELUC and change for each sample in a context_actions_df.
         """
@@ -110,16 +130,16 @@ class TorchPrescriptor():
         
         return eluc_df, change_df
 
-    def evaluate_candidates(self, candidates: list):
+    def _evaluate_candidates(self, candidates: list):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
         for candidate in candidates:
-            context_actions_df = self.prescribe(candidate)
-            eluc_df, change_df = self.predict(context_actions_df)
+            context_actions_df = self._prescribe(candidate, self.context_dl)
+            eluc_df, change_df = self.predict_metrics(context_actions_df)
             candidate.metrics = (eluc_df["ELUC"].mean(), change_df["ELUC"].mean())
 
-    def select_parents(self, candidates: list, n_parents: int):
+    def _select_parents(self, candidates: list, n_parents: int):
         """
         NSGA-II parent selection using fast non-dominated sort and crowding distance.
         Sets candidates' ranks and distance attributes.
@@ -141,7 +161,7 @@ class TorchPrescriptor():
             parents += front
         return parents
     
-    def tournament_selection(self, sorted_parents: list) -> tuple:
+    def _tournament_selection(self, sorted_parents: list) -> tuple:
         """
         Same implementation as in ESP.
         Takes two random parents and compares their indices since this is a measure of their performance.
@@ -151,7 +171,7 @@ class TorchPrescriptor():
         idx2 = min(random.choices(range(len(sorted_parents)), k=2))
         return sorted_parents[idx1], sorted_parents[idx2]
 
-    def make_new_pop(self, parents: list, pop_size: int, gen:int) -> list:
+    def _make_new_pop(self, parents: list, pop_size: int, gen:int) -> list:
         """
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
@@ -159,7 +179,7 @@ class TorchPrescriptor():
         sorted_parents = sorted(parents, key=lambda c: (c.rank, -c.distance))
         children = []
         for i in range(pop_size):
-            parent1, parent2 = self.tournament_selection(sorted_parents)
+            parent1, parent2 = self._tournament_selection(sorted_parents)
             child = Candidate.from_crossover(parent1, parent2, self.p_mutation, gen, i)
             children.append(child)
         return children
@@ -188,10 +208,10 @@ class TorchPrescriptor():
         for gen in tqdm(range(1, self.n_generations+1)):
             # Set up candidates by merging parent and offspring populations
             candidates = parents + offspring
-            self.evaluate_candidates(candidates)
+            self._evaluate_candidates(candidates)
 
             # NSGA-II parent selection
-            parents = self.select_parents(candidates, self.pop_size)
+            parents = self._select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
             results.append(self._record_candidate_avgs(gen+1, parents))
@@ -199,7 +219,7 @@ class TorchPrescriptor():
 
             # If we aren't on the last generation, make a new population
             if gen < self.n_generations:
-                offspring = self.make_new_pop(parents, self.pop_size, gen)
+                offspring = self._make_new_pop(parents, self.pop_size, gen)
 
         results_df = pd.DataFrame(results)
         results_df.to_csv(save_path / "results.csv", index=False)
@@ -229,4 +249,14 @@ class TorchPrescriptor():
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
         return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
-    
+
+    def prescribe_land_use(self, cand_id: int, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Wrapper for prescribe method that loads a candidate from disk using an id.
+        Then takes in a context dataframe and prescribes actions.
+        """
+        candidate = Candidate(**self.candidate_params)
+        gen = int(cand_id.split("_")[0])
+        candidate.load_state_dict(torch.load(results_dir / f"{gen + 1}" / f"{cand_id}.pt"))
+        context_actions_df = self._prescribe(candidate, context_df)
+        return context_actions_df

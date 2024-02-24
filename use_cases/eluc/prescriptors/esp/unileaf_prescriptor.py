@@ -127,7 +127,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
                                 columns=constants.RECO_COLS)
         
-        context_actions_df = self.reco_to_context_actions(reco_land_use_df, self.context_df, self.data_encoder)
+        context_actions_df = self._reco_to_context_actions(reco_land_use_df, self.context_df)
 
         # Compute the metrics
         metrics = self._compute_metrics(context_actions_df)
@@ -172,7 +172,9 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         # So that percent changed really represent the percentage of change within the land use
         # portion of the cell
         # I.e. how much of the pie chart has changed?
-        percent_changed = percent_changed / context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
+        total_land_use = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
+        total_land_use = total_land_use.replace(0, 1)
+        percent_changed = percent_changed / total_land_use
         df = pd.DataFrame(percent_changed, columns=['change'])
         return df
 

@@ -50,9 +50,9 @@ class TorchPrescriptor(Prescriptor):
 
         self.predictor = predictor
 
-    def _reco_tensor_to_df(self, reco_tensor: torch.Tensor, context_df: pd.Index) -> pd.DataFrame:
+    def _reco_tensor_to_df(self, reco_tensor: torch.Tensor, context_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Converts neural network output tensor to scaled dataframe.
+        Converts raw Candidate neural network output tensor to scaled dataframe.
         Sets the indices of the recommendations so that we can subtract from the context to get
         the land diffs.
         """
@@ -65,8 +65,8 @@ class TorchPrescriptor(Prescriptor):
 
     def _reco_to_context_actions(self, reco_df: pd.DataFrame, context_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Converts recommendation dataframe to context + actions dataframe.
-        Uses old context to compute diffs based on recommendations - old context.
+        Converts recommendation df and original context df to context + actions df.
+        Uses original context to compute diffs based on recommendations - original context.
         """
         presc_actions_df = reco_df - context_df[constants.RECO_COLS]
         presc_actions_df = presc_actions_df.rename(constants.RECO_MAP, axis=1)
@@ -91,9 +91,9 @@ class TorchPrescriptor(Prescriptor):
     
     def _prescribe(self, candidate: Candidate, context_df=None) -> pd.DataFrame:
         """
-        Prescribes actions given a candidate.
-        If we don't provide a context_df, we use the stored context_dl. Otherwise, we create
-        a new dataloader from the given context_df.
+        Prescribes actions given a candidate and a context.
+        If we don't provide a context_df, we use the stored context_dl to avoid overhead. 
+        Otherwise, we create a new dataloader from the given context_df.
         """
 
         # Either create context_dl or used stored one
@@ -130,7 +130,7 @@ class TorchPrescriptor(Prescriptor):
         
         return eluc_df, change_df
 
-    def _evaluate_candidates(self, candidates: list):
+    def _evaluate_candidates(self, candidates: list[Candidate]):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
@@ -139,7 +139,7 @@ class TorchPrescriptor(Prescriptor):
             eluc_df, change_df = self.predict_metrics(context_actions_df)
             candidate.metrics = (eluc_df["ELUC"].mean(), change_df["ELUC"].mean())
 
-    def _select_parents(self, candidates: list, n_parents: int):
+    def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """
         NSGA-II parent selection using fast non-dominated sort and crowding distance.
         Sets candidates' ranks and distance attributes.
@@ -161,7 +161,7 @@ class TorchPrescriptor(Prescriptor):
             parents += front
         return parents
     
-    def _tournament_selection(self, sorted_parents: list) -> tuple:
+    def _tournament_selection(self, sorted_parents: list[Candidate]) -> tuple[Candidate, Candidate]:
         """
         Same implementation as in ESP.
         Takes two random parents and compares their indices since this is a measure of their performance.
@@ -171,7 +171,7 @@ class TorchPrescriptor(Prescriptor):
         idx2 = min(random.choices(range(len(sorted_parents)), k=2))
         return sorted_parents[idx1], sorted_parents[idx2]
 
-    def _make_new_pop(self, parents: list, pop_size: int, gen:int) -> list:
+    def _make_new_pop(self, parents: list[Candidate], pop_size: int, gen:int) -> list[Candidate]:
         """
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
@@ -226,7 +226,7 @@ class TorchPrescriptor(Prescriptor):
 
         return parents
     
-    def _record_gen_results(self, gen: int, candidates: list, save_path: Path):
+    def _record_gen_results(self, gen: int, candidates: list[Candidate], save_path: Path) -> None:
         """
         Records the state of all the candidates.
         Save the pareto front to disk.
@@ -242,7 +242,7 @@ class TorchPrescriptor(Prescriptor):
         for c in pareto_candidates:
             torch.save(c.state_dict(), save_path / f"{gen}" / f"{c.gen}_{c.cand_id}.pt")
 
-    def _record_candidate_avgs(self, gen: int, candidates: list):
+    def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """
         Gets the average eluc and change for a population of candidates.
         """
@@ -260,3 +260,4 @@ class TorchPrescriptor(Prescriptor):
         candidate.load_state_dict(torch.load(results_dir / f"{gen + 1}" / f"{cand_id}.pt"))
         context_actions_df = self._prescribe(candidate, context_df)
         return context_actions_df
+    

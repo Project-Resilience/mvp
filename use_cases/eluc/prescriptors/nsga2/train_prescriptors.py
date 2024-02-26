@@ -19,7 +19,7 @@ if __name__ == "__main__":
         pop_size=100,
         n_generations=100,
         p_mutation=0.2,
-        eval_df=dataset.train_df.sample(frac=0.00001, random_state=42),
+        eval_df=dataset.train_df.sample(frac=0.001, random_state=42),
         encoder=dataset.encoder,
         predictor=nnp,
         batch_size=4096,

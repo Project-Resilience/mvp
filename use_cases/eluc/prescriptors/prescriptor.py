@@ -22,5 +22,5 @@ class Prescriptor(ABC):
         was trained on to predict ELUC. Then computes change.
         Returns a dataframe of ELUC and change.
         """
-
         raise NotImplementedError
+    

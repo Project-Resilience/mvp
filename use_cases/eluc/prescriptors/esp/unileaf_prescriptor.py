@@ -164,8 +164,6 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         """
         Calculates what percent of usable land was changed from the context to the actions.
         """
-        context_actions_df = context_actions_df.reset_index(drop=True)
-
         # Sum the positive diffs
         percent_changed = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0][constants.DIFF_LAND_USE_COLS].sum(axis=1)
         # Land usage is only a portion of that cell, e.g 0.8. Scale back to 1
@@ -175,8 +173,8 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         total_land_use = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
         total_land_use = total_land_use.replace(0, 1)
         percent_changed = percent_changed / total_land_use
-        df = pd.DataFrame(percent_changed, columns=['change'])
-        return df
+        change_df = pd.DataFrame(percent_changed, index=context_actions_df.index, columns=['change'])
+        return change_df
 
     def prescribe(self, candidate, context_df: pd.DataFrame = None) -> pd.DataFrame:
         """

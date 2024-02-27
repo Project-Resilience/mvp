@@ -68,6 +68,7 @@ class TorchPrescriptor(Prescriptor):
         Converts recommendation df and original context df to context + actions df.
         Uses original context to compute diffs based on recommendations - original context.
         """
+        assert reco_df.index.isin(context_df.index).all(), "Recommendation index must be a subset of context index."
         presc_actions_df = reco_df - context_df[constants.RECO_COLS]
         presc_actions_df = presc_actions_df.rename(constants.RECO_MAP, axis=1)
         presc_actions_df[constants.NO_CHANGE_COLS] = 0

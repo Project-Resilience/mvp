@@ -10,6 +10,7 @@ import torch
 from data import constants
 from data.eluc_data import ELUCData
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor
+from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 
 class TestTorchPrescriptor(unittest.TestCase):
@@ -96,6 +97,29 @@ class TestTorchPrescriptor(unittest.TestCase):
         diff_df = diff_df[constants.DIFF_LAND_USE_COLS]
 
         self.assertTrue((diff_df == context_actions_df[constants.DIFF_LAND_USE_COLS]).all().all())
+
+    def test_compute_percent_changed_indices_same(self):
+        """
+        Makes sure the indices in change_df are the same as in the context_actions_df.
+        """
+        context_actions_df = self.prescriptor.eval_df.iloc[:100]
+        context_actions_df = context_actions_df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"]]
+        change_df = self.prescriptor._compute_percent_changed(context_actions_df)
+
+        self.assertTrue(change_df.index.equals(context_actions_df.index))
+
+    def test_prescribe_indices_same(self):
+        """
+        Tests prescribe method to see if context_actions_df has the same indices as the input context_df.
+        """
+        candidate = Candidate(in_size=len(constants.CAO_MAPPING["context"]),
+                              hidden_size=16,
+                              out_size=len(constants.RECO_COLS))
+        context_df = self.dataset.test_df.iloc[:100][constants.CAO_MAPPING["context"]]
+        context_actions_df = self.prescriptor._prescribe(candidate, context_df)
+
+        self.assertTrue(context_actions_df.index.equals(context_df.index))
+        self.assertTrue(context_df.equals(context_actions_df[constants.CAO_MAPPING["context"]]))
 
 if __name__ == "__main__":
     unittest.main()

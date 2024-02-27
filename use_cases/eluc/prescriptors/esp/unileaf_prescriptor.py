@@ -146,7 +146,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         metrics['ELUC'] = preds['ELUC'].mean()
         
         # Compute the % of change
-        change_df = self.compute_percent_changed(context_actions_df)
+        change_df = self._compute_percent_changed(context_actions_df)
         metrics['change'] = change_df['change'].mean()
         
         return metrics
@@ -159,22 +159,6 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         preds = predictor.predict(context_actions_df)
         preds = preds.astype("float64")
         return preds
-    
-    def compute_percent_changed(self, context_actions_df):
-        """
-        Calculates what percent of usable land was changed from the context to the actions.
-        """
-        # Sum the positive diffs
-        percent_changed = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0][constants.DIFF_LAND_USE_COLS].sum(axis=1)
-        # Land usage is only a portion of that cell, e.g 0.8. Scale back to 1
-        # So that percent changed really represent the percentage of change within the land use
-        # portion of the cell
-        # I.e. how much of the pie chart has changed?
-        total_land_use = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
-        total_land_use = total_land_use.replace(0, 1)
-        percent_changed = percent_changed / total_land_use
-        change_df = pd.DataFrame(percent_changed, index=context_actions_df.index, columns=['change'])
-        return change_df
 
     def prescribe(self, candidate, context_df: pd.DataFrame = None) -> pd.DataFrame:
         """
@@ -298,7 +282,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
     
     def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
         eluc_df = self.predict_eluc(context_actions_df)
-        change_df = self.compute_percent_changed(context_actions_df)
+        change_df = self._compute_percent_changed(context_actions_df)
 
         return eluc_df, change_df
         

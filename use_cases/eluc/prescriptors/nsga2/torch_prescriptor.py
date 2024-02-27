@@ -194,7 +194,8 @@ class TorchPrescriptor(Prescriptor):
         2a Log performance of parents
         3. Make new population from parents
         """
-        shutil.rmtree(save_path)
+        if save_path.exists():
+            shutil.rmtree(save_path)
         save_path.mkdir(parents=True, exist_ok=False)
         results = []
         parents = [Candidate(**self.candidate_params, gen=1, cand_id=i) for i in range(self.pop_size)]

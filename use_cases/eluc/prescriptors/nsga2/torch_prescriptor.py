@@ -136,9 +136,9 @@ class TorchPrescriptor(Prescriptor):
         Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
         for candidate in candidates:
-            context_actions_df = self._prescribe(candidate, self.context_dl)
+            context_actions_df = self._prescribe(candidate)
             eluc_df, change_df = self.predict_metrics(context_actions_df)
-            candidate.metrics = (eluc_df["ELUC"].mean(), change_df["ELUC"].mean())
+            candidate.metrics = (eluc_df["ELUC"].mean(), change_df["change"].mean())
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """

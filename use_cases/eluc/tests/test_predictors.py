@@ -1,3 +1,6 @@
+"""
+Unit tests for the predictors.
+"""
 import unittest
 import shutil
 from pathlib import Path

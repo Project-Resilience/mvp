@@ -265,11 +265,21 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         fitness_metrics = [metric["metric_name"] for metric in metrics]
         return fitness_metrics
     
-    def prescribe_land_use(self, cand_id: str, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
+    def _load_candidate(self, cand_id: str, results_dir: Path):
         gen = int(cand_id.split('_')[0])
         candidate_filename = results_dir / f"{gen}" / f"{cand_id}.h5"
         candidate = load_model(candidate_filename, compile=False)
-        
+        return candidate
+
+    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """
+        Implementation of prescribe_land_use.
+        Takes in a candidate id and a results dir to load the candidate from.
+        Candidate ID in format: <gen>_<id>
+        Then prescribes using the loaded prescriptor.
+        """
+        candidate = self._load_candidate(**kwargs)
+
         encoded_context_df = self.data_encoder.encode_as_df(context_df)
 
         reco_land_use = self.prescribe(candidate, encoded_context_df)
@@ -281,6 +291,9 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         return context_actions_df
     
     def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
+        """
+        Predicts ELUC and computes change from the given context_actions_df.
+        """
         eluc_df = self.predict_eluc(context_actions_df)
         change_df = self._compute_percent_changed(context_actions_df)
 

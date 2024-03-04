@@ -28,14 +28,13 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         """
         raise NotImplementedError
     
-    def prescribe_land_use(self, pct, __, context_df: pd.DataFrame) -> pd.DataFrame:
+    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
-        TODO: The header of this function is weird. Not entirely sure what to do about it.
-        The header of this function is kinda gacky. Not sure what to do about this...
-        We don't need a result dir or candidate id to load a prescriptor because we 
-        prescribe via. heuristic.
+        TODO: I'm not 100% sure this is how we should be handing the kwargs.
+        Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
+        Kwargs must contain a "pct" key that is the percentage of land-use change to prescribe up to.
         """
-        reco_df = self._reco_heuristic(pct, context_df)
+        reco_df = self._reco_heuristic(kwargs["pct"], context_df)
         prescribed_actions_df = reco_df[constants.RECO_COLS] - context_df[constants.RECO_COLS]
 
         # Rename the columns to match what the predictor expects
@@ -94,7 +93,7 @@ class PerfectHeuristic(HeuristicPrescriptor):
         super().__init__(predictor)
         assert len(coefs) == len(constants.RECO_COLS)
         # Sort columns by coefficient
-        reco_cols = [col for col in constants.RECO_COLS]
+        reco_cols = list(constants.RECO_COLS)
         zipped = zip(reco_cols, coefs)
         sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
         self.reco_cols, _ = zip(*sorted_zip)
@@ -115,13 +114,13 @@ class PerfectHeuristic(HeuristicPrescriptor):
 
         adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
-        adjusted["to_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
+        adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
 
         for col in self.reco_cols:
-            change = adjusted[[col, "to_change"]].min(axis=1)
+            change = adjusted[[col, "amt_change"]].min(axis=1)
             adjusted[col] -= change
-            adjusted["to_change"] -= change
+            adjusted["amt_change"] -= change
 
         adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
-        adjusted = adjusted.drop(["scaled_change", "presc_sum", "to_change"], axis=1)
+        adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
         return adjusted

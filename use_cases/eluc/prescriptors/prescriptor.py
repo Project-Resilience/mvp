@@ -10,9 +10,9 @@ class Prescriptor(ABC):
     Abstract class for prescriptors to allow us to experiment with different implementations.
     """
 
-    def prescribe_land_use(self, cand_id: str, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
+    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
-        Loads a candidate based off id format <generation>_<id>.
+        Loads a candidate prescriptor using kwargs.
         Then takes in a context dataframe, and prescribes actions.
         Outputs a concatenation of the context and actions.
         """

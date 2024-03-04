@@ -43,6 +43,9 @@ class TorchPrescriptor(Prescriptor):
         self.eval_df = eval_df
         self.encoded_eval_df = encoder.encode_as_df(eval_df)
         self.encoder = encoder
+
+        # We cache the training context here so that we don't have to repeatedly convert to tensor.
+        # We can pass in our own dataframe later for inference.
         context_ds = TorchDataset(self.encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
                                   np.zeros((len(self.encoded_eval_df), len(constants.RECO_COLS))))
         self.context_dl = torch.utils.data.DataLoader(context_ds, batch_size=batch_size, shuffle=False)
@@ -95,8 +98,12 @@ class TorchPrescriptor(Prescriptor):
         Prescribes actions given a candidate and a context.
         If we don't provide a context_df, we use the stored context_dl to avoid overhead. 
         Otherwise, we create a new dataloader from the given context_df.
+        Overall flow of prescription:
+            1. context_df -> context_tensor
+            2. candidate(context_tensor) -> reco_tensor
+            3. reco_tensor -> reco_df
+            4. context_df, reco_df -> context_actions_df
         """
-
         # Either create context_dl or used stored one
         context_dl = None
         if context_df is not None:

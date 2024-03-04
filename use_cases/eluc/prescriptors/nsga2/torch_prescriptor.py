@@ -171,7 +171,6 @@ class TorchPrescriptor(Prescriptor):
     
     def _tournament_selection(self, sorted_parents: list[Candidate]) -> tuple[Candidate, Candidate]:
         """
-        Same implementation as in ESP.
         Takes two random parents and compares their indices since this is a measure of their performance.
         Note: It is possible for this function to select the same parent twice.
         """

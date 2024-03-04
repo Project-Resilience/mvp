@@ -1,3 +1,9 @@
+"""
+Note: This class cannot be used without the ESP SDK. It is not available to the general public and
+is just a guideline for other evolution methods. A similar open-source implementation is available
+in the "nsga2" directory.
+"""
+
 from typing import Any
 from typing import Dict
 from typing import List

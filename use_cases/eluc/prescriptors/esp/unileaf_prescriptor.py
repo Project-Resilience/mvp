@@ -265,20 +265,17 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         fitness_metrics = [metric["metric_name"] for metric in metrics]
         return fitness_metrics
     
-    def _load_candidate(self, cand_id: str, results_dir: Path):
-        gen = int(cand_id.split('_')[0])
-        candidate_filename = results_dir / f"{gen}" / f"{cand_id}.h5"
-        candidate = load_model(candidate_filename, compile=False)
-        return candidate
-
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Implementation of prescribe_land_use.
-        Takes in a candidate id and a results dir to load the candidate from.
-        Candidate ID in format: <gen>_<id>
-        Then prescribes using the loaded prescriptor.
+        Loads a candidate from disk using kwargs:
+            1. cand_id: str, a string in format <gen>_<id> that identifies the candidate to load.
+            2. results_dir: Path, the directory where the candidate is stored.
+        Then prescribes using the loaded candidate.
         """
-        candidate = self._load_candidate(**kwargs)
+        gen = int(kwargs["cand_id"].split('_')[0])
+        candidate_filename = kwargs["results_dir"] / f"{gen}" / f"{kwargs['cand_id']}.h5"
+        candidate = load_model(candidate_filename, compile=False)
 
         encoded_context_df = self.data_encoder.encode_as_df(context_df)
 

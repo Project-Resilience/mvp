@@ -30,7 +30,6 @@ class HeuristicPrescriptor(Prescriptor, ABC):
     
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
-        TODO: I'm not 100% sure this is how we should be handing the kwargs.
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
         Kwargs must contain a "pct" key that is the percentage of land-use change to prescribe up to.
         """

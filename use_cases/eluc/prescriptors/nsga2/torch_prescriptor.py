@@ -237,20 +237,21 @@ class TorchPrescriptor(Prescriptor):
         """
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
-        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
-
-    def _load_candidate(self, cand_id: int, results_dir: Path) -> Candidate:
-        candidate = Candidate(**self.candidate_params)
-        gen = int(cand_id.split("_")[0])
-        candidate.load_state_dict(torch.load(results_dir / f"{gen + 1}" / f"{cand_id}.pt"))
-        return candidate
+        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}     
 
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Wrapper for prescribe method that loads a candidate from disk using an id.
+        Valid kwargs:
+            cand_id: str, the ID of the candidate to load
+            results_dir: Path, the directory where the candidate is stored
         Then takes in a context dataframe and prescribes actions.
         """
-        candidate = self._load_candidate(**kwargs)
+        candidate = Candidate(**self.candidate_params)
+        gen = int(kwargs["cand_id"].split("_")[0])
+        state_dict = torch.load(kwargs["results_dir"] / f"{gen + 1}" / f"{kwargs['cand_id']}.pt")
+        candidate.load_state_dict(state_dict)
+        
         context_actions_df = self._prescribe(candidate, context_df)
         return context_actions_df
     

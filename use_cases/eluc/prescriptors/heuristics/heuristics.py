@@ -48,7 +48,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
     def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
         column_order = constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"]
         eluc_df = self.predictor.predict(context_actions_df[column_order])
-        change_df = self._compute_percent_changed(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
         return eluc_df, change_df
 
 

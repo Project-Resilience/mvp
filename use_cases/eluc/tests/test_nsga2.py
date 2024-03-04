@@ -104,7 +104,7 @@ class TestTorchPrescriptor(unittest.TestCase):
         """
         context_actions_df = self.prescriptor.eval_df.iloc[:100]
         context_actions_df = context_actions_df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"]]
-        change_df = self.prescriptor._compute_percent_changed(context_actions_df)
+        change_df = self.prescriptor.compute_percent_changed(context_actions_df)
 
         self.assertTrue(change_df.index.equals(context_actions_df.index))
 

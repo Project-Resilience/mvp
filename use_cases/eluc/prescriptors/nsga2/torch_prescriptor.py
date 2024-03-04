@@ -114,7 +114,7 @@ class TorchPrescriptor(Prescriptor):
         Computes ELUC and change for each sample in a context_actions_df.
         """
         eluc_df = self.predictor.predict(context_actions_df)
-        change_df = self._compute_percent_changed(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
         
         return eluc_df, change_df
 

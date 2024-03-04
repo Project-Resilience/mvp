@@ -26,7 +26,7 @@ class Prescriptor(ABC):
         """
         raise NotImplementedError
     
-    def _compute_percent_changed(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
+    def compute_percent_changed(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculates percent of land changed by prescriptor.
         """

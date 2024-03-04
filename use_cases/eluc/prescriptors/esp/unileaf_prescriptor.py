@@ -146,7 +146,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         metrics['ELUC'] = preds['ELUC'].mean()
         
         # Compute the % of change
-        change_df = self._compute_percent_changed(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
         metrics['change'] = change_df['change'].mean()
         
         return metrics
@@ -295,7 +295,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         Predicts ELUC and computes change from the given context_actions_df.
         """
         eluc_df = self.predict_eluc(context_actions_df)
-        change_df = self._compute_percent_changed(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
 
         return eluc_df, change_df
         

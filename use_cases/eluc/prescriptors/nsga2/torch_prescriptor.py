@@ -79,19 +79,6 @@ class TorchPrescriptor(Prescriptor):
                                             presc_actions_df[constants.CAO_MAPPING["actions"]]],
                                             axis=1)
         return context_actions_df
-
-    def _compute_percent_changed(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Calculates percent of land changed by prescriptor.
-        """
-        # Sum the positive diffs
-        percent_changed = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0][constants.DIFF_LAND_USE_COLS].sum(axis=1)
-        # Divide by sum of used land
-        total_land = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
-        total_land = total_land.replace(0, 1) # Avoid division by 0
-        percent_changed = percent_changed / total_land
-        change_df = pd.DataFrame(percent_changed, columns=["change"])
-        return change_df
     
     def _prescribe(self, candidate: Candidate, context_df=None) -> pd.DataFrame:
         """
@@ -134,7 +121,7 @@ class TorchPrescriptor(Prescriptor):
         Computes ELUC and change for each sample in a context_actions_df.
         """
         eluc_df = self.predictor.predict(context_actions_df)
-        change_df = self._compute_percent_changed(context_actions_df)
+        change_df = self.compute_percent_changed(context_actions_df)
         
         return eluc_df, change_df
 
@@ -256,16 +243,21 @@ class TorchPrescriptor(Prescriptor):
         """
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
-        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
+        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}     
 
-    def prescribe_land_use(self, cand_id: int, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
+    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Wrapper for prescribe method that loads a candidate from disk using an id.
+        Valid kwargs:
+            cand_id: str, the ID of the candidate to load
+            results_dir: Path, the directory where the candidate is stored
         Then takes in a context dataframe and prescribes actions.
         """
         candidate = Candidate(**self.candidate_params)
-        gen = int(cand_id.split("_")[0])
-        candidate.load_state_dict(torch.load(results_dir / f"{gen + 1}" / f"{cand_id}.pt"))
+        gen = int(kwargs["cand_id"].split("_")[0])
+        state_dict = torch.load(kwargs["results_dir"] / f"{gen + 1}" / f"{kwargs['cand_id']}.pt")
+        candidate.load_state_dict(state_dict)
+        
         context_actions_df = self._prescribe(candidate, context_df)
         return context_actions_df
     

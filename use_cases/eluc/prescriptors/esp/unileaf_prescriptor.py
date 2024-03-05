@@ -165,22 +165,6 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         preds = predictor.predict(context_actions_df)
         preds = preds.astype("float64")
         return preds
-    
-    def compute_percent_changed(self, context_actions_df):
-        """
-        Calculates what percent of usable land was changed from the context to the actions.
-        """
-        # Sum the positive diffs
-        percent_changed = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0][constants.DIFF_LAND_USE_COLS].sum(axis=1)
-        # Land usage is only a portion of that cell, e.g 0.8. Scale back to 1
-        # So that percent changed really represent the percentage of change within the land use
-        # portion of the cell
-        # I.e. how much of the pie chart has changed?
-        total_land_use = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
-        total_land_use = total_land_use.replace(0, 1)
-        percent_changed = percent_changed / total_land_use
-        change_df = pd.DataFrame(percent_changed, index=context_actions_df.index, columns=['change'])
-        return change_df
 
     def prescribe(self, candidate, context_df: pd.DataFrame = None) -> pd.DataFrame:
         """
@@ -287,11 +271,18 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         fitness_metrics = [metric["metric_name"] for metric in metrics]
         return fitness_metrics
     
-    def prescribe_land_use(self, cand_id: str, results_dir: Path, context_df: pd.DataFrame) -> pd.DataFrame:
-        gen = int(cand_id.split('_')[0])
-        candidate_filename = results_dir / f"{gen}" / f"{cand_id}.h5"
+    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """
+        Implementation of prescribe_land_use.
+        Loads a candidate from disk using kwargs:
+            1. cand_id: str, a string in format <gen>_<id> that identifies the candidate to load.
+            2. results_dir: Path, the directory where the candidate is stored.
+        Then prescribes using the loaded candidate.
+        """
+        gen = int(kwargs["cand_id"].split('_')[0])
+        candidate_filename = kwargs["results_dir"] / f"{gen}" / f"{kwargs['cand_id']}.h5"
         candidate = load_model(candidate_filename, compile=False)
-        
+
         encoded_context_df = self.data_encoder.encode_as_df(context_df)
 
         reco_land_use = self.prescribe(candidate, encoded_context_df)
@@ -303,6 +294,9 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         return context_actions_df
     
     def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
+        """
+        Predicts ELUC and computes change from the given context_actions_df.
+        """
         eluc_df = self.predict_eluc(context_actions_df)
         change_df = self.compute_percent_changed(context_actions_df)
 

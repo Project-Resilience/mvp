@@ -120,7 +120,6 @@ if __name__ == "__main__":
                             otherwise uses a flat number.")
     parser.add_argument("--n_epochs", type=int, default=300, help="Number of epochs to train for.")
     parser.add_argument("--validate", default=True, help="Whether to validate the seeds after training.")
-    
     args = parser.parse_args()
 
     dataset = ELUCData()

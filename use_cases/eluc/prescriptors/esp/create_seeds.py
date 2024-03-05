@@ -29,7 +29,7 @@ def create_template_model():
     model = tf.keras.Model(inputs=inputs, outputs=output)
     return model
 
-def seed_no_change(seed_dir:Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
+def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame, n_epochs=300):
     """
     Creates seed model that attempts to prescribe zero change.
     This is now feasible because we no longer softmax the output but instead linearly scale them.
@@ -42,12 +42,12 @@ def seed_no_change(seed_dir:Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     no_change_model = create_template_model()
     opt = tf.keras.optimizers.legacy.Adam(learning_rate=0.001)
     no_change_model.compile(optimizer=opt, loss='mean_absolute_error', metrics=['mae'])
-    no_change_model.fit(X_train, y_train, epochs=300, batch_size=128, verbose=1)
+    no_change_model.fit(X_train, y_train, epochs=n_epochs, batch_size=4096, verbose=1)
 
     seed_dir.mkdir(parents=True, exist_ok=True)
     no_change_model.save(seed_dir / "1_1.h5")
 
-def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame, best_col="secdf"):
+def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame, n_epochs=300, best_col="secdf"):
     """
     Creates seed model that attempts to prescribe maximum change.
     Moves all possible land use to best_col which is secdf by default.
@@ -64,7 +64,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame, 
     max_change_model = create_template_model()
     opt = tf.keras.optimizers.legacy.Adam(learning_rate=0.001)
     max_change_model.compile(optimizer=opt, loss='mean_absolute_error', metrics=['mae'])
-    max_change_model.fit(X_train, y_train, epochs=300, batch_size=128, verbose=1)
+    max_change_model.fit(X_train, y_train, epochs=n_epochs, batch_size=4096, verbose=1)
 
     seed_dir.mkdir(parents=True, exist_ok=True)
     max_change_model.save(seed_dir / "1_2.h5")
@@ -123,8 +123,8 @@ if __name__ == "__main__":
 
     seed_dir = Path(args.seed_dir)
 
-    seed_no_change(seed_dir, train_df, encoded_train_df)
-    seed_max_change(seed_dir, train_df, encoded_train_df)
+    seed_no_change(seed_dir, train_df, encoded_train_df, args.n_epochs)
+    seed_max_change(seed_dir, train_df, encoded_train_df, args.n_epochs)
 
     if args.validate:
         validate_seeds(seed_dir, dataset)

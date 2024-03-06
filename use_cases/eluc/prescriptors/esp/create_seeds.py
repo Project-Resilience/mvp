@@ -69,7 +69,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame, 
     seed_dir.mkdir(parents=True, exist_ok=True)
     max_change_model.save(seed_dir / "1_2.h5")
 
-def validate_seeds(seed_dir: Path, dataset: ELUCData):
+def validate_seeds(seed_dir: Path, nn_path: Path, presc_cfg_path:Path, dataset: ELUCData):
     """
     TODO: This is pretty yucky right now and exposes some internals in the dummy prescriptor,
     will have to play around with the SWE side of the prescriptors to make this work better.
@@ -77,8 +77,8 @@ def validate_seeds(seed_dir: Path, dataset: ELUCData):
     Creates a dummy prescriptor and evaluates the seeds, then prints the results.
     """
     nnp = NeuralNetPredictor()
-    nnp.load("predictors/neural_network/trained_models/experiment_nn")
-    with open("prescriptors/esp/unileaf_configs/config-loctime-crop-nosoft.json", "r") as f:
+    nnp.load(nn_path)
+    with open(presc_cfg_path) as f:
         presc_config = json.load(f)
     dummy_prescriptor = UnileafPrescriptor(presc_config,
                                     dataset.train_df.iloc[:1],
@@ -108,6 +108,10 @@ if __name__ == "__main__":
                             otherwise uses a flat number.")
     parser.add_argument("--n_epochs", type=int, default=300, help="Number of epochs to train for.")
     parser.add_argument("--validate", default=True, help="Whether to validate the seeds after training.")
+    parser.add_argument("--nn_path", type=str, default="predictors/neural_network/trained_models/no_overlap_nn",
+                        help="Path to saved neural network model.")
+    parser.add_argument("--presc_cfg_path", type=str, default="prescriptors/esp/unileaf_configs/config-loctime-crop-nosoft.json",
+                        help="Path to prescriptor configuration.")
     args = parser.parse_args()
 
     dataset = ELUCData()
@@ -127,6 +131,8 @@ if __name__ == "__main__":
     seed_max_change(seed_dir, train_df, encoded_train_df, args.n_epochs)
 
     if args.validate:
-        validate_seeds(seed_dir, dataset)
+        nn_path = Path(args.nn_path)
+        presc_cfg_path = Path(args.presc_cfg_path)
+        validate_seeds(seed_dir, nn_path, presc_cfg_path, dataset)
 
     

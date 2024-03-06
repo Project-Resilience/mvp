@@ -87,13 +87,13 @@ def seed_max_change(seed_dir: Path,
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds, candidate_params, n_epochs)
 
-def validate_seeds(seed_dir: Path, dataset: ELUCData, candidate_params: dict):
+def validate_seeds(seed_dir: Path, nn_path: Path, dataset: ELUCData, candidate_params: dict):
     """
     Validates that the seeds' performances match the intended behavior.
     Creates a dummy prescriptor and evaluates the seeds, then prints the results.
     """
     nnp = NeuralNetPredictor()
-    nnp.load("predictors/neural_network/trained_models/no_overlap_nn")
+    nnp.load(nn_path)
     eval_df = dataset.test_df.sample(frac=0.01, random_state=100)
     dummy_prescriptor = TorchPrescriptor(
         2, 1, 0, eval_df, dataset.encoder, nnp, 4096, candidate_params, seed_dir
@@ -120,6 +120,8 @@ if __name__ == "__main__":
                             otherwise uses a flat number.")
     parser.add_argument("--n_epochs", type=int, default=300, help="Number of epochs to train for.")
     parser.add_argument("--validate", default=True, help="Whether to validate the seeds after training.")
+    parser.add_argument("--nn_path", type=str, default="predictors/neural_network/trained_models/no_overlap_nn",
+                        help="Path to saved neural network model.")
     args = parser.parse_args()
 
     dataset = ELUCData()
@@ -139,4 +141,5 @@ if __name__ == "__main__":
     seed_no_change(seed_dir, train_df, encoded_train_df, candidate_params, args.n_epochs)
     seed_max_change(seed_dir, train_df, encoded_train_df, candidate_params, args.n_epochs)
     if args.validate:
-        validate_seeds(seed_dir, dataset, candidate_params)
+        nn_path = Path(args.nn_path)
+        validate_seeds(seed_dir, nn_path, dataset, candidate_params)

@@ -24,7 +24,7 @@ if __name__ == "__main__":
         predictor=nnp,
         batch_size=4096,
         candidate_params=candidate_params,
-        seed_dir=Path("prescriptors/nsga2/seeds/test")
+        seed_dir=Path("prescriptors/nsga2/seeds/small_sample")
     )
     print("Training prescriptors...")
     save_path = Path("prescriptors/nsga2/trained_prescriptors/test")

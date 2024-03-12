@@ -78,7 +78,7 @@ def validate_seeds(seed_dir: Path, nn_path: Path, presc_cfg_path:Path, dataset: 
     """
     nnp = NeuralNetPredictor()
     nnp.load(nn_path)
-    with open(presc_cfg_path) as f:
+    with open(presc_cfg_path, encoding="utf-8") as f:
         presc_config = json.load(f)
     dummy_prescriptor = UnileafPrescriptor(presc_config,
                                     dataset.train_df.iloc[:1],

@@ -1,3 +1,8 @@
+"""
+Implementation of predictor.py using a simple feed-forward NeuralNetwork
+implemented in PyTorch.
+"""
+
 import copy
 import json
 import time
@@ -8,7 +13,6 @@ import numpy as np
 import pandas as pd
 import joblib
 from tqdm import tqdm
-
 from sklearn.preprocessing import StandardScaler
 
 import torch
@@ -50,12 +54,14 @@ class ELUCNeuralNet(torch.nn.Module):
         hidden_sizes = [in_size] + hidden_sizes
         enc_blocks = [self.EncBlock(hidden_sizes[i], hidden_sizes[i+1], dropout) for i in range(len(hidden_sizes) - 1)]
         self.enc = torch.nn.Sequential(*enc_blocks)
+        # If we are using linear skip, we concatenate the input to the output of the hidden layers
         out_size = hidden_sizes[-1] + in_size if linear_skip else hidden_sizes[-1]
         self.linear = torch.nn.Linear(out_size, 1)
 
     def forward(self, X: torch.FloatTensor) -> torch.FloatTensor:
         """
         Performs a forward pass of the neural net.
+        If linear_skip is True, we concatenate the input to the output of the hidden layers.
         :param X: input data
         :return: output of the neural net
         """
@@ -177,12 +183,14 @@ class NeuralNetPredictor(Predictor):
         sampler = torch.utils.data.RandomSampler(train_ds, num_samples=int(len(train_ds) * self.train_pct))
         train_dl = DataLoader(train_ds, self.batch_size, sampler=sampler)
 
+        # If we pass in a validation set, use them
         if X_val is not None and y_val is not None:
             X_val = self.scaler.transform(X_val[self.features])
             y_val = y_val.values
             val_ds = TorchDataset(X_val, y_val)
             val_dl = DataLoader(val_ds, self.batch_size, shuffle=False)
 
+        # Optimization parameters
         optimizer = torch.optim.AdamW(self.model.parameters(), **self.optim_params)
         loss_fn = torch.nn.L1Loss()
         if self.step_lr_params:

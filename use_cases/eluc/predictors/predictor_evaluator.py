@@ -1,3 +1,6 @@
+"""
+Evaluates our predictors.
+"""
 from sklearn.metrics import mean_absolute_error
 
 from data.eluc_data import ELUCData
@@ -11,7 +14,10 @@ class PredictorEvaluator():
         """
         Initializes the evalutor with a test set to consistently test on.
         """
-        dataset = ELUCData("projectresilience/ELUC-committed", start_year=test_start_year-1, test_year=test_start_year, end_year=test_end_year, countries=test_countries)
+        dataset = ELUCData(start_year=test_start_year-1,
+                           test_year=test_start_year,
+                           end_year=test_end_year,
+                           countries=test_countries)
         self.X_test = dataset.test_df.drop("ELUC", axis=1)
         self.y_test = dataset.test_df["ELUC"]
 

@@ -1,3 +1,7 @@
+"""
+Abstract SKLearn predictor and its implementations.
+Since the SKLearn library is standardized we can easily make more.
+"""
 import json
 
 from pathlib import Path
@@ -13,7 +17,7 @@ from predictors.predictor import Predictor
 class SKLearnPredictor(Predictor, ABC):
     """
     Simple abstract class for sklearn predictors.
-    Keeps track of features fit on.
+    Keeps track of features fit on and label to predict.
     """
     def __init__(self, features=None, label=None, **kwargs):
         self.features = features
@@ -51,6 +55,7 @@ class SKLearnPredictor(Predictor, ABC):
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
         Fits SKLearn model with standard sklearn fit method.
+        If we passed in features, use those. Otherwise use all columns.
         :param X_train: DataFrame with input data
         :param y_train: series with target data
         """

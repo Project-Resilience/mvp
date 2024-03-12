@@ -7,7 +7,9 @@ The tools should help decisions makers with their choices:
 made to reduce CO2 emissions?
 - What will be the long term CO2 impact of changing the land usage in a particular way?
 
-It is possible to learn from historical decisions made by decision makers all around the world if they can be compared. 
+It is possible to learn from historical decisions made by decision makers all around the world if they can be compared.
+
+Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://arxiv.org/abs/2311.12304) which won the *Best Pathway to Impact* award.
 
 ## Data
 

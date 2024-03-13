@@ -7,9 +7,15 @@ The tools should help decisions makers with their choices:
 made to reduce CO2 emissions?
 - What will be the long term CO2 impact of changing the land usage in a particular way?
 
-It is possible to learn from historical decisions made by decision makers all around the world if they can be compared. 
+It is possible to learn from historical decisions made by decision makers all around the world if they can be compared.
+
+Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://arxiv.org/abs/2311.12304) which won the *Best Pathway to Impact* award. The recorded talk can be found [here](https://www.climatechange.ai/papers/neurips2023/94).
 
 ## Data
+
+### Download
+
+A dataset consisting of land-use changes and their committed emissions can be found on [HuggingFace](https://huggingface.co/datasets/projectresilience/ELUC-committed). The raw data used to generate this dataset can also be found within the HuggingFace repo. Further details about the dataset can be found below.
 
 ### ELUC
 
@@ -18,10 +24,6 @@ BLUE simulations with committed emissions could be used to estimate the long-ter
 of the event.
 BLUE (bookkeeping of land use emissions) is a bookkeeping model that attributes carbon fluxes to land use activities.
 See [BLUE: Bookkeeping of land use emissions](https://doi.org/10.1002/2014GB004997) for more details.  
-
-The team in charge of the BLUE model performed such simulations with BLUE and generated the file
-`BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc` available in
-[this shared folder](https://syncandshare.lrz.de/getlink/fiAuJz5VFgsEJ1E96mthCT/Data_GCB2022).
 
 ### LUC
 
@@ -72,7 +74,6 @@ Pasture
 - **pastr**: Managed pasture land
 - **range**: Natural grassland / savannah / desert / etc.
 
-
 ## Modeling decisions
 
 A decision can be represented by 3 constituents: **context**, **actions** and **outcomes**
@@ -91,7 +92,7 @@ a point in time when the decision had to be made, and the current usage of the l
 - Longitude
 - Area
 - Year
-- Land usage, as a percentage, summing up to 100%
+- Land usage, as a percentage (does not necessarily sum to 100%)
   - primf
   - primn
   - sedf
@@ -104,14 +105,12 @@ a point in time when the decision had to be made, and the current usage of the l
   - c3fnx
   - pastr
   - range
-  - nonland
 
 Latitude and longitude represent the cell on the grid.  
 Area represents the surface of the cell. Cells close to the equator have a bigger area than cells close to the poles.  
 Year is useful to capture historical decisions: the same cell has been through a lot of land use changes
 over the years.  
-Land usage represents the percentage of the land used by each land type. Note there is a 'nonland' type that represents
-the percentage of the cell that is not land (e.g typically sea, lake, etc.). The land usage types sum up to 100%. 
+Land usage represents the percentage of the land used by each land type. Note that the land usage does not sum to 100% because of area in the cell that is not land (e.g typically sea, lake, etc.).
 
 ### Actions
 
@@ -128,13 +127,13 @@ We considered 2 limitations:
 
 ### Outcomes
 
-- Emissions from Land Use Change (ELUC): CO2 emissions, in metric ton of carbon per hectare (tC/ha),
+- Committed Emissions from Land Use Change (ELUC): all present and future CO2 emissions, in metric ton of carbon per hectare (tC/ha),
 resulting from the land use change
 - Percentage of land that was changed
 
 There is a trade-off between these 2 objectives: it easy to reduce emissions by changing
 most of the land, but that would come at a huge cost. This "cost" can be approximately derived from
-the percentage of land that was change. In other words decision makers have to:
+the percentage of land that was changed. In other words decision makers have to:
 - minimize ELUC
 - while minimizing land change at the same time
 
@@ -148,10 +147,13 @@ predict the CO2 long term emissions directly caused by these changes (ELUC).
 
 This is a prediction problem.
 
-Anyone can contribute a prediction model, as long as it complies with the `predict` interface
+Anyone can contribute a prediction model, as long as it complies with the `predictor` interface
 and its inputs and outputs.
 
-TODO: point to code that trains predictor models
+Code to train predictor models can be found in the [predictors](predictors) directory. Currently, the following models are implemented:
+- [Neural Network](predictors/neural_network/neural_net_predictor.py)
+- [Random Forest](predictors/sklearn/sklearn_predictor.py)
+- [Linear Regression](predictors/sklearn/sklearn_predictor.py)
 
 ### Ensembling
 
@@ -170,8 +172,12 @@ TODO: see task #55
 Given **context** -> prescribe **actions** that optimize **outcomes**
 
 This is an optimization problem.
-Anyone can contribute a prescription model, as long as it complies with the `prescribe` interface
+Anyone can contribute a prescription model, as long as it complies with the `prescriptor` interface
 and its inputs and outputs.
+
+Code to train prescriptor models can be found in the [prescriptors](prescriptors) directory. Currently 2 prescriptors are implemented:
+- [UniLEAF Prescriptor](prescriptors/esp/unileaf_prescriptor.py) (note: this prescriptor uses the ESP SDK which is not open source, however it remains in the repo as it was used in the original paper)
+- [Torch Prescriptor](prescriptors/nsga2/torch_prescriptor.py) which is an open-source method that implements the NSGA-II algorithm in PyTorch.
 
 ## Robojudge
 

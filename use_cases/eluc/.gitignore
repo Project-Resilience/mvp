@@ -6,9 +6,11 @@ experiments/predictor_significance
 # Ignores figures for paper
 experiments/figures
 
+experiments/figures
+
 # Ignores trained prescriptors and seeds
-prescriptors/trained_prescriptors
-prescriptors/seeds
+prescriptors/*/trained_prescriptors
+prescriptors/*/seeds
 
 data/*.zip
 *.nc

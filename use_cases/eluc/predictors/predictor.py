@@ -1,7 +1,9 @@
+"""
+Abstract class for predictors to inherit from.
+"""
 from abc import ABC, abstractmethod
 
 import pandas as pd
-import numpy as np
 
 
 class Predictor(ABC):

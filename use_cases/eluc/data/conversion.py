@@ -1,8 +1,16 @@
+"""
+A bit of a hacky way to fix the country codes given by
+the regionmask library as they don't match the standard.
+Country code conversion table from: https://gist.github.com/radcliff/f09c0f88344a7fcef373
+"""
 import pandas as pd
 import regionmask
 
 from data import constants
 
+# TODO: Note: This table is not perfect and has some errors,
+# we should consider manually fixing them. I tried my best but 
+# I'm not 100% sure it's correct.
 MANUAL_MAP = {
     "INDO": 360,
     "DRC": 180,

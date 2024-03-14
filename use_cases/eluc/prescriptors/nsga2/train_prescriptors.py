@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 from data import constants
@@ -6,10 +7,11 @@ from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 
 if __name__ == "__main__":
+
     print("Loading dataset...")
     dataset = ELUCData()
     print("Loading predictor...")
-    nnp = NeuralNetPredictor()
+    nnp = NeuralNetPredictor(device="cuda")
     nnp.load("predictors/neural_network/trained_models/no_overlap_nn")
     print("Initializing prescription...")
     candidate_params = {"in_size": len(constants.CAO_MAPPING["context"]),
@@ -24,7 +26,7 @@ if __name__ == "__main__":
         predictor=nnp,
         batch_size=4096,
         candidate_params=candidate_params,
-        seed_dir=Path("prescriptors/nsga2/seeds/small_sample")
+        seed_dir=Path("prescriptors/nsga2/seeds/test")
     )
     print("Training prescriptors...")
     save_path = Path("prescriptors/nsga2/trained_prescriptors/test")

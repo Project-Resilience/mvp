@@ -31,6 +31,8 @@ if __name__ == "__main__":
     nnp.load(nnp_path)
 
     print("Initializing prescription...")
+    if "seed_dir" in config.keys():
+        config["seed_dir"] = Path(config["seed_dir"])
     tp = TorchPrescriptor(
         eval_df=dataset.train_df.sample(frac=0.001, random_state=42),
         encoder=dataset.encoder,

@@ -1,12 +1,14 @@
+"""
+A list of constants used throughout the project.
+"""
+# Data paths
 HF_PATH = "projectresilience/ELUC-committed"
 # This should work if python path is set to use_cases/ELUC
 DATA_FILE_PATH = "data/merged_aggregated_dataset_1850_2022.zarr.zip"
 UPDATE_FILE_PATH = "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.nc"
-# Country code conversion table from: https://gist.github.com/radcliff/f09c0f88344a7fcef373
-# TODO: Note: This table is not perfect and has some errors, we should consider manually fixing them.
-# I tried my best but I'm not 100% sure it's correct.
 CODES_PATH = "data/codes.csv"
 
+# Different variations of land-use change columns
 LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 
                  'pastr', 'primf', 'primn', 
                  'range', 'secdf', 'secdn', 'urban']
@@ -22,6 +24,7 @@ RECO_MAP = dict(zip(RECO_COLS, DIFF_RECO_COLS))
 
 NONLAND_FEATURES = ["cell_area", "lat", "lon", "time"]
 
+# Features used by the Neural Network model
 NN_FEATS = LAND_USE_COLS + NONLAND_FEATURES + DIFF_LAND_USE_COLS
 
 # ["United Kingdom", "France", "Germany", "Netherlands", "Belgium", "Switzerland", "Ireland"]
@@ -32,6 +35,7 @@ SA_COUNTRIES = ["BR", "BO", "PY", "PE", "EC", "CO", "VE", "GY", "SR", "UY", "AR"
 US_COUNTRIES = ["US"]
 COUNTRY_DICT = {"EU": EU_COUNTRIES, "SA": SA_COUNTRIES, "US": US_COUNTRIES, "ALL": None}
 
-CAO_MAPPING = {'context': LAND_USE_COLS + NONLAND_FEATURES, 
+# Context-action-outcome mapping for prescription.
+CAO_MAPPING = {'context': LAND_USE_COLS + NONLAND_FEATURES,
                'actions': DIFF_LAND_USE_COLS, 
                'outcomes': ["ELUC", "change"]}

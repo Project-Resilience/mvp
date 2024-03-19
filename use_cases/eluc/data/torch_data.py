@@ -1,3 +1,9 @@
+"""
+A simple custom PyTorch dataset is created here. This is used to keep our
+datasets standard between models. It is used in both Torch prescription
+and Neural Network training.
+"""
+
 import numpy as np
 import torch
 from torch.utils.data.dataset import Dataset

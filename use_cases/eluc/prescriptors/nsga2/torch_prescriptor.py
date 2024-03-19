@@ -39,6 +39,8 @@ class TorchPrescriptor(Prescriptor):
         self.n_generations = n_generations
         self.p_mutation = p_mutation
         self.seed_dir=seed_dir
+        if isinstance(self.seed_dir, str):
+            self.seed_dir = Path(self.seed_dir)
 
         self.eval_df = eval_df
         self.encoded_eval_df = encoder.encode_as_df(eval_df)

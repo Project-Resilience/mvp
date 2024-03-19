@@ -52,7 +52,6 @@ docopt==0.6.2
 ecdsa==0.18.0
 einops==0.6.1
 entrypoints @ file:///private/var/folders/nz/j6p8yfhx1mv_0grj5xl4650h0000gp/T/abs_croot-jb01gaox/entrypoints_1650293758411/work
-esp-sdk @ file:///Users/964840/workspace/leaf_files/esp_sdk-3.2.0-py3-none-any.whl
 exceptiongroup==1.1.1
 executing @ file:///opt/conda/conda-bld/executing_1646925071911/work
 fasteners==0.18
@@ -113,7 +112,6 @@ jupyterlab_server==2.22.1
 keras==2.13.1rc0
 kiwisolver==1.4.4
 lazy-object-proxy==1.9.0
-leaf-common @ file:///Users/964840/workspace/leaf_files/leaf_common-1.2.1-py3-none-any.whl
 libclang==16.0.0
 llvmlite==0.40.1
 locket==1.0.0
@@ -237,7 +235,6 @@ tqdm==4.65.0
 traitlets==5.9.0
 transformers==4.31.0
 typing_extensions==4.6.2
-unileaf-util @ file:///Users/964840/workspace/leaf_files/unileaf_util-0.2.2-py3-none-any.whl
 uri-template==1.2.0
 urllib3 @ file:///private/var/folders/k1/30mswbxs7r1g6zwn8y4fyt500000gp/T/abs_aff2m3lasf/croot/urllib3_1707770561896/work
 wcwidth @ file:///Users/ktietz/demo/mc3/conda-bld/wcwidth_1629357192024/work

@@ -4,14 +4,55 @@ Unit tests for the NSGA-II Torch implementation.
 
 import unittest
 
+import numpy as np
 import pandas as pd
 import torch
 
 from data import constants
-from data.eluc_data import ELUCData
+from data.eluc_data import ELUCEncoder
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+
+def get_fields(df):
+    """
+    TODO: This is temporary before the dataset becomes public, enabling us to test without
+    having to download the dataset from HuggingFace.
+    Dummy fields method to create the encoder for dummy data.
+    """
+    fields_df = df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]].astype("float64")
+    fields = dict()
+    for col in constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]:
+        # Set range of land and diff land uses manually to their true ranges because they
+        # do not need to be scaled
+        if col in constants.LAND_USE_COLS:
+            ran = [0, 1]
+        elif col in constants.DIFF_LAND_USE_COLS:
+            ran = [-1, 1]
+        else:
+            ran = [fields_df[col].min(), fields_df[col].max()]
+        fields[col] = {
+            "data_type": "FLOAT",
+            "has_nan": False,
+            "mean": fields_df[col].mean(),
+            "range": ran,
+            "std_dev": fields_df[col].std(),
+            "sum": fields_df[col].sum(),
+            "valued": "CONTINUOUS"
+        }
+
+    # These are just dummy values so that the prescriptor knows we have a change outcome
+    fields["change"] = {
+        "data_type": "FLOAT",
+        "has_nan": False,
+        "mean": 0.5,
+        "range": [0, 1],
+        "std_dev": 0.1,
+        "sum": len(fields_df) // 2,
+        "valued": "CONTINUOUS"
+    }
+
+    return fields 
 
 class TestTorchPrescriptor(unittest.TestCase):
     """
@@ -20,15 +61,22 @@ class TestTorchPrescriptor(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.dataset = ELUCData(start_year=2020, test_year=2021, end_year=2022, countries=["US"])
+        cls.dummy_data = pd.DataFrame()
+        np.random.seed(42)
+        for col in constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]:
+            cls.dummy_data[col] = np.random.random(size=(1000,))
+
+        fields = get_fields(cls.dummy_data)
+        encoder = ELUCEncoder(fields)
+
         predictor = LinearRegressionPredictor(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1)
-        predictor.fit(cls.dataset.train_df[constants.DIFF_LAND_USE_COLS], cls.dataset.train_df["ELUC"])
+        predictor.fit(cls.dummy_data[constants.DIFF_LAND_USE_COLS], cls.dummy_data["ELUC"])
         cls.prescriptor = TorchPrescriptor(
             100,
             100,
             0.2,
-            cls.dataset.train_df,
-            cls.dataset.encoder,
+            cls.dummy_data,
+            encoder,
             predictor,
             2048,
             {"in_size": len(constants.CAO_MAPPING["context"]), "hidden_size": 16, "out_size": len(constants.RECO_COLS)}
@@ -115,7 +163,7 @@ class TestTorchPrescriptor(unittest.TestCase):
         candidate = Candidate(in_size=len(constants.CAO_MAPPING["context"]),
                               hidden_size=16,
                               out_size=len(constants.RECO_COLS))
-        context_df = self.dataset.test_df.iloc[:100][constants.CAO_MAPPING["context"]]
+        context_df = self.dummy_data.iloc[:100][constants.CAO_MAPPING["context"]]
         context_actions_df = self.prescriptor._prescribe(candidate, context_df)
 
         self.assertTrue(context_actions_df.index.equals(context_df.index))

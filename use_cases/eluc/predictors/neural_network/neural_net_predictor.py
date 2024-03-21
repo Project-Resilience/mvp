@@ -79,7 +79,7 @@ class NeuralNetPredictor(Predictor):
     in order to take advantage of the linear relationship in the data.
     Data is automatically standardized and the scaler is saved with the model.
     """
-    def __init__(self, features=None, label=None, hidden_sizes=[4096], linear_skip=True, dropout=0, device="mps",
+    def __init__(self, features=None, label=None, hidden_sizes=[4096], linear_skip=True, dropout=0, device="cpu",
             epochs=3, batch_size=2048, optim_params={}, train_pct=1, step_lr_params={"step_size": 1, "gamma": 0.1}): 
         # Model setup params
         self.model = None

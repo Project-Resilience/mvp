@@ -20,9 +20,9 @@ class TestTorchPrescriptor(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        predictor = LinearRegressionPredictor(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1)
-        predictor.load("predictors/sklearn/trained_models/no_overlap_linreg")
         cls.dataset = ELUCData(start_year=2020, test_year=2021, end_year=2022, countries=["US"])
+        predictor = LinearRegressionPredictor(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1)
+        predictor.fit(cls.dataset.train_df[constants.DIFF_LAND_USE_COLS], cls.dataset.train_df["ELUC"])
         cls.prescriptor = TorchPrescriptor(
             100,
             100,

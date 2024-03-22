@@ -23,7 +23,7 @@ BLUE simulations with committed emissions could be used to estimate the long-ter
 "Committed emissions" means all the emissions that are caused by a land-use change event are attributed to the year
 of the event.
 BLUE (bookkeeping of land use emissions) is a bookkeeping model that attributes carbon fluxes to land use activities.
-See [BLUE: Bookkeeping of land use emissions](https://doi.org/10.1002/2014GB004997) for more details.  
+See [BLUE: Bookkeeping of land use emissions](https://doi.org/10.1002/2014GB004997) for more details. 
 
 ### LUC
 

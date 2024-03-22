@@ -9,8 +9,8 @@ UPDATE_FILE_PATH = "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.
 CODES_PATH = "data/codes.csv"
 
 # Different variations of land-use change columns
-LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 
-                 'pastr', 'primf', 'primn', 
+LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per',
+                 'pastr', 'primf', 'primn',
                  'range', 'secdf', 'secdn', 'urban']
 CROP_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per']
 LAND_USE_COLS = ["crop"] + [col for col in LAND_USE_COLS if col not in CROP_COLS]
@@ -29,7 +29,8 @@ NN_FEATS = LAND_USE_COLS + NONLAND_FEATURES + DIFF_LAND_USE_COLS
 
 # ["United Kingdom", "France", "Germany", "Netherlands", "Belgium", "Switzerland", "Ireland"]
 EU_COUNTRIES = ["GB", "FR", "DE", "NL", "BE", "CH", "IE"]
-# ["Brazil", "Bolivia", "Paraguay", "Peru", "Ecuador", "Colombia", "Venezuela", "Guyana", "Suriname", "Uruguay", "Argentina", "Chile"]
+# ["Brazil", "Bolivia", "Paraguay", "Peru", "Ecuador", "Colombia",
+# "Venezuela", "Guyana", "Suriname", "Uruguay", "Argentina", "Chile"]
 SA_COUNTRIES = ["BR", "BO", "PY", "PE", "EC", "CO", "VE", "GY", "SR", "UY", "AR", "CL"]
 # ["United States"]
 US_COUNTRIES = ["US"]

@@ -1,3 +1,6 @@
+"""
+Script to train the NSGA-II prescriptors.
+"""
 from pathlib import Path
 
 from data import constants

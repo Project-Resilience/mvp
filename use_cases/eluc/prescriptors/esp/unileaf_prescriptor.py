@@ -3,12 +3,9 @@ Note: This class cannot be used without the ESP SDK. It is not available to the 
 is just a guideline for other evolution methods. A similar open-source implementation is available
 in the "nsga2" directory.
 """
-
 from typing import Any
 from typing import Dict
 from typing import List
-
-from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -101,17 +98,17 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
 
         # Compute the diff
         # Note: the index need to match in order to subtract. Otherwise we get NaN
-        prescribed_actions_df = reco_df[constants.RECO_COLS].reset_index(drop=True) - context_df[constants.RECO_COLS].reset_index(drop=True)
+        prescribed_actions_df = reco_df[constants.RECO_COLS] - context_df[constants.RECO_COLS].reset_index(drop=True)
 
         # Rename the columns to match what the predictor expects
         prescribed_actions_df = prescribed_actions_df.rename(constants.RECO_MAP, axis=1)
         prescribed_actions_df[constants.NO_CHANGE_COLS] = 0
-        
+
         # Aggregate the context and actions dataframes.
         context_actions_df = pd.concat([context_df,
                                                 prescribed_actions_df[constants.DIFF_LAND_USE_COLS]],
                                                 axis=1)
-        
+
         return context_actions_df
 
     def evaluate_candidate(self, candidate):
@@ -121,24 +118,21 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         :param candidate: a Keras neural network or rule based Prescriptor candidate
         :return metrics: A dictionary of {'metric_name': metric_value}
         """
-        # Save candidate to local file for easy debug
-        # candidate.save('prescriptor.h5')
-        
         # Prescribe actions
         # Single action, recommended percentage for each land use type
         # Note: prescribed action is a softmax, NOT encoded in the same scale as the context
         prescribed_actions_df = self.prescribe(candidate)
-        
+
         # Convert the softmax into a DataFrame
         reco_land_use_df = pd.DataFrame(prescribed_actions_df["reco_land_use"].tolist(),
                                 columns=constants.RECO_COLS)
-        
+
         context_actions_df = self._reco_to_context_actions(reco_land_use_df, self.context_df)
 
         # Compute the metrics
         metrics = self._compute_metrics(context_actions_df)
         return metrics
-    
+
     def _compute_metrics(self, context_actions_df):
         """
         Computes metrics from the passed context/actions DataFrame using the instance's trained predictors.
@@ -146,17 +140,17 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         :return: A dictionary of {'metric_name': metric_value}
         """
         metrics = {}
-        
+
         # Get the predicted ELUC from the predictors
         preds = self.predict_eluc(context_actions_df)
         metrics['ELUC'] = preds['ELUC'].mean()
-        
+
         # Compute the % of change
         change_df = self.compute_percent_changed(context_actions_df)
         metrics['change'] = change_df['change'].mean()
-        
+
         return metrics
-    
+
     def predict_eluc(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Predicts ELUC using the given predictor
@@ -213,12 +207,12 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
             # Put the single action in an array to process it like multiple actions
             prescribed_actions = [prescribed_actions]
 
-        for i, action_col in enumerate(self.cao_mapping["actions"]):
-            if self._is_scalar(prescribed_actions[i]):
+        for idx, action_col in enumerate(self.cao_mapping["actions"]):
+            if self._is_scalar(prescribed_actions[idx]):
                 # We have a single row and this action is numerical. Convert it to a scalar.
-                actions[action_col] = prescribed_actions[i].item()
+                actions[action_col] = prescribed_actions[idx].item()
             else:
-                actions[action_col] = prescribed_actions[i].tolist()
+                actions[action_col] = prescribed_actions[idx].tolist()
         return actions
 
     def _is_single_action_prescriptor(self):
@@ -270,7 +264,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         metrics = config["evolution"]["fitness"]
         fitness_metrics = [metric["metric_name"] for metric in metrics]
         return fitness_metrics
-    
+
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Implementation of prescribe_land_use.
@@ -292,7 +286,7 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         context_actions_df = context_actions_df.set_index(context_df.index)
 
         return context_actions_df
-    
+
     def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
         """
         Predicts ELUC and computes change from the given context_actions_df.
@@ -301,5 +295,3 @@ class UnileafPrescriptor(EspEvaluator, Prescriptor):
         change_df = self.compute_percent_changed(context_actions_df)
 
         return eluc_df, change_df
-        
-

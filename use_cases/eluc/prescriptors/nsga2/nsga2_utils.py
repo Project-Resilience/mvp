@@ -29,7 +29,7 @@ def fast_non_dominated_sort(candidates: list):
                 front[0].append(p)
 
     i = 0
-    while front[i] != []:
+    while front[i]:
         Q = []
         for p in front[i]:
             for q in S[p]:

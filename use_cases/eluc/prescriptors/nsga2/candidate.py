@@ -9,7 +9,8 @@ class Candidate(torch.nn.Module):
     Simple fixed topology 1 hidden layer feed-forward nn candidate.
     Keeps track of its own metrics and evolution logging information.
     """
-    def __init__(self, in_size: int, hidden_size: int, out_size: int, device="cpu", gen=-1, cand_id=-1, parents=(None, None)):
+    def __init__(self, in_size: int, hidden_size: int, out_size: int,
+                 device="cpu", gen=-1, cand_id=-1, parents=(None, None)):
         super().__init__()
 
         self.in_size = in_size
@@ -20,11 +21,11 @@ class Candidate(torch.nn.Module):
             torch.nn.Linear(in_size, hidden_size),
             torch.nn.Tanh(),
             torch.nn.Linear(hidden_size, out_size))
-        
+
         self.device = device
         self.model.to(device)
         self.model.eval()
-        
+
         # Orthogonal initialization
         for layer in self.model:
             if isinstance(layer, torch.nn.Linear):
@@ -54,20 +55,21 @@ class Candidate(torch.nn.Module):
                     gen=gen,
                     cand_id=cand_id,
                     parents=((parent1.gen, parent1.cand_id), (parent2.gen, parent2.cand_id)))
-        
-        for child_param, parent1_param, parent2_param in zip(child.parameters(), parent1.parameters(), parent2.parameters()):
+
+        params = zip(child.parameters(), parent1.parameters(), parent2.parameters())
+        for child_param, parent1_param, parent2_param in params:
             mask = torch.rand(size=child_param.data.shape) < 0.5
             child_param.data = torch.where(mask, parent1_param.data, parent2_param.data)
         child.mutate(p_mutation)
         return child
-        
+
     def forward(self, X: torch.Tensor) -> torch.Tensor:
         """
         Forward pass of the simple nn
         """
         out = self.model(X)
         return out
-    
+
     def mutate(self, p_mutation: float):
         """
         Randomly mutates each weight with probability p_mutation with gaussian noise mu=0, sigma=0.1
@@ -83,13 +85,12 @@ class Candidate(torch.nn.Module):
         """
         Record the state of the candidate for logging purposes
         """
-        if self.metrics is None:
+        if not isinstance(self.metrics, tuple):
             raise ValueError("Candidate has not been evaluated yet")
-        else:
-            return {"gen": self.gen,
-                    "id": self.cand_id,
-                    "parents": self.parents,
-                    "NSGA-II_rank": self.rank, # Named this to match ESP
-                    "distance": self.distance,
-                    "ELUC": self.metrics[0],
-                    "change": self.metrics[1]}
+        return {"gen": self.gen,
+                "id": self.cand_id,
+                "parents": self.parents,
+                "NSGA-II_rank": self.rank, # Named this to match ESP
+                "distance": self.distance,
+                "ELUC": self.metrics[0],
+                "change": self.metrics[1]}

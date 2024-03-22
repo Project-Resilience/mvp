@@ -1,7 +1,6 @@
 """
 PyTorch implementation of NSGA-II.
 """
-
 import random
 import shutil
 from pathlib import Path
@@ -79,7 +78,7 @@ class TorchPrescriptor(Prescriptor):
                                             presc_actions_df[constants.CAO_MAPPING["actions"]]],
                                             axis=1)
         return context_actions_df
-    
+
     def _prescribe(self, candidate: Candidate, context_df=None) -> pd.DataFrame:
         """
         Prescribes actions given a candidate and a context.
@@ -122,7 +121,7 @@ class TorchPrescriptor(Prescriptor):
         """
         eluc_df = self.predictor.predict(context_actions_df)
         change_df = self.compute_percent_changed(context_actions_df)
-        
+
         return eluc_df, change_df
 
     def _evaluate_candidates(self, candidates: list[Candidate]):
@@ -155,7 +154,7 @@ class TorchPrescriptor(Prescriptor):
                 break
             parents += front
         return parents
-    
+
     def _tournament_selection(self, sorted_parents: list[Candidate]) -> tuple[Candidate, Candidate]:
         """
         Takes two random parents and compares their indices since this is a measure of their performance.
@@ -195,9 +194,9 @@ class TorchPrescriptor(Prescriptor):
         # Seeding the first generation with trained models
         if self.seed_dir:
             seed_paths = list(self.seed_dir.glob("*.pt"))
-            for i, seed_path in enumerate(seed_paths):
+            for idx, seed_path in enumerate(seed_paths):
                 print(f"Seeding with {seed_path}...")
-                parents[i].load_state_dict(torch.load(seed_path))
+                parents[idx].load_state_dict(torch.load(seed_path))
 
         offspring = []
         for gen in tqdm(range(1, self.n_generations+1)):
@@ -220,7 +219,7 @@ class TorchPrescriptor(Prescriptor):
         results_df.to_csv(save_path / "results.csv", index=False)
 
         return parents
-    
+
     def _record_gen_results(self, gen: int, candidates: list[Candidate], save_path: Path) -> None:
         """
         Records the state of all the candidates.
@@ -257,7 +256,7 @@ class TorchPrescriptor(Prescriptor):
         gen = int(kwargs["cand_id"].split("_")[0])
         state_dict = torch.load(kwargs["results_dir"] / f"{gen + 1}" / f"{kwargs['cand_id']}.pt")
         candidate.load_state_dict(state_dict)
-        
+
         context_actions_df = self._prescribe(candidate, context_df)
         return context_actions_df
     

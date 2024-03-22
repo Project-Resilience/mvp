@@ -19,7 +19,7 @@ class SKLearnPredictor(Predictor, ABC):
     Simple abstract class for sklearn predictors.
     Keeps track of features fit on and label to predict.
     """
-    def __init__(self, features=None, label=None, **kwargs):
+    def __init__(self, features=None, label=None):
         self.features = features
         self.label = label
         self.model = None
@@ -36,8 +36,8 @@ class SKLearnPredictor(Predictor, ABC):
             "features": self.features,
             "label": self.label
         }
-        with open(save_path / "config.json", "w", encoding="utf-8") as f:
-            json.dump(config, f)
+        with open(save_path / "config.json", "w", encoding="utf-8") as file:
+            json.dump(config, file)
         joblib.dump(self.model, save_path / "model.joblib")
 
     def load(self, path):
@@ -46,8 +46,8 @@ class SKLearnPredictor(Predictor, ABC):
         :param path: path to folder to load model files from.
         """
         load_path = Path(path)
-        with open(load_path / "config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
+        with open(load_path / "config.json", "r", encoding="utf-8") as file:
+            config = json.load(file)
             self.features = config["features"]
             self.label = config["label"]
         self.model = joblib.load(load_path / "model.joblib")
@@ -77,7 +77,7 @@ class SKLearnPredictor(Predictor, ABC):
             X_test = X_test[self.features]
         y_pred = self.model.predict(X_test)
         return pd.DataFrame(y_pred, index=X_test.index, columns=[self.label])
-    
+
 class LinearRegressionPredictor(SKLearnPredictor):
     """
     Simple linear regression predictor.
@@ -86,7 +86,7 @@ class LinearRegressionPredictor(SKLearnPredictor):
     def __init__(self, features=None, **kwargs):
         super().__init__(features)
         self.model = LinearRegression(**kwargs)
-    
+
 class RandomForestPredictor(SKLearnPredictor):
     """
     Simple random forest predictor.
@@ -108,7 +108,7 @@ class RandomForestPredictor(SKLearnPredictor):
             "features": self.features,
             "label": self.label
         }
-        with open(save_path / "config.json", "w", encoding="utf-8") as f:
-            json.dump(config, f)
+        with open(save_path / "config.json", "w", encoding="utf-8") as file:
+            json.dump(config, file)
         joblib.dump(self.model, save_path / "model.joblib", compress=compression)
         

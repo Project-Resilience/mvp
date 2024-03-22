@@ -27,7 +27,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         context dataframe and returns a dataframe of recommendations based on the heuristic.
         """
         raise NotImplementedError
-    
+
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
@@ -39,7 +39,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         # Rename the columns to match what the predictor expects
         prescribed_actions_df = prescribed_actions_df.rename(constants.RECO_MAP, axis=1)
         prescribed_actions_df[constants.NO_CHANGE_COLS] = 0
-        
+
         # Aggregate the context and actions dataframes.
         context_actions_df = pd.concat([context_df, prescribed_actions_df[constants.DIFF_LAND_USE_COLS]], axis=1)
         return context_actions_df
@@ -59,7 +59,7 @@ class EvenHeuristic(HeuristicPrescriptor):
         super().__init__(predictor)
         self.best_col = best_col
         self.presc_cols = [col for col in constants.RECO_COLS if col != best_col]
-    
+
     def _reco_heuristic(self, pct: float, context_df: pd.DataFrame):
         """
         Takes evenly from all columns and adds to best col.
@@ -71,11 +71,14 @@ class EvenHeuristic(HeuristicPrescriptor):
         adjusted["row_sum"] = adjusted[self.presc_cols].sum(axis=1)
         to_change = adjusted["row_sum"] > 0
         adjusted["max_change"] = adjusted[["scaled_change", "row_sum"]].min(axis=1)
+
+        max_change = adjusted.loc[to_change, "max_change"]
+        row_sum = adjusted.loc[to_change, "row_sum"]
         # Reduce all columns by even amount
         for col in self.presc_cols:
-            adjusted.loc[to_change, col] -= adjusted.loc[to_change, col] * adjusted.loc[to_change, "max_change"] / adjusted.loc[to_change, "row_sum"]
+            adjusted.loc[to_change, col] -= adjusted.loc[to_change, col] * max_change / row_sum
         # Increase best column by max change
-        adjusted.loc[to_change, self.best_col] = adjusted.loc[to_change, self.best_col] + adjusted.loc[to_change, "max_change"]
+        adjusted.loc[to_change, self.best_col] = adjusted.loc[to_change, self.best_col] + max_change
         adjusted = adjusted.drop(["scaled_change", "row_sum", "max_change"], axis=1)
         return adjusted
 

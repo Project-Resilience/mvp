@@ -3,7 +3,6 @@ Script used to train NSGA-II prescriptors.
 Requires a config file with the same fields as shown in the
 test.json file in prescriptors/nsga2/configs
 """
-
 import argparse
 import json
 from pathlib import Path

@@ -42,8 +42,7 @@ if __name__ == "__main__":
     esp_password = os.getenv('ESP_SERVICE_PASSWORD')
     if not esp_username or not esp_password:
         raise ValueError('ESP Service username and password not found.')
-    else:
-        print('ESP Service username and password found.')
+    print('ESP Service username and password found.')
 
     print("Running prescriptor training...")
     config_path = Path(args.config_path)

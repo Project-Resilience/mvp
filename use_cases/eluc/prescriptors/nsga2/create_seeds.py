@@ -48,7 +48,7 @@ def supervised_backprop(save_path: Path, ds: TorchDataset):
                 n += len(X)
 
         pbar.set_postfix({"val loss": total_loss / n})
-    
+
     torch.save(seed.state_dict(), save_path)
 
 def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
@@ -58,7 +58,7 @@ def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     ds = TorchDataset(encoded_df[constants.CAO_MAPPING["context"]].to_numpy(), df[constants.RECO_COLS].to_numpy())
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "no_change.pt", ds)
-    
+
 def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     """
     Creates a seed that attempts to prescribe the max change to secdf.
@@ -70,7 +70,9 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     max_change_recos[constants.RECO_COLS] = 0
     max_change_recos["secdf"] = reco_use
 
-    ds = TorchDataset(encoded_df[constants.CAO_MAPPING["context"]].to_numpy(), max_change_recos[constants.RECO_COLS].to_numpy())
+    encoded_context_np = encoded_df[constants.CAO_MAPPING["context"]].to_numpy()
+    max_change_recos_np = max_change_recos[constants.RECO_COLS].to_numpy()
+    ds = TorchDataset(encoded_context_np, max_change_recos_np)
 
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds)

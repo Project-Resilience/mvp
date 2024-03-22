@@ -1,0 +1,10 @@
+[MASTER]
+ignore=demo
+
+jobs=0
+
+max-line-length=120
+
+suggestion-mode=yes
+
+good-names=X_train, X_val, X_test, y_train, y_val, y_test, X, Y, y, X_test_scaled

@@ -69,7 +69,7 @@ class TestTorchPrescriptor(unittest.TestCase):
         fields = get_fields(cls.dummy_data)
         encoder = ELUCEncoder(fields)
 
-        predictor = LinearRegressionPredictor(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1)
+        predictor = LinearRegressionPredictor(dict(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1))
         predictor.fit(cls.dummy_data[constants.DIFF_LAND_USE_COLS], cls.dummy_data["ELUC"])
         cls.prescriptor = TorchPrescriptor(
             100,

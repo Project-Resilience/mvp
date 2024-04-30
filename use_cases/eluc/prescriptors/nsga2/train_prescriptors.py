@@ -25,9 +25,7 @@ if __name__ == "__main__":
 
     print("Loading predictor...")
     # TODO: We need to make it so you can load any predictor here
-    nnp = NeuralNetPredictor()
-    nnp_path = Path(config["predictor_path"])
-    nnp.load(nnp_path)
+    nnp = NeuralNetPredictor.load(Path(config["predictor_path"]))
 
     print("Initializing prescription...")
     if "seed_dir" in config["evolution_params"].keys():

@@ -1,8 +1,6 @@
 [MASTER]
 ignore=demo, prescriptors/esp
 
-ignore-patterns=*.md
-
 recursive=y
 
 fail-under=9.0

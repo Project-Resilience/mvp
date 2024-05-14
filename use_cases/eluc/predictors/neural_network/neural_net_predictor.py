@@ -79,6 +79,20 @@ class NeuralNetPredictor(Predictor):
     Data is automatically standardized and the scaler is saved with the model.
     """
     def __init__(self, model_config: dict):
+        """
+        Model config should contain the following:
+        features: list of features to use in the model (optional, defaults to all features)
+        label: name of the label column (optional, defaults to passed label in fit)
+        hidden_sizes: list of hidden layer sizes
+        linear_skip: whether to concatenate input to hidden layer output
+        dropout: dropout probability
+        device: device to run the model on
+        epochs: number of epochs to train for
+        batch_size: batch size for training
+        optim_params: dictionary of parameters to pass to the optimizer
+        train_pct: percentage of training data to use
+        step_lr_params: dictionary of parameters to pass to the step learning rate scheduler
+        """
         
         self.features = model_config.get("features", None)
         self.label = model_config.get("label", None)
@@ -96,7 +110,7 @@ class NeuralNetPredictor(Predictor):
         self.scaler = StandardScaler()
 
     @classmethod
-    def load(cls, path: str):
+    def load(cls, path: str) -> "NeuralNetPredictor":
         """
         Loads a model from a given folder containing a config.json, model.pt, and scaler.joblib.
         :param path: path to folder containing model files.

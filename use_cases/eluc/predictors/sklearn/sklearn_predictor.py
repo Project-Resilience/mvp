@@ -20,6 +20,11 @@ class SKLearnPredictor(Predictor, ABC):
     Keeps track of features fit on and label to predict.
     """
     def __init__(self, model_config: dict):
+        """
+        Model config contains the following:
+        features: list of features to use for prediction (optional, defaults to all features)
+        label: name of the label to predict (optional, defaults to passed label during fit)
+        """
         self.features = model_config.get("features", None)
         self.label = model_config.get("label", None)
 
@@ -45,7 +50,7 @@ class SKLearnPredictor(Predictor, ABC):
         joblib.dump(self.model, save_path / "model.joblib")
 
     @classmethod
-    def load(cls, path):
+    def load(cls, path) -> "SKLearnPredictor":
         """
         Loads saved model and features from a folder.
         :param path: path to folder to load model files from.

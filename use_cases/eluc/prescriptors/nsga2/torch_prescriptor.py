@@ -32,7 +32,7 @@ class TorchPrescriptor(Prescriptor):
                  batch_size: int,
                  candidate_params: dict,
                  seed_dir=None):
-        
+
         self.candidate_params = candidate_params
         self.pop_size = pop_size
         self.n_generations = n_generations
@@ -149,7 +149,7 @@ class TorchPrescriptor(Prescriptor):
             for candidate, distance in zip(front, crowding_distance):
                 candidate.distance = distance
             if len(parents) + len(front) > n_parents:  # If adding this front exceeds num_parents
-                front = sorted(front, key=lambda c: c.distance, reverse=True)
+                front = sorted(front, key=lambda candidate: candidate.distance, reverse=True)
                 parents += front[:n_parents - len(parents)]
                 break
             parents += front
@@ -169,7 +169,7 @@ class TorchPrescriptor(Prescriptor):
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
         """
-        sorted_parents = sorted(parents, key=lambda c: (c.rank, -c.distance))
+        sorted_parents = sorted(parents, key=lambda candidate: (candidate.rank, -candidate.distance))
         children = []
         for i in range(pop_size):
             parent1, parent2 = self._tournament_selection(sorted_parents)
@@ -226,15 +226,15 @@ class TorchPrescriptor(Prescriptor):
         Save the pareto front to disk.
         """
         # Save statistics of candidates
-        gen_results = [c.record_state() for c in candidates]
+        gen_results = [candidate.record_state() for candidate in candidates]
         gen_results_df = pd.DataFrame(gen_results)
         gen_results_df.to_csv(save_path / f"{gen}.csv", index=False)
 
         # Save rank 1 candidate state dicts
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
-        pareto_candidates = [c for c in candidates if c.rank == 1]
-        for c in pareto_candidates:
-            torch.save(c.state_dict(), save_path / f"{gen}" / f"{c.gen}_{c.cand_id}.pt")
+        pareto_candidates = [candidate for candidate in candidates if candidate.rank == 1]
+        for candidate in pareto_candidates:
+            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.gen}_{candidate.cand_id}.pt")
 
     def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """
@@ -242,7 +242,7 @@ class TorchPrescriptor(Prescriptor):
         """
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
-        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}     
+        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
 
     def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """

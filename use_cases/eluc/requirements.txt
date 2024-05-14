@@ -171,6 +171,7 @@ traitlets==5.9.0
 transformers==4.31.0
 typing_extensions==4.6.2
 uri-template==1.2.0
+wcwidth==0.2.13
 webcolors==1.13
 webencodings==0.5.1
 websocket-client==1.5.3

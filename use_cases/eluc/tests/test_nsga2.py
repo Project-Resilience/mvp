@@ -21,7 +21,7 @@ def get_fields(df):
     Dummy fields method to create the encoder for dummy data.
     """
     fields_df = df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]].astype("float64")
-    fields = dict()
+    fields = {}
     for col in constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]:
         # Set range of land and diff land uses manually to their true ranges because they
         # do not need to be scaled
@@ -52,7 +52,7 @@ def get_fields(df):
         "valued": "CONTINUOUS"
     }
 
-    return fields 
+    return fields
 
 class TestTorchPrescriptor(unittest.TestCase):
     """

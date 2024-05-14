@@ -30,7 +30,7 @@ jobs:
         pip install pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with PyLint
-      run: pylint --ignore="demo" --recursive=y --fail-under=9 ./*
+      run: pylint ./*
     - name: Run unit tests
       run: python -m unittest
 

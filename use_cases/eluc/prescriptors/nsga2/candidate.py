@@ -43,7 +43,7 @@ class Candidate(torch.nn.Module):
         self.parents = parents
 
     @classmethod
-    def from_crossover(cls, parent1, parent2, p_mutation: float, gen: int, cand_id: int):
+    def from_crossover(cls, parent1, parent2, p_mutation: float, gen: int, cand_id: int) -> "Candidate":
         """
         Crossover two parents to create a child.
         Take a random 50/50 choice of either parent's weights

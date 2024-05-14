@@ -58,6 +58,8 @@ def construct_countries_df():
     for i in range(len(countries_df)):
         old_abbrev = countries_df.iloc[i]["abbrevs"]
         if old_abbrev in MANUAL_MAP and MANUAL_MAP[old_abbrev] in codes_df["Numeric code"].unique():
-            countries_df.iloc[i]["abbrevs"] = codes_df[codes_df["Numeric code"] == MANUAL_MAP[old_abbrev]]["Alpha-2 code"].iloc[0]
+            numeric_code = codes_df["Numeric code"]
+            old_abbrev = MANUAL_MAP[old_abbrev]
+            countries_df.iloc[i]["abbrevs"] = codes_df[numeric_code == old_abbrev]["Alpha-2 code"].iloc[0]
 
     return countries_df

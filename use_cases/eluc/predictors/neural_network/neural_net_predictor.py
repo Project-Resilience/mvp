@@ -2,7 +2,6 @@
 Implementation of predictor.py using a simple feed-forward NeuralNetwork
 implemented in PyTorch.
 """
-
 import copy
 import json
 import time
@@ -79,57 +78,62 @@ class NeuralNetPredictor(Predictor):
     in order to take advantage of the linear relationship in the data.
     Data is automatically standardized and the scaler is saved with the model.
     """
-    def __init__(self, features=None, label=None, hidden_sizes=[4096], linear_skip=True,
-                 dropout=0, device="mps", epochs=3, batch_size=2048, optim_params={},
-                 train_pct=1, step_lr_params={"step_size": 1, "gamma": 0.1}):
-
-        self.features=None
-        self.label=None
-
-        self.set_params(features, label, hidden_sizes, linear_skip,
-                        dropout, device, epochs, batch_size, optim_params,
-                        train_pct, step_lr_params)
+    def __init__(self, model_config: dict):
+        """
+        Model config should contain the following:
+        features: list of features to use in the model (optional, defaults to all features)
+        label: name of the label column (optional, defaults to passed label in fit)
+        hidden_sizes: list of hidden layer sizes
+        linear_skip: whether to concatenate input to hidden layer output
+        dropout: dropout probability
+        device: device to run the model on
+        epochs: number of epochs to train for
+        batch_size: batch size for training
+        optim_params: dictionary of parameters to pass to the optimizer
+        train_pct: percentage of training data to use
+        step_lr_params: dictionary of parameters to pass to the step learning rate scheduler
+        """
+        
+        self.features = model_config.get("features", None)
+        self.label = model_config.get("label", None)
+        self.hidden_sizes = model_config.get("hidden_sizes", [4096])
+        self.linear_skip = model_config.get("linear_skip", True)
+        self.dropout = model_config.get("dropout", 0)
+        self.device = model_config.get("device", "cpu")
+        self.epochs = model_config.get("epochs", 3)
+        self.batch_size = model_config.get("batch_size", 2048)
+        self.optim_params = model_config.get("optim_params", {})
+        self.train_pct = model_config.get("train_pct", 1)
+        self.step_lr_params = model_config.get("step_lr_params", {"step_size": 1, "gamma": 0.1})
 
         self.model = None
         self.scaler = StandardScaler()
 
-    def set_params(self, features, label, hidden_sizes, linear_skip,
-                   dropout, device, epochs, batch_size, optim_params,
-                   train_pct, step_lr_params):
-        """
-        Set all the parameters for the neural network.
-        """
-        self.features = features
-        self.label = label
-        self.hidden_sizes = hidden_sizes
-        self.linear_skip = linear_skip
-        self.dropout = dropout
-        self.device = device
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.optim_params = optim_params
-        self.train_pct = train_pct
-        self.step_lr_params = step_lr_params
-
-    def load(self, path: str):
+    @classmethod
+    def load(cls, path: str) -> "NeuralNetPredictor":
         """
         Loads a model from a given folder containing a config.json, model.pt, and scaler.joblib.
         :param path: path to folder containing model files.
         """
-        load_path = Path(path)
+        if isinstance(path, str):
+            load_path = Path(path)
+        else:
+            load_path = path
         if not load_path.exists():
             raise FileNotFoundError(f"Path {path} does not exist.")
 
         # Initialize model with config
         with open(load_path / "config.json", "r", encoding="utf-8") as file:
             config = json.load(file)
-        self.set_params(**config)
 
-        self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
-        self.model.load_state_dict(torch.load(load_path / "model.pt"))
-        self.model.to(self.device)
-        self.model.eval()
-        self.scaler = joblib.load(load_path / "scaler.joblib")
+        nnp = cls(config)
+
+        nnp.model = ELUCNeuralNet(len(config["features"]), config["hidden_sizes"], config["linear_skip"], config["dropout"])
+        nnp.model.load_state_dict(torch.load(load_path / "model.pt"))
+        nnp.model.to(config["device"])
+        nnp.model.eval()
+        nnp.scaler = joblib.load(load_path / "scaler.joblib")
+        return nnp
 
 
     def save(self, path: str):

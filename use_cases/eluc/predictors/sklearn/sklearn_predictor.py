@@ -19,9 +19,15 @@ class SKLearnPredictor(Predictor, ABC):
     Simple abstract class for sklearn predictors.
     Keeps track of features fit on and label to predict.
     """
-    def __init__(self, features=None, label=None):
-        self.features = features
-        self.label = label
+    def __init__(self, model_config: dict):
+        """
+        Model config contains the following:
+        features: list of features to use for prediction (optional, defaults to all features)
+        label: name of the label to predict (optional, defaults to passed label during fit)
+        """
+        self.features = model_config.get("features", None)
+        self.label = model_config.get("label", None)
+
         self.model = None
 
     def save(self, path: str):
@@ -30,7 +36,10 @@ class SKLearnPredictor(Predictor, ABC):
         Generates path to folder if it does not exist.
         :param path: path to folder to save model files.
         """
-        save_path = Path(path)
+        if isinstance(path, str):
+            save_path = Path(path)
+        else:
+            save_path = path
         save_path.mkdir(parents=True, exist_ok=True)
         config = {
             "features": self.features,
@@ -40,7 +49,8 @@ class SKLearnPredictor(Predictor, ABC):
             json.dump(config, file)
         joblib.dump(self.model, save_path / "model.joblib")
 
-    def load(self, path):
+    @classmethod
+    def load(cls, path) -> "SKLearnPredictor":
         """
         Loads saved model and features from a folder.
         :param path: path to folder to load model files from.
@@ -48,9 +58,9 @@ class SKLearnPredictor(Predictor, ABC):
         load_path = Path(path)
         with open(load_path / "config.json", "r", encoding="utf-8") as file:
             config = json.load(file)
-            self.features = config["features"]
-            self.label = config["label"]
-        self.model = joblib.load(load_path / "model.joblib")
+        sklearn_predictor = cls(config)
+        sklearn_predictor.model = joblib.load(load_path / "model.joblib")
+        return sklearn_predictor
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
@@ -83,9 +93,11 @@ class LinearRegressionPredictor(SKLearnPredictor):
     Simple linear regression predictor.
     See SKLearnPredictor for more details.
     """
-    def __init__(self, features=None, **kwargs):
-        super().__init__(features)
-        self.model = LinearRegression(**kwargs)
+    def __init__(self, model_config: dict):
+        super().__init__(model_config)
+        model_config.pop("features", None)
+        model_config.pop("label", None)
+        self.model = LinearRegression(**model_config)
 
 class RandomForestPredictor(SKLearnPredictor):
     """
@@ -93,9 +105,11 @@ class RandomForestPredictor(SKLearnPredictor):
     See SKLearnPredictor for more details.
     Overrides save method in order to compress it.
     """
-    def __init__(self, features=None, **kwargs):
-        super().__init__(features)
-        self.model = RandomForestRegressor(**kwargs)
+    def __init__(self, model_config: dict):
+        super().__init__(model_config)
+        model_config.pop("features", None)
+        model_config.pop("label", None)
+        self.model = RandomForestRegressor(**model_config)
 
     def save(self, path: str, compression=0):
         """

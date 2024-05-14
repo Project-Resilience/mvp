@@ -149,7 +149,7 @@ class TorchPrescriptor(Prescriptor):
             for candidate, distance in zip(front, crowding_distance):
                 candidate.distance = distance
             if len(parents) + len(front) > n_parents:  # If adding this front exceeds num_parents
-                front = sorted(front, key=lambda cand: cand.distance, reverse=True)
+                front = sorted(front, key=lambda candidate: candidate.distance, reverse=True)
                 parents += front[:n_parents - len(parents)]
                 break
             parents += front
@@ -169,7 +169,7 @@ class TorchPrescriptor(Prescriptor):
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
         """
-        sorted_parents = sorted(parents, key=lambda cand: (cand.rank, -cand.distance))
+        sorted_parents = sorted(parents, key=lambda candidate: (candidate.rank, -candidate.distance))
         children = []
         for i in range(pop_size):
             parent1, parent2 = self._tournament_selection(sorted_parents)
@@ -226,15 +226,15 @@ class TorchPrescriptor(Prescriptor):
         Save the pareto front to disk.
         """
         # Save statistics of candidates
-        gen_results = [cand.record_state() for cand in candidates]
+        gen_results = [candidate.record_state() for candidate in candidates]
         gen_results_df = pd.DataFrame(gen_results)
         gen_results_df.to_csv(save_path / f"{gen}.csv", index=False)
 
         # Save rank 1 candidate state dicts
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
-        pareto_candidates = [cand for cand in candidates if cand.rank == 1]
-        for cand in pareto_candidates:
-            torch.save(cand.state_dict(), save_path / f"{gen}" / f"{cand.gen}_{cand.cand_id}.pt")
+        pareto_candidates = [candidate for candidate in candidates if candidate.rank == 1]
+        for candidate in pareto_candidates:
+            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.gen}_{candidate.cand_id}.pt")
 
     def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """

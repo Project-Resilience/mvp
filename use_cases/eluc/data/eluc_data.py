@@ -171,7 +171,8 @@ class ELUCData(AbstractData):
 
         self.train_df = df.loc[start_year:test_year-1]
         self.test_df = df.loc[test_year:end_year-1]
-
+        assert self.train_df['time'].max() == self.test_df["time"].min() - 1
+        
         self.encoder = ELUCEncoder(self.get_fields())
 
     def hf_to_df(self, hf_repo):
@@ -197,7 +198,8 @@ class RawELUCData(AbstractData):
 
         self.train_df = df.loc[start_year:test_year-1]
         self.test_df = df.loc[test_year:end_year-1]
-
+        assert self.train_df['time'].max() == self.test_df["time"].min() - 1
+        
         self.encoder = ELUCEncoder(self.get_fields())
 
     def import_data(self, path, update_path):

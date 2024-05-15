@@ -45,7 +45,7 @@ class TestPredictors(unittest.TestCase):
         ]
         for model, config, test_names in zip(self.models, self.configs, save_file_names):
             with self.subTest(model=model):
-                predictor = model(**config)
+                predictor = model(config)
                 predictor.fit(self.dummy_data, self.dummy_target)
                 predictor.save(self.temp_path)
                 files = [f.name for f in self.temp_path.glob("**/*") if f.is_file()]
@@ -61,13 +61,12 @@ class TestPredictors(unittest.TestCase):
 
         for model, config in zip(self.models, self.configs):
             with self.subTest(model=model):
-                predictor = model(**config)
+                predictor = model(config)
                 predictor.fit(self.dummy_data.iloc[:2], self.dummy_target.iloc[:2])
                 output = predictor.predict(self.dummy_data.iloc[2:])
                 predictor.save(self.temp_path)
 
-                loaded = model(**config)
-                loaded.load(self.temp_path)
+                loaded = model.load(self.temp_path)
                 loaded_output = loaded.predict(self.dummy_data.iloc[2:])
 
                 self.assertTrue((output == loaded_output).all().all()) # Pandas is so annoying why is this necessary?
@@ -91,7 +90,7 @@ class TestNeuralNet(unittest.TestCase):
         """
         Tests the neural net with a single input.
         """
-        predictor = NeuralNetPredictor(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu")
+        predictor = NeuralNetPredictor(dict(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu"))
 
         train_data = pd.DataFrame({"a": [1], "b": [2], "c": [3], "label": [4]})
         test_data = pd.DataFrame({"a": [4], "b": [5], "c": [6]})
@@ -104,7 +103,7 @@ class TestNeuralNet(unittest.TestCase):
         """
         Tests the neural net with multiple inputs.
         """
-        predictor = NeuralNetPredictor(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu")
+        predictor = NeuralNetPredictor(dict(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu"))
 
         train_data = pd.DataFrame({"a": [1, 2], "b": [2, 3], "c": [3, 4], "label": [4, 5]})
         test_data = pd.DataFrame({"a": [4, 5], "b": [5, 6], "c": [6, 7]})

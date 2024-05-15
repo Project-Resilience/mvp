@@ -9,7 +9,7 @@ made to reduce CO2 emissions?
 
 It is possible to learn from historical decisions made by decision makers all around the world if they can be compared.
 
-Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://arxiv.org/abs/2311.12304) which won the *Best Pathway to Impact* award. The recorded talk can be found [here](https://www.climatechange.ai/papers/neurips2023/94).
+Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://nn.cs.utexas.edu/?miikkulainen:arxiv23) which won the *Best Pathway to Impact* award. The recorded talk can be found [here](https://www.climatechange.ai/papers/neurips2023/94).
 
 ## Data
 
@@ -23,7 +23,7 @@ BLUE simulations with committed emissions could be used to estimate the long-ter
 "Committed emissions" means all the emissions that are caused by a land-use change event are attributed to the year
 of the event.
 BLUE (bookkeeping of land use emissions) is a bookkeeping model that attributes carbon fluxes to land use activities.
-See [BLUE: Bookkeeping of land use emissions](https://doi.org/10.1002/2014GB004997) for more details.  
+See [BLUE: Bookkeeping of Land Use Emissions](https://doi.org/10.1002/2014GB004997) for more details.
 
 ### LUC
 
@@ -139,6 +139,8 @@ the percentage of land that was changed. In other words decision makers have to:
 
 ## Modeling
 
+*Note: Before running anything make sure to set your python path environment variable with: `export PYTHONPATH=$PWD` while in the eluc directory.*
+
 ### Predictions
 
 Given **context** and **actions** -> predict **outcomes**  
@@ -179,10 +181,14 @@ Code to train prescriptor models can be found in the [prescriptors](prescriptors
 - [UniLEAF Prescriptor](prescriptors/esp/unileaf_prescriptor.py) (note: this prescriptor uses the ESP SDK which is not open source, however it remains in the repo as it was used in the original paper)
 - [Torch Prescriptor](prescriptors/nsga2/torch_prescriptor.py) which is an open-source method that implements the NSGA-II algorithm in PyTorch.
 
+To train a prescriptor, use the [train_prescriptors.py](prescriptors/nsga2/train_prescriptors.py) script. A predictor model needs to be trained beforehand. A template config to be used in prescriptor training can be found in the [configs](prescriptors/nsga2/configs/test.json) folder. Seeds can also be trained to allow the prescriptor to find candidates along the edge of the pareto-front. These can be trained using [train_seeds.py](prescriptors/nsga2/train_seeds.py).
+
 ## Robojudge
 
 "Robojudge" is an interactive tool that can be used to compare predictors.
-Some models perform better depending on the evaluation metric, the countries or the years on which they are evaluated.   
+Some models perform better depending on the evaluation metric, the countries or the years on which they are evaluated.
+
+Preliminary evaluation code for predictors can be found in the [demo_predictors.ipynb](predictors/demo_predictors.ipynb) notebook.
 
 TODO: see task #49
 
@@ -191,6 +197,14 @@ TODO: see task #49
 A user interface for decision makers is available here: https://landuse.evolution.ml/
 
 See [demo/README.md](demo/README.md)
+
+## Testing
+
+To run unit tests, use the following command: ```python -m unittest```.
+
+TODO: see task #79
+
+To run pylint, use the following command: ```pylint ./*```
 
 ## References
 

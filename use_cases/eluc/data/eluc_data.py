@@ -42,9 +42,9 @@ class ELUCEncoder():
                 if min_val == max_val:
                     new_df[col] = 0
                 else:
-                    new_df[col] = (new_df[col] - self.fields[col]["range"][0]) / (self.fields[col]["range"][1] - self.fields[col]["range"][0])
+                    new_df[col] = (new_df[col] - min_val) / (max_val - min_val)
         return new_df
-    
+
     def decode_as_df(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Decodes a dataframe using the fields given in the constructor.
@@ -53,7 +53,9 @@ class ELUCEncoder():
         new_df = df.copy()
         for col in new_df.columns:
             if col in self.fields:
-                new_df[col] = new_df[col] * (self.fields[col]["range"][1] - self.fields[col]["range"][0]) + self.fields[col]["range"][0]
+                min_val = self.fields[col]["range"][0]
+                max_val = self.fields[col]["range"][1]
+                new_df[col] = new_df[col] * (max_val - min_val) + min_val
         return new_df
 
 
@@ -87,7 +89,7 @@ class AbstractData(ABC):
         if self.encoded_train_df is None:
             self.encoded_train_df = self.encoder.encode_as_df(self.train_df)
         return self.encoded_train_df
-    
+
     def get_encoded_test(self):
         """
         Same as above but for test data.
@@ -95,14 +97,15 @@ class AbstractData(ABC):
         if self.encoded_test_df is None:
             self.encoded_test_df = self.encoder.encode_as_df(self.test_df)
         return self.encoded_test_df
-    
+
     def get_fields(self) -> dict:
         """
         Creates fields json object for the data encoder/prescriptor.
         """
-        fields_df = self.train_df[constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]].astype("float64")
-        fields = dict()
-        for col in constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]:
+        cao_cols = constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"] + ["ELUC"]
+        fields_df = self.train_df[cao_cols].astype("float64")
+        fields = {}
+        for col in cao_cols:
             # Set range of land and diff land uses manually to their true ranges because they
             # do not need to be scaled
             if col in constants.LAND_USE_COLS:
@@ -132,14 +135,13 @@ class AbstractData(ABC):
             "valued": "CONTINUOUS"
         }
 
-        return fields 
-    
+        return fields
+
     def push_to_hf(self, repo_path, commit_message, token=None):
         """
         Pushes data to huggingface repo. Don't use this unless you're sure you want to update it!
         :param repo_path: Path to huggingface repo.
         """
-    
         whole_df = pd.concat([self.train_df, self.test_df])
         # We get the indices as columns anyways so we can drop them
         whole_df = whole_df.drop(["lat", "lon", "time"], axis=1)
@@ -147,13 +149,13 @@ class AbstractData(ABC):
         if not token:
             token = os.getenv("HF_TOKEN")
         ds.push_to_hub(repo_path, commit_message=commit_message, token=token)
-        
+
 
 class ELUCData(AbstractData):
     """
     Loads ELUC data from HuggingFace repo and processes it.
     """
-    
+
     def __init__(self, start_year=1851, test_year=2012, end_year=2022, countries=None):
         """
         If update_path is given, load raw data the old way using 2 files that are merged.
@@ -175,7 +177,8 @@ class ELUCData(AbstractData):
 
     def hf_to_df(self, hf_repo):
         """
-        Loads dataset from huggingface, converts to pandas, then sets indices appropriately to time/lat/lon.
+        Loads dataset from huggingface, converts to pandas, then sets indices
+        appropriately to time/lat/lon.
         Keep old time/lat/lon columns so we can use them as features later.
         """
         ds = load_dataset(hf_repo)["train"]
@@ -219,7 +222,9 @@ class RawELUCData(AbstractData):
             raw = raw.merge(eluc)
 
             # Shift actions back a year
-            raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban']
+            raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per',
+                         'pastr', 'primf', 'primn', 'range',
+                         'secdf', 'secdn', 'urban']
             raw_diffs = [f"{col}_diff" for col in raw_diffs]
             raw[raw_diffs] = raw[raw_diffs].shift(time=-1)
 
@@ -227,7 +232,7 @@ class RawELUCData(AbstractData):
             country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(raw)
             raw["country"] = country_mask
         return raw
-    
+
     def da_to_df(self, da: xr.DataArray, start_year=None, end_year=None, countries=None) -> pd.DataFrame:
         """
         Converts an xarray DataArray to a pandas DataFrame.
@@ -261,10 +266,10 @@ class RawELUCData(AbstractData):
         # Merge crops into one column because BLUE model doesn't differentiate
         df["crop"] = df[constants.CROP_COLS].sum(axis=1)
         df["crop_diff"] = df[[f"{c}_diff" for c in constants.CROP_COLS]].sum(axis=1)
-            
+
         df['country_name'] = self.countries_df.loc[df['country'], 'names'].values
-        
+
         # Drop this column we used for preprocessing (?)
         df = df.drop("mask", axis=1)
-            
+
         return df

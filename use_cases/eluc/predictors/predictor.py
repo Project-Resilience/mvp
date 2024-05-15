@@ -45,9 +45,9 @@ class Predictor(ABC):
         :param path: path to save the model
         """
 
-
+    @classmethod
     @abstractmethod
-    def load(self, path: str):
+    def load(cls, path: str) -> "Predictor":
         """
         Loads a model from a path.
         :param path: path to the model

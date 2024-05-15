@@ -2,7 +2,6 @@
 Implementation of predictor.py using a simple feed-forward NeuralNetwork
 implemented in PyTorch.
 """
-
 import copy
 import json
 import time
@@ -79,45 +78,62 @@ class NeuralNetPredictor(Predictor):
     in order to take advantage of the linear relationship in the data.
     Data is automatically standardized and the scaler is saved with the model.
     """
-    def __init__(self, features=None, label=None, hidden_sizes=[4096], linear_skip=True, dropout=0, device="mps",
-            epochs=3, batch_size=2048, optim_params={}, train_pct=1, step_lr_params={"step_size": 1, "gamma": 0.1}): 
-        # Model setup params
-        self.model = None
-        self.features = features
-        self.label = label
-        self.hidden_sizes = hidden_sizes
-        self.linear_skip = linear_skip
-        self.dropout = dropout
-        self.device = device
-
-        # Training params
-        self.scaler = StandardScaler()
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.optim_params = optim_params
-        self.train_pct = train_pct
-        self.step_lr_params = step_lr_params
+    def __init__(self, model_config: dict):
+        """
+        Model config should contain the following:
+        features: list of features to use in the model (optional, defaults to all features)
+        label: name of the label column (optional, defaults to passed label in fit)
+        hidden_sizes: list of hidden layer sizes
+        linear_skip: whether to concatenate input to hidden layer output
+        dropout: dropout probability
+        device: device to run the model on
+        epochs: number of epochs to train for
+        batch_size: batch size for training
+        optim_params: dictionary of parameters to pass to the optimizer
+        train_pct: percentage of training data to use
+        step_lr_params: dictionary of parameters to pass to the step learning rate scheduler
+        """
         
+        self.features = model_config.get("features", None)
+        self.label = model_config.get("label", None)
+        self.hidden_sizes = model_config.get("hidden_sizes", [4096])
+        self.linear_skip = model_config.get("linear_skip", True)
+        self.dropout = model_config.get("dropout", 0)
+        self.device = model_config.get("device", "cpu")
+        self.epochs = model_config.get("epochs", 3)
+        self.batch_size = model_config.get("batch_size", 2048)
+        self.optim_params = model_config.get("optim_params", {})
+        self.train_pct = model_config.get("train_pct", 1)
+        self.step_lr_params = model_config.get("step_lr_params", {"step_size": 1, "gamma": 0.1})
 
-    def load(self, path: str):
+        self.model = None
+        self.scaler = StandardScaler()
+
+    @classmethod
+    def load(cls, path: str) -> "NeuralNetPredictor":
         """
         Loads a model from a given folder containing a config.json, model.pt, and scaler.joblib.
         :param path: path to folder containing model files.
         """
-        load_path = Path(path)
+        if isinstance(path, str):
+            load_path = Path(path)
+        else:
+            load_path = path
         if not load_path.exists():
             raise FileNotFoundError(f"Path {path} does not exist.")
-        
-        # Initialize model with config
-        with open(load_path / "config.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
-        self.__init__(**config)
 
-        self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
-        self.model.load_state_dict(torch.load(load_path / "model.pt", map_location=self.device))
-        self.model.to(self.device)
-        self.model.eval()
-        self.scaler = joblib.load(load_path / "scaler.joblib")
+        # Initialize model with config
+        with open(load_path / "config.json", "r", encoding="utf-8") as file:
+            config = json.load(file)
+
+        nnp = cls(config)
+
+        nnp.model = ELUCNeuralNet(len(config["features"]), config["hidden_sizes"], config["linear_skip"], config["dropout"])
+        nnp.model.load_state_dict(torch.load(load_path / "model.pt"))
+        nnp.model.to(config["device"])
+        nnp.model.eval()
+        nnp.scaler = joblib.load(load_path / "scaler.joblib")
+        return nnp
 
 
     def save(self, path: str):
@@ -144,13 +160,16 @@ class NeuralNetPredictor(Predictor):
             "train_pct": self.train_pct,
             "step_lr_params": self.step_lr_params
         }
-        with open(save_path / "config.json", "w", encoding="utf-8") as f:
-            json.dump(config, f)
+        with open(save_path / "config.json", "w", encoding="utf-8") as file:
+            json.dump(config, file)
         torch.save(self.model.state_dict(), save_path / "model.pt")
         joblib.dump(self.scaler, save_path / "scaler.joblib")
 
 
-    def fit(self, X_train: pd.DataFrame, y_train: pd.Series, X_val=None, y_val=None, X_test=None, y_test=None, log_path=None, verbose=False) -> dict:
+    def fit(self, X_train: pd.DataFrame, y_train: pd.Series,
+            X_val=None, y_val=None,
+            X_test=None, y_test=None,
+            log_path=None, verbose=False) -> dict:
         """
         Fits neural network to given data using predefined parameters and hyperparameters.
         If no features were specified we use all the columns in X_train.
@@ -164,7 +183,8 @@ class NeuralNetPredictor(Predictor):
         :param y_test: test labels.
         :param log_path: path to log training data to tensorboard.
         :param verbose: whether to print progress bars.
-        :return: dictionary of results from training containing time taken, best epoch, best loss, and test loss if applicable.
+        :return: dictionary of results from training containing time taken, best epoch, best loss, 
+        and test loss if applicable.
         """
         if not self.features:
             self.features = X_train.columns.tolist()
@@ -174,7 +194,7 @@ class NeuralNetPredictor(Predictor):
         self.model.to(self.device)
         self.model.train()
 
-        s = time.time()
+        start = time.time()
 
         # Set up train set
         X_train = self.scaler.fit_transform(X_train[self.features])
@@ -203,7 +223,7 @@ class NeuralNetPredictor(Predictor):
         result_dict = {}
         best_model = None
         best_loss = np.inf
-        e = 0
+        end = 0
 
         step = 0
         for epoch in range(self.epochs):
@@ -220,7 +240,7 @@ class NeuralNetPredictor(Predictor):
                 step += 1
                 loss.backward()
                 optimizer.step()
-            
+
             # LR Decay
             if self.step_lr_params:
                 scheduler.step()
@@ -235,25 +255,25 @@ class NeuralNetPredictor(Predictor):
                         out = self.model(X)
                         loss = loss_fn(out.squeeze(), y.squeeze())
                         total += loss.item() * y.shape[0]
-                
+
                 if log_path:
                     writer.add_scalar("val_loss", total / len(val_ds), step)
-                
+
                 if total < best_loss:
                     best_model = copy.deepcopy(self.model.state_dict())
                     best_loss = total
-                    e = time.time()
+                    end = time.time()
                     result_dict["best_epoch"] = epoch
                     result_dict["best_loss"] = total / len(val_ds)
-                    result_dict["time"] = e - s
+                    result_dict["time"] = end - start
 
                 print(f"epoch {epoch} mae {total / len(val_ds)}")
-        
+
         if best_model:
             self.model.load_state_dict(best_model)
         else:
-            e = time.time()
-            result_dict["time"] = e - s
+            end = time.time()
+            result_dict["time"] = end - start
 
         # If we provide a test dataset
         if X_test is not None and y_test is not None:

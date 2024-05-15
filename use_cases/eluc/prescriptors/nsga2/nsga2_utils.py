@@ -29,7 +29,7 @@ def fast_non_dominated_sort(candidates: list):
                 front[0].append(p)
 
     i = 0
-    while front[i] != []:
+    while front[i]:
         Q = []
         for p in front[i]:
             for q in S[p]:
@@ -64,7 +64,7 @@ def calculate_crowding_distance(front):
     n_objectives = len(front[0].metrics)
     distances = [0 for _ in range(len(front))]
     for m in range(n_objectives):
-        front.sort(key=lambda c: c.metrics[m])
+        front.sort(key=lambda candidate: candidate.metrics[m])
         obj_min = front[0].metrics[m]
         obj_max = front[-1].metrics[m]
         distances[0] = float('inf')

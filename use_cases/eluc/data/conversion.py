@@ -9,7 +9,7 @@ import regionmask
 from data import constants
 
 # TODO: Note: This table is not perfect and has some errors,
-# we should consider manually fixing them. I tried my best but 
+# we should consider manually fixing them. I tried my best but
 # I'm not 100% sure it's correct.
 MANUAL_MAP = {
     "INDO": 360,
@@ -56,8 +56,10 @@ def construct_countries_df():
 
     # Replace all the bad codes with their real ones
     for i in range(len(countries_df)):
-        old_abbrev = countries_df.loc[i, "abbrevs"]
-        if old_abbrev in MANUAL_MAP.keys() and MANUAL_MAP[old_abbrev] in codes_df["Numeric code"].unique():
-            countries_df.loc[i, "abbrevs"] = codes_df[codes_df["Numeric code"] == MANUAL_MAP[old_abbrev]]["Alpha-2 code"].iloc[0]
+        old_abbrev = countries_df.iloc[i]["abbrevs"]
+        if old_abbrev in MANUAL_MAP and MANUAL_MAP[old_abbrev] in codes_df["Numeric code"].unique():
+            numeric_code = codes_df["Numeric code"]
+            old_abbrev = MANUAL_MAP[old_abbrev]
+            countries_df.iloc[i]["abbrevs"] = codes_df[numeric_code == old_abbrev]["Alpha-2 code"].iloc[0]
 
     return countries_df

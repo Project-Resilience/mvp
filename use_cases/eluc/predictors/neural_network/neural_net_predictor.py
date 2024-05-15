@@ -114,7 +114,7 @@ class NeuralNetPredictor(Predictor):
         self.__init__(**config)
 
         self.model = ELUCNeuralNet(len(self.features), self.hidden_sizes, self.linear_skip, self.dropout)
-        self.model.load_state_dict(torch.load(load_path / "model.pt"))
+        self.model.load_state_dict(torch.load(load_path / "model.pt", map_location=self.device))
         self.model.to(self.device)
         self.model.eval()
         self.scaler = joblib.load(load_path / "scaler.joblib")

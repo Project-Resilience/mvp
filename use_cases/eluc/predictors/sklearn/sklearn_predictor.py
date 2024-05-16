@@ -24,10 +24,9 @@ class SKLearnPredictor(Predictor, ABC):
         Model config contains the following:
         features: list of features to use for prediction (optional, defaults to all features)
         label: name of the label to predict (optional, defaults to passed label during fit)
+        Any other parameters are passed to the model.
         """
-        self.features = model_config.get("features", None)
-        self.label = model_config.get("label", None)
-
+        self.config = model_config
         self.model = None
 
     def save(self, path: str):
@@ -41,12 +40,8 @@ class SKLearnPredictor(Predictor, ABC):
         else:
             save_path = path
         save_path.mkdir(parents=True, exist_ok=True)
-        config = {
-            "features": self.features,
-            "label": self.label
-        }
         with open(save_path / "config.json", "w", encoding="utf-8") as file:
-            json.dump(config, file)
+            json.dump(self.config, file)
         joblib.dump(self.model, save_path / "model.joblib")
 
     @classmethod
@@ -69,11 +64,11 @@ class SKLearnPredictor(Predictor, ABC):
         :param X_train: DataFrame with input data
         :param y_train: series with target data
         """
-        if self.features:
-            X_train = X_train[self.features]
+        if "features" in self.config:
+            X_train = X_train[self.config["features"]]
         else:
-            self.features = list(X_train.columns)
-        self.label = y_train.name
+            self.config["features"] = list(X_train.columns)
+        self.config["label"] = y_train.name
         self.model.fit(X_train, y_train)
 
     def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
@@ -83,10 +78,9 @@ class SKLearnPredictor(Predictor, ABC):
         :param X_test: DataFrame with input data
         :return: properly labeled DataFrame with predictions and matching index.
         """
-        if self.features:
-            X_test = X_test[self.features]
+        X_test = X_test[self.config["features"]]
         y_pred = self.model.predict(X_test)
-        return pd.DataFrame(y_pred, index=X_test.index, columns=[self.label])
+        return pd.DataFrame(y_pred, index=X_test.index, columns=[self.config["label"]])
 
 class LinearRegressionPredictor(SKLearnPredictor):
     """
@@ -94,10 +88,11 @@ class LinearRegressionPredictor(SKLearnPredictor):
     See SKLearnPredictor for more details.
     """
     def __init__(self, model_config: dict):
+        if not model_config:
+            model_config = {}
         super().__init__(model_config)
-        model_config.pop("features", None)
-        model_config.pop("label", None)
-        self.model = LinearRegression(**model_config)
+        lr_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
+        self.model = LinearRegression(**lr_config)
 
 class RandomForestPredictor(SKLearnPredictor):
     """
@@ -107,9 +102,8 @@ class RandomForestPredictor(SKLearnPredictor):
     """
     def __init__(self, model_config: dict):
         super().__init__(model_config)
-        model_config.pop("features", None)
-        model_config.pop("label", None)
-        self.model = RandomForestRegressor(**model_config)
+        rf_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
+        self.model = RandomForestRegressor(**rf_config)
 
     def save(self, path: str, compression=0):
         """
@@ -118,11 +112,7 @@ class RandomForestPredictor(SKLearnPredictor):
         """
         save_path = Path(path)
         save_path.mkdir(parents=True, exist_ok=True)
-        config = {
-            "features": self.features,
-            "label": self.label
-        }
         with open(save_path / "config.json", "w", encoding="utf-8") as file:
-            json.dump(config, file)
+            json.dump(self.config, file)
         joblib.dump(self.model, save_path / "model.joblib", compress=compression)
         

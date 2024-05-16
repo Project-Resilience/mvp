@@ -4,15 +4,14 @@ implemented in PyTorch.
 """
 import copy
 import json
-import time
 from pathlib import Path
+import time
 
-
+import joblib
 import numpy as np
 import pandas as pd
-import joblib
-from tqdm import tqdm
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm
 
 import torch
 from torch.utils.data import DataLoader
@@ -112,9 +111,10 @@ class NeuralNetPredictor(Predictor):
     @classmethod
     def load(cls, path: str) -> "NeuralNetPredictor":
         """
-        Loads a model from a given folder containing a config.json, model.pt, and scaler.joblib.
+        Loads a model from a given folder or huggingface repo containing a config.json, model.pt, and scaler.joblib.
         :param path: path to folder containing model files.
         """
+        
         if isinstance(path, str):
             load_path = Path(path)
         else:
@@ -134,7 +134,6 @@ class NeuralNetPredictor(Predictor):
         nnp.model.eval()
         nnp.scaler = joblib.load(load_path / "scaler.joblib")
         return nnp
-
 
     def save(self, path: str):
         """

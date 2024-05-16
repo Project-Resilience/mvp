@@ -111,7 +111,7 @@ class NeuralNetPredictor(Predictor):
     @classmethod
     def load(cls, path: str) -> "NeuralNetPredictor":
         """
-        Loads a model from a given folder or huggingface repo containing a config.json, model.pt, and scaler.joblib.
+        Loads a model from a given folder.
         :param path: path to folder containing model files.
         """
         
@@ -119,7 +119,7 @@ class NeuralNetPredictor(Predictor):
             load_path = Path(path)
         else:
             load_path = path
-        if not load_path.exists():
+        if not load_path.exists() or not load_path.is_dir():
             raise FileNotFoundError(f"Path {path} does not exist.")
 
         # Initialize model with config

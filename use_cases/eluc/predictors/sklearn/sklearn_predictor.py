@@ -47,7 +47,7 @@ class SKLearnPredictor(Predictor, ABC):
     @classmethod
     def load(cls, path) -> "SKLearnPredictor":
         """
-        Loads saved model and features from a folder.
+        Loads saved model and config from a local folder.
         :param path: path to folder to load model files from.
         """
         load_path = Path(path)

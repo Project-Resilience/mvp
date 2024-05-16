@@ -43,7 +43,7 @@ class Predictor(ABC):
     @abstractmethod
     def save(self, path: str):
         """
-        Saves the model to a path.
+        Saves the model to a local path.
         :param path: path to save the model
         """
         raise NotImplementedError
@@ -51,8 +51,9 @@ class Predictor(ABC):
     @classmethod
     def from_pretrained(cls, path_or_url: str, **hf_args) -> "Predictor":
         """
-        Loads a model from a path or if this path is not found, searches for it on huggingface and loads from there.
-        :param path: path to the model or url to the huggingface repo.
+        Loads a model from a path or if it is not found, from a huggingface repo.
+        :param path_or_url: path to the model or url to the huggingface repo.
+        :param hf_args: arguments to pass to the snapshot_download function from huggingface.
         """
         path = Path(path_or_url)
         if path.exists() and path.is_dir():
@@ -71,6 +72,7 @@ class Predictor(ABC):
     @classmethod
     def load(cls, path: Path) -> "Predictor":
         """
-        Loads a model from the path
+        Loads a model from the path on disk.
+        :param path: path to the model
         """
         raise NotImplementedError

@@ -1,5 +1,6 @@
 # Ignores saved predictors
 predictors/*/trained_models/
+predictors/trained_models
 
 # Ignores predictor significance results
 experiments/predictor_significance

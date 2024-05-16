@@ -121,6 +121,10 @@ class NeuralNetPredictor(Predictor):
             load_path = path
         if not load_path.exists() or not load_path.is_dir():
             raise FileNotFoundError(f"Path {path} does not exist.")
+        if not (load_path / "config.json").exists() or \
+            not (load_path / "model.pt").exists() or \
+            not (load_path / "scaler.joblib").exists():
+            raise FileNotFoundError("Model files not found in path.")
 
         # Initialize model with config
         with open(load_path / "config.json", "r", encoding="utf-8") as file:

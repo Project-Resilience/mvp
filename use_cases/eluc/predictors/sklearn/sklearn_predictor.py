@@ -51,6 +51,11 @@ class SKLearnPredictor(Predictor, ABC):
         :param path: path to folder to load model files from.
         """
         load_path = Path(path)
+        if not load_path.exists() or not load_path.is_dir():
+            raise FileNotFoundError(f"Path {path} does not exist.")
+        if not (load_path / "config.json").exists() or not (load_path / "model.joblib").exists():
+            raise FileNotFoundError("Model files not found in path.")
+
         with open(load_path / "config.json", "r", encoding="utf-8") as file:
             config = json.load(file)
         sklearn_predictor = cls(config)

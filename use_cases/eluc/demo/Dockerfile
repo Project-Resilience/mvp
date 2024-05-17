@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.10.14-slim
 
 # Define environment variables
 ENV APPS_HOME=/usr/local/cognizant \

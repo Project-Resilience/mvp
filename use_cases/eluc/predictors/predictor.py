@@ -2,7 +2,9 @@
 Abstract class for predictors to inherit from.
 """
 from abc import ABC, abstractmethod
+from pathlib import Path
 
+from huggingface_hub import snapshot_download
 import pandas as pd
 
 
@@ -25,7 +27,7 @@ class Predictor(ABC):
             It is up to the model to decide which columns to use.
         :param y_train: series with target data
         """
-
+        raise NotImplementedError
 
     @abstractmethod
     def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
@@ -36,19 +38,41 @@ class Predictor(ABC):
         :param X_test: DataFrame with input data
         :return: DataFrame with predictions
         """
-
+        raise NotImplementedError
 
     @abstractmethod
     def save(self, path: str):
         """
-        Saves the model to a path.
+        Saves the model to a local path.
         :param path: path to save the model
         """
+        raise NotImplementedError
 
     @classmethod
-    @abstractmethod
-    def load(cls, path: str) -> "Predictor":
+    def from_pretrained(cls, path_or_url: str, **hf_args) -> "Predictor":
         """
-        Loads a model from a path.
+        Loads a model from a path or if it is not found, from a huggingface repo.
+        :param path_or_url: path to the model or url to the huggingface repo.
+        :param hf_args: arguments to pass to the snapshot_download function from huggingface.
+        """
+        path = Path(path_or_url)
+        if path.exists() and path.is_dir():
+            return cls.load(path)
+        else:
+            # TODO: Need a try except block to catch download errors
+            url_path = path_or_url.replace("/", "--")
+            local_dir = hf_args.get("local_dir", f"predictors/trained_models/{url_path}")
+
+            if not Path(local_dir).exists() or not Path(local_dir).is_dir():
+                hf_args["local_dir"] = local_dir
+                snapshot_download(repo_id=path_or_url, **hf_args)
+
+            return cls.load(Path(local_dir))
+
+    @classmethod
+    def load(cls, path: Path) -> "Predictor":
+        """
+        Loads a model from the path on disk.
         :param path: path to the model
         """
+        raise NotImplementedError

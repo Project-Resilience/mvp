@@ -62,8 +62,8 @@ def calculate_crowding_distance(front):
     Set crowding distance of each candidate in front.
     """
     n_objectives = len(front[0].metrics)
-    for c in front:
-        c.distance = 0
+    for candidate in front:
+        candidate.distance = 0
     for m in range(n_objectives):
         sorted_front = sorted(front, key=lambda candidate: candidate.metrics[m])
         obj_min = sorted_front[0].metrics[m]

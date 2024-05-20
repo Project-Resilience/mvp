@@ -64,12 +64,12 @@ def calculate_crowding_distance(front):
     n_objectives = len(front[0].metrics)
     distances = [0 for _ in range(len(front))]
     for m in range(n_objectives):
-        front.sort(key=lambda candidate: candidate.metrics[m])
-        obj_min = front[0].metrics[m]
-        obj_max = front[-1].metrics[m]
+        sorted_indices = sorted(range(len(front)), key=lambda i: front[i].metrics[m])
+        obj_min = front[sorted_indices[0]].metrics[m]
+        obj_max = front[sorted_indices[-1]].metrics[m]
         distances[0] = float('inf')
         distances[-1] = float('inf')
-        for i in range(1, len(front) - 1):
+        for i in sorted_indices[1:-1]:
             distances[i] += (front[i+1].metrics[m] - front[i-1].metrics[m]) / (obj_max - obj_min)
 
     return distances

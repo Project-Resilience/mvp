@@ -1,4 +1,0 @@
-predictors/*.joblib
-data/*.zip
-data/processed/*.csv
-*.tar.gz

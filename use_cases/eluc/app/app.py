@@ -15,21 +15,22 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 
-from . import Predictor
-from . import Prescriptor
-from . import constants
-from . import utils
+import data.constants as constants
+import app.constants as app_constants
+from predictors.predictor import Predictor
+from prescriptors.prescriptor import Prescriptor
+import app.utils as utils
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            prevent_initial_callbacks="initial_duplicate")
 server = app.server
 
-df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
+df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COLS)
 countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
 # Prescriptor list should be in order of least to most change
-pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
+pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
 prescriptor_list = list(pareto_df["id"])
 
 # Cells

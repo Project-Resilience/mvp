@@ -145,9 +145,7 @@ class TorchPrescriptor(Prescriptor):
         for front in fronts:
             # Compute crowding distance here even though it's technically not necessary now
             # so that later we can sort by distance
-            crowding_distance = nsga2_utils.calculate_crowding_distance(front)
-            for candidate, distance in zip(front, crowding_distance):
-                candidate.distance = distance
+            nsga2_utils.calculate_crowding_distance(front)
             if len(parents) + len(front) > n_parents:  # If adding this front exceeds num_parents
                 front = sorted(front, key=lambda candidate: candidate.distance, reverse=True)
                 parents += front[:n_parents - len(parents)]

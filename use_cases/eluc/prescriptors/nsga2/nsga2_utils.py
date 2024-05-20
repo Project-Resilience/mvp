@@ -59,20 +59,24 @@ def fast_non_dominated_sort(candidates: list):
 
 def calculate_crowding_distance(front):
     """
-    Calculate crowding distance of each candidate in front.
+    Set crowding distance of each candidate in front.
     """
     n_objectives = len(front[0].metrics)
-    distances = [0 for _ in range(len(front))]
+    for c in front:
+        c.distance = 0
     for m in range(n_objectives):
-        sorted_indices = sorted(range(len(front)), key=lambda i: front[i].metrics[m])
-        obj_min = front[sorted_indices[0]].metrics[m]
-        obj_max = front[sorted_indices[-1]].metrics[m]
-        distances[0] = float('inf')
-        distances[-1] = float('inf')
-        for i in sorted_indices[1:-1]:
-            distances[i] += (front[i+1].metrics[m] - front[i-1].metrics[m]) / (obj_max - obj_min)
-
-    return distances
+        sorted_front = sorted(front, key=lambda candidate: candidate.metrics[m])
+        obj_min = sorted_front[0].metrics[m]
+        obj_max = sorted_front[-1].metrics[m]
+        sorted_front[0].distance = float('inf')
+        sorted_front[-1].distance = float('inf')
+        for i in range(1, len(sorted_front) - 1):
+            if obj_max != obj_min:
+                dist = sorted_front[i+1].metrics[m] - sorted_front[i-1].metrics[m]
+                sorted_front[i].distance += dist / (obj_max - obj_min)
+            # If all candidates have the same value, their distances are 0
+            else:
+                sorted_front[i].distance += 0
 
 def dominates(candidate1: Candidate, candidate2: Candidate):
     """

@@ -77,9 +77,15 @@ class TestNSGA2Utils(unittest.TestCase):
                 dist1 = ((i + 1)**2 - (i - 1)**2) / 9
                 tgt_distances.append(dist0 + dist1)
 
-        distances = nsga2_utils.calculate_crowding_distance(front)
-        for dist, tgt in zip(distances, tgt_distances):
-            self.assertAlmostEqual(dist, tgt)
+        # Manually shuffle the front
+        shuffled_indices = [1, 3, 0, 2]
+        shuffled_front = [front[i] for i in shuffled_indices]
+        shuffled_tgts = [tgt_distances[i] for i in shuffled_indices]
+
+        # Assign crowding distances
+        nsga2_utils.calculate_crowding_distance(shuffled_front)
+        for candidate, tgt in zip(shuffled_front, shuffled_tgts):
+            self.assertAlmostEqual(candidate.distance, tgt)
 
 class TestTorchPrescriptor(unittest.TestCase):
     """

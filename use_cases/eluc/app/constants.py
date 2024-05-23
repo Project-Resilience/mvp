@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+import base64
 
 from data.constants import LAND_USE_COLS
 
@@ -28,12 +28,12 @@ FIELDS = ['pastr', 'range']
 CHART_TYPES = ["Treemap", "Pie Chart"]
 
 PREDICTOR_PATH = Path("predictors/trained_models")
-PRESCRIPTOR_PATH = Path("prescriptors/nsga2/app_prescriptors")
+PRESCRIPTOR_PATH = Path("prescriptors/nsga2/trained_prescriptors/demo")
 
 # Pareto front
-# PARETO_CSV_PATH = os.path.join(PRESCRIPTOR_PATH, "pareto.csv")
-# PARETO_FRONT_PATH = os.path.join(PRESCRIPTOR_PATH, "pareto_front.png")
-# PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
+PARETO_CSV_PATH = PRESCRIPTOR_PATH / "pareto.csv"
+PARETO_FRONT_PATH = PRESCRIPTOR_PATH / "pareto_front.png"
+PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('ascii')
 
 FIELDS_PATH = PRESCRIPTOR_PATH / "fields.json"
 

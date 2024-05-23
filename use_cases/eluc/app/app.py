@@ -1,6 +1,5 @@
 from math import isclose
 
-import os
 import numpy as np
 import pandas as pd
 import regionmask
@@ -41,13 +40,13 @@ max_lon = df.index.get_level_values("lon").max()
 min_time = df.index.get_level_values("time").min()
 max_time = df.index.get_level_values("time").max()
 
-lat_list = list(np.arange(min_lat, max_lat + constants.GRID_STEP, constants.GRID_STEP))
-lon_list = list(np.arange(min_lon, max_lon + constants.GRID_STEP, constants.GRID_STEP))
+lat_list = list(np.arange(min_lat, max_lat + app_constants.GRID_STEP, app_constants.GRID_STEP))
+lon_list = list(np.arange(min_lon, max_lon + app_constants.GRID_STEP, app_constants.GRID_STEP))
 
 map_fig = go.Figure()
 
 # Load predictors
-predictors = utils.load_predictors()
+# predictors = utils.load_predictors()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -131,7 +130,7 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(prescriptor_list)-1, step=1,
-                value=constants.DEFAULT_PRESCRIPTOR_IDX,
+                value=app_constants.DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
                 marks={i : "" for i in range(len(prescriptor_list))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
@@ -142,7 +141,7 @@ presc_select_div = html.Div([
             [
                 dbc.ModalHeader("Pareto front"),
                 dcc.Graph(id='pareto-fig', figure=utils.create_pareto(pareto_df=pareto_df,
-                                                                presc_id=prescriptor_list[constants.DEFAULT_PRESCRIPTOR_IDX])),
+                                                                presc_id=prescriptor_list[app_constants.DEFAULT_PRESCRIPTOR_IDX])),
             ],
             id="pareto-modal",
             is_open=False,
@@ -150,9 +149,9 @@ presc_select_div = html.Div([
 ], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "100%", "align-content": "center"})
 
 chart_select_div = dcc.Dropdown(
-    options=constants.CHART_TYPES,
+    options=app_constants.CHART_TYPES,
     id="chart-select",
-    value=constants.CHART_TYPES[0],
+    value=app_constants.CHART_TYPES[0],
     clearable=False
 )
 
@@ -168,7 +167,7 @@ sliders_div = html.Div([
             dcc.Slider(
                 min=0,
                 max=1,
-                step=constants.SLIDER_PRECISION,
+                step=app_constants.SLIDER_PRECISION,
                 value=0,
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": False},
@@ -189,29 +188,29 @@ frozen_div = html.Div([
         value=f"{col}: 0.00%",
         type="text",
         disabled=True,
-        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in constants.NO_CHANGE_COLS + ["nonland"]
+        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in app_constants.NO_CHANGE_COLS + ["nonland"]
 ])
 
-predict_div = html.Div([
-    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
-    html.Button("Predict", id='predict-button', n_clicks=0,),
-    html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
-    dcc.Input(
-        value="",
-        type="text",
-        disabled=True,
-        id="predict-eluc",
-    ),
-    html.Label("tC/ha", style={'padding-left': '2px'}),
-    html.Label("Land Change:", style={'padding-left': '10px'}),
-    dcc.Input(
-        value="",
-        type="text",
-        disabled=True,
-        id="predict-change",
-    ),
-    html.Label("%", style={'padding-left': '2px'}),
-], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
+# predict_div = html.Div([
+#     dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
+#     html.Button("Predict", id='predict-button', n_clicks=0,),
+#     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
+#     dcc.Input(
+#         value="",
+#         type="text",
+#         disabled=True,
+#         id="predict-eluc",
+#     ),
+#     html.Label("tC/ha", style={'padding-left': '2px'}),
+#     html.Label("Land Change:", style={'padding-left': '10px'}),
+#     dcc.Input(
+#         value="",
+#         type="text",
+#         disabled=True,
+#         id="predict-change",
+#     ),
+#     html.Label("%", style={'padding-left': '2px'}),
+# ], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
 
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
@@ -222,7 +221,7 @@ trivia_div = html.Div([
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
         html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
-        html.P(f"{constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(f"{app_constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
@@ -232,7 +231,7 @@ trivia_div = html.Div([
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
         html.P("Total yearly carbon emissions of average world citizen: ", className="child", style=inline_block),
-        html.P(f"{constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(f"{app_constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
@@ -381,7 +380,7 @@ def set_frozen_reset_sliders(lat, lon, year):
 
     chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
 
-    frozen_cols = constants.NO_CHANGE_COLS + ["nonland"]
+    frozen_cols = app_constants.NO_CHANGE_COLS + ["nonland"]
     frozen = chart_data[frozen_cols].tolist()
     frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
@@ -440,10 +439,10 @@ def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     :return: Updated slider values.
     """
     presc_id = prescriptor_list[presc_idx]
-    prescriptor = Prescriptor.Prescriptor(presc_id)
-    context = df.loc[year, lat, lon][constants.CONTEXT_COLUMNS]
+    prescriptor = Prescriptor(presc_id)
+    context = df.loc[year, lat, lon][constants.CAO_MAPPING["context"]]
     context_df = pd.DataFrame([context])
-    prescribed = prescriptor.run_prescriptor(context_df)
+    prescribed = prescriptor.prescribe_land_use(context_df)
     return prescribed.iloc[0].tolist()
     
 
@@ -597,69 +596,69 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     return presc.tolist()
 
 
-@app.callback(
-    Output("predict-eluc", "value"),
-    Input("predict-button", "n_clicks"),
-    State("year-input", "value"),
-    State("lat-dropdown", "value"),
-    State("lon-dropdown", "value"),
-    State({"type": "presc-slider", "index": ALL}, "value"),
-    State("pred-select", "value"),
-    prevent_initial_call=True
-)
-def predict(n_clicks, year, lat, lon, sliders, predictor_name):
-    """
-    Predicts ELUC from context and prescription stores.
-    :param n_clicks: Unused number of times button has been clicked.
-    :param year: Selected context year.
-    :param lat: Selected context lat.
-    :param lon: Selected context lon.
-    :param sliders: Prescribed slider values.
-    :param predictor_name: String name of predictor to use from dropdown.
-    :return: Predicted ELUC.
-    """
-    context = df.loc[year, lat, lon]
-    presc = pd.Series(sliders, index=constants.RECO_COLS)
+# @app.callback(
+#     Output("predict-eluc", "value"),
+#     Input("predict-button", "n_clicks"),
+#     State("year-input", "value"),
+#     State("lat-dropdown", "value"),
+#     State("lon-dropdown", "value"),
+#     State({"type": "presc-slider", "index": ALL}, "value"),
+#     State("pred-select", "value"),
+#     prevent_initial_call=True
+# )
+# def predict(n_clicks, year, lat, lon, sliders, predictor_name):
+#     """
+#     Predicts ELUC from context and prescription stores.
+#     :param n_clicks: Unused number of times button has been clicked.
+#     :param year: Selected context year.
+#     :param lat: Selected context lat.
+#     :param lon: Selected context lon.
+#     :param sliders: Prescribed slider values.
+#     :param predictor_name: String name of predictor to use from dropdown.
+#     :return: Predicted ELUC.
+#     """
+#     context = df.loc[year, lat, lon]
+#     presc = pd.Series(sliders, index=constants.RECO_COLS)
 
-    # Preprocess presc into diffs
-    presc = presc.combine_first(context[constants.NO_CHANGE_COLS])
-    diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
-    diff = diff.rename(constants.COLS_MAP)
-    diff_df = pd.DataFrame([diff])
+#     # Preprocess presc into diffs
+#     presc = presc.combine_first(context[app_constants.NO_CHANGE_COLS])
+#     diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
+#     diff = diff.rename(constants.COLS_MAP)
+#     diff_df = pd.DataFrame([diff])
 
-    predictor = predictors[predictor_name]
-    eluc = predictor.predict(diff_df)
-    return f"{eluc:.4f}"
+#     predictor = predictors[predictor_name]
+#     eluc = predictor.predict(diff_df)
+#     return f"{eluc:.4f}"
 
 
-@app.callback(
-    Output("total-em", "children"),
-    Output("tickets", "children"),
-    Output("people", "children"),
-    Input("predict-eluc", "value"),
-    State("year-input", "value"),
-    State("lat-dropdown", "value"),
-    State("lon-dropdown", "value"),
-    prevent_initial_call=True
-)
-def update_trivia(eluc_str, year, lat, lon):
-    """
-    Updates trivia section based on rounded ELUC value.
-    :param eluc_str: ELUC in string form.
-    :param year: Selected context year.
-    :param lat: Selected context lat.
-    :param lon: Selected context lon.
-    :return: Trivia string output.
-    """
-    context = df.loc[year, lat, lon]
-    area = context["cell_area"]
+# @app.callback(
+#     Output("total-em", "children"),
+#     Output("tickets", "children"),
+#     Output("people", "children"),
+#     Input("predict-eluc", "value"),
+#     State("year-input", "value"),
+#     State("lat-dropdown", "value"),
+#     State("lon-dropdown", "value"),
+#     prevent_initial_call=True
+# )
+# def update_trivia(eluc_str, year, lat, lon):
+#     """
+#     Updates trivia section based on rounded ELUC value.
+#     :param eluc_str: ELUC in string form.
+#     :param year: Selected context year.
+#     :param lat: Selected context lat.
+#     :param lon: Selected context lon.
+#     :return: Trivia string output.
+#     """
+#     context = df.loc[year, lat, lon]
+#     area = context["cell_area"]
 
-    # Calculate total reduction
-    eluc = float(eluc_str)
-    total_reduction = eluc * area
-    return f"{-1 * total_reduction:,.2f} tonnes CO2", \
-            f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
-                f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
+#     # Calculate total reduction
+#     eluc = float(eluc_str)
+#     total_reduction = eluc * area
+#     return f"{-1 * total_reduction:,.2f} tonnes CO2", \
+#             f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
+#                 f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
 
 
 app.title = 'Land Use Optimization'
@@ -706,9 +705,9 @@ in tons of carbon per hectare)
         html.Div(id='sum-warning')
     ]),
     dcc.Markdown('''## Outcomes'''),
-    predict_div,
+    # predict_div,
     dcc.Markdown('''## Trivia'''),
-    trivia_div,
+    # trivia_div,
     dcc.Markdown('''## References'''),
     references_div
 ], style={'padding-left': '10px'},)

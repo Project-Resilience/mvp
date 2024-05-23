@@ -6,8 +6,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 from dash import html
 
-from . import constants
-from . import Predictor
+import app.constants as app_constants
+import data.constants as constants
+from predictors.predictor import Predictor
 
 
 class Encoder:
@@ -57,7 +58,7 @@ def add_nonland(data: pd.Series) -> pd.Series:
     data = data[constants.LAND_USE_COLS]
     nonland = 1 - data.sum() if data.sum() <= 1 else 0
     data['nonland'] = nonland
-    return data[constants.CHART_COLS]
+    return data[app_constants.CHART_COLS]
 
 
 def create_map(df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
@@ -177,28 +178,25 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     else:
         total = data[constants.LAND_USE_COLS].sum()
-        c3 = data[constants.C3].sum()
-        c4 = data[constants.C4].sum()
-        crops = c3 + c4
-        primary = data[constants.PRIMARY].sum()
-        secondary = data[constants.SECONDARY].sum()
-        fields = data[constants.FIELDS].sum()
+        primary = data[app_constants.PRIMARY].sum()
+        secondary = data[app_constants.SECONDARY].sum()
+        fields = data[app_constants.FIELDS].sum()
 
         labels = [title, "Nonland",
-                "Crops", "C3", "C4", "c3ann", "c3nfx", "c3per", "c4ann", "c4per", 
+                "Crops", 
                 "Primary Vegetation", "primf", "primn", 
                 "Secondary Vegetation", "secdf", "secdn",
                 "Urban",
                 "Fields", "pastr", "range"]
         parents = ["", title,
-                title, "Crops", "Crops", "C3", "C3", "C3", "C4", "C4",
+                title,
                 title, "Primary Vegetation", "Primary Vegetation",
                 title, "Secondary Vegetation", "Secondary Vegetation",
                 title,
                 title, "Fields", "Fields"]
 
         values =  [total + data["nonland"], data["nonland"],
-                    crops, c3, c4, data["c3ann"], data["c3nfx"], data["c3per"], data["c4ann"], data["c4per"],
+                    data["crop"],
                     primary, data["primf"], data["primn"],
                     secondary, data["secdf"], data["secdn"],
                     data["urban"],
@@ -237,13 +235,13 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     # Sum for case where all zeroes, which allows us to display pie even when presc is reset
     if data.empty or data.sum() == 0:
-        values = [0 for _ in range(len(constants.CHART_COLS))]
+        values = [0 for _ in range(len(app_constants.CHART_COLS))]
         values[-1] = 1
 
     else:
-        values = data[constants.CHART_COLS].tolist()
+        values = data[app_constants.CHART_COLS].tolist()
 
-    assert(len(values) == len(constants.CHART_COLS))
+    assert(len(values) == len(app_constants.CHART_COLS))
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
@@ -256,7 +254,7 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     fig = go.Figure(
         go.Pie(
             values = values,
-            labels = constants.CHART_COLS,
+            labels = app_constants.CHART_COLS,
             textposition = "inside",
             sort = False,
             marker_colors = colors,
@@ -309,14 +307,14 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     return fig
 
 
-def load_predictors() -> dict:
-    """
-    Loads in predictors from json file according to config.
-    :return: dict of predictor name -> predictor object.
-    """
-    predictor_cfg = json.load(open(os.path.join(constants.PREDICTOR_PATH, "predictors.json")))
-    predictors = dict()
-    # This is ok because python dicts are ordered.
-    for row in predictor_cfg["predictors"]:
-        predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
-    return predictors
+# def load_predictors() -> dict:
+#     """
+#     Loads in predictors from json file according to config.
+#     :return: dict of predictor name -> predictor object.
+#     """
+#     predictor_cfg = json.load(open(os.path.join(constants.PREDICTOR_PATH, "predictors.json")))
+#     predictors = dict()
+#     # This is ok because python dicts are ordered.
+#     for row in predictor_cfg["predictors"]:
+#         predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
+#     return predictors

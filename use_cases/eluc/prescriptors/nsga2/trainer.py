@@ -91,7 +91,7 @@ class TorchTrainer():
         children = []
         for i in range(pop_size):
             parent1, parent2 = self._tournament_selection(sorted_parents)
-            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, gen, i)
+            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, f"{gen}_{i}")
             children.append(child)
         return children
 
@@ -109,7 +109,7 @@ class TorchTrainer():
         save_path.mkdir(parents=True, exist_ok=False)
         self.prescriptor.encoder.save_fields(save_path / "fields.json")
         results = []
-        parents = [Candidate(**self.candidate_params, gen=1, cand_id=i) for i in range(self.pop_size)]
+        parents = [Candidate(**self.candidate_params, cand_id=f"1_{i}") for i in range(self.pop_size)]
         # Seeding the first generation with trained models
         if self.seed_dir:
             seed_paths = list(self.seed_dir.glob("*.pt"))
@@ -153,7 +153,7 @@ class TorchTrainer():
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
         pareto_candidates = [candidate for candidate in candidates if candidate.rank == 1]
         for candidate in pareto_candidates:
-            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.gen}_{candidate.cand_id}.pt")
+            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.cand_id}.pt")
 
     def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """

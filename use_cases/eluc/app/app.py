@@ -1,5 +1,7 @@
+"""
+Main app file for ELUC demo.
+"""
 from math import isclose
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -34,8 +36,6 @@ countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_
 pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
 combined_ids = pareto_df["gen"].astype(str) + "_" + pareto_df["id"].astype(str)
 prescriptor_list = list(combined_ids)
-print("Prescriptor list:")
-print(prescriptor_list)
 encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
 # TODO: How to not hard-code candidate params?
 prescriptor = TorchPrescriptor(None, encoder, None, 1, {"in_size": 12, "hidden_size": 16, "out_size": 5})
@@ -316,7 +316,6 @@ def click_map(click_data):
     :param click_data: Input data from click action.
     :return: The new longitude and latitude to put into the dropdowns.
     """
-    print(f'lat: {click_data["points"][0]["lat"]}, lon: {click_data["points"][0]["lon"]}')
     return click_data["points"][0]["lat"], click_data["points"][0]["lon"]
 
 @app.callback(
@@ -458,7 +457,6 @@ def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     for col in constants.RECO_COLS:
         prescribed[col] = context[col] + prescribed[f"{col}_diff"]
     prescribed = prescribed[constants.RECO_COLS]
-    print(prescribed)
     return prescribed.iloc[0].tolist()
     
 

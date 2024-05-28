@@ -18,10 +18,8 @@ import dash_bootstrap_components as dbc
 import data.constants as constants
 from data.eluc_data import ELUCEncoder
 import app.constants as app_constants
-from predictors.predictor import Predictor
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
-from prescriptors.prescriptor import Prescriptor
 import app.utils as utils
+from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -42,6 +40,9 @@ encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
 # TODO: How to not hard-code candidate params?
 prescriptor = TorchPrescriptor(None, encoder, None, 1, {"in_size": 12, "hidden_size": 16, "out_size": 5})
 
+# Load predictors
+predictors = utils.load_predictors()
+
 # Cells
 min_lat = df.index.get_level_values("lat").min()
 max_lat = df.index.get_level_values("lat").max()
@@ -54,9 +55,6 @@ lat_list = list(np.arange(min_lat, max_lat + app_constants.GRID_STEP, app_consta
 lon_list = list(np.arange(min_lon, max_lon + app_constants.GRID_STEP, app_constants.GRID_STEP))
 
 map_fig = go.Figure()
-
-# Load predictors
-# predictors = utils.load_predictors()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
@@ -201,26 +199,26 @@ frozen_div = html.Div([
         id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in app_constants.NO_CHANGE_COLS + ["nonland"]
 ])
 
-# predict_div = html.Div([
-#     dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
-#     html.Button("Predict", id='predict-button', n_clicks=0,),
-#     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
-#     dcc.Input(
-#         value="",
-#         type="text",
-#         disabled=True,
-#         id="predict-eluc",
-#     ),
-#     html.Label("tC/ha", style={'padding-left': '2px'}),
-#     html.Label("Land Change:", style={'padding-left': '10px'}),
-#     dcc.Input(
-#         value="",
-#         type="text",
-#         disabled=True,
-#         id="predict-change",
-#     ),
-#     html.Label("%", style={'padding-left': '2px'}),
-# ], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
+predict_div = html.Div([
+    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
+    html.Button("Predict", id='predict-button', n_clicks=0,),
+    html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
+    dcc.Input(
+        value="",
+        type="text",
+        disabled=True,
+        id="predict-eluc",
+    ),
+    html.Label("tC/ha", style={'padding-left': '2px'}),
+    html.Label("Land Change:", style={'padding-left': '10px'}),
+    dcc.Input(
+        value="",
+        type="text",
+        disabled=True,
+        id="predict-change",
+    ),
+    html.Label("%", style={'padding-left': '2px'}),
+], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
 
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
@@ -559,13 +557,12 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     nonland = nonland if nonland > 0 else 0
     chart_data["nonland"] = nonland
 
-    assert chart_type in ("Treemap", "Pie Chart")
-    print("chart data:")
-    print(chart_data)
     if chart_type == "Treemap":
         return utils.create_treemap(chart_data, type_context=False, year=year)
-    
-    return utils.create_pie(chart_data, type_context=False, year=year)
+    elif chart_type == "Pie Chart":
+        return utils.create_pie(chart_data, type_context=False, year=year)
+    else:
+        raise ValueError(f"Invalid chart type: {chart_type}")
 
 
 @app.callback(
@@ -615,69 +612,69 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     return presc.tolist()
 
 
-# @app.callback(
-#     Output("predict-eluc", "value"),
-#     Input("predict-button", "n_clicks"),
-#     State("year-input", "value"),
-#     State("lat-dropdown", "value"),
-#     State("lon-dropdown", "value"),
-#     State({"type": "presc-slider", "index": ALL}, "value"),
-#     State("pred-select", "value"),
-#     prevent_initial_call=True
-# )
-# def predict(n_clicks, year, lat, lon, sliders, predictor_name):
-#     """
-#     Predicts ELUC from context and prescription stores.
-#     :param n_clicks: Unused number of times button has been clicked.
-#     :param year: Selected context year.
-#     :param lat: Selected context lat.
-#     :param lon: Selected context lon.
-#     :param sliders: Prescribed slider values.
-#     :param predictor_name: String name of predictor to use from dropdown.
-#     :return: Predicted ELUC.
-#     """
-#     context = df.loc[year, lat, lon]
-#     presc = pd.Series(sliders, index=constants.RECO_COLS)
+@app.callback(
+    Output("predict-eluc", "value"),
+    Input("predict-button", "n_clicks"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
+    State({"type": "presc-slider", "index": ALL}, "value"),
+    State("pred-select", "value"),
+    prevent_initial_call=True
+)
+def predict(n_clicks, year, lat, lon, sliders, predictor_name):
+    """
+    Predicts ELUC from context and prescription stores.
+    :param n_clicks: Unused number of times button has been clicked.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
+    :param sliders: Prescribed slider values.
+    :param predictor_name: String name of predictor to use from dropdown.
+    :return: Predicted ELUC.
+    """
+    context = df.loc[year, lat, lon]
+    presc = pd.Series(sliders, index=constants.RECO_COLS)
+    diff = presc - context[constants.RECO_COLS]
+    diff = diff.rename({col: f"{col}_diff" for col in diff.index})
+    context_actions = diff.combine_first(context[constants.CAO_MAPPING["context"]])
+    context_actions_df = pd.DataFrame([context_actions])
+    context_actions_df[constants.NO_CHANGE_COLS] = 0 # TODO: I'm not entirely sure why this line is necessary
 
-#     # Preprocess presc into diffs
-#     presc = presc.combine_first(context[app_constants.NO_CHANGE_COLS])
-#     diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
-#     diff = diff.rename(constants.COLS_MAP)
-#     diff_df = pd.DataFrame([diff])
-
-#     predictor = predictors[predictor_name]
-#     eluc = predictor.predict(diff_df)
-#     return f"{eluc:.4f}"
+    predictor = predictors[predictor_name]
+    eluc_df = predictor.predict(context_actions_df)
+    eluc = eluc_df["ELUC"].iloc[0]
+    return f"{eluc:.4f}"
 
 
-# @app.callback(
-#     Output("total-em", "children"),
-#     Output("tickets", "children"),
-#     Output("people", "children"),
-#     Input("predict-eluc", "value"),
-#     State("year-input", "value"),
-#     State("lat-dropdown", "value"),
-#     State("lon-dropdown", "value"),
-#     prevent_initial_call=True
-# )
-# def update_trivia(eluc_str, year, lat, lon):
-#     """
-#     Updates trivia section based on rounded ELUC value.
-#     :param eluc_str: ELUC in string form.
-#     :param year: Selected context year.
-#     :param lat: Selected context lat.
-#     :param lon: Selected context lon.
-#     :return: Trivia string output.
-#     """
-#     context = df.loc[year, lat, lon]
-#     area = context["cell_area"]
+@app.callback(
+    Output("total-em", "children"),
+    Output("tickets", "children"),
+    Output("people", "children"),
+    Input("predict-eluc", "value"),
+    State("year-input", "value"),
+    State("lat-dropdown", "value"),
+    State("lon-dropdown", "value"),
+    prevent_initial_call=True
+)
+def update_trivia(eluc_str, year, lat, lon):
+    """
+    Updates trivia section based on rounded ELUC value.
+    :param eluc_str: ELUC in string form.
+    :param year: Selected context year.
+    :param lat: Selected context lat.
+    :param lon: Selected context lon.
+    :return: Trivia string output.
+    """
+    context = df.loc[year, lat, lon]
+    area = context["cell_area"]
 
-#     # Calculate total reduction
-#     eluc = float(eluc_str)
-#     total_reduction = eluc * area
-#     return f"{-1 * total_reduction:,.2f} tonnes CO2", \
-#             f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
-#                 f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
+    # Calculate total reduction
+    eluc = float(eluc_str)
+    total_reduction = eluc * area
+    return f"{-1 * total_reduction:,.2f} tonnes CO2", \
+            f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
+                f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
 
 
 app.title = 'Land Use Optimization'
@@ -724,9 +721,9 @@ in tons of carbon per hectare)
         html.Div(id='sum-warning')
     ]),
     dcc.Markdown('''## Outcomes'''),
-    # predict_div,
+    predict_div,
     dcc.Markdown('''## Trivia'''),
-    # trivia_div,
+    trivia_div,
     dcc.Markdown('''## References'''),
     references_div
 ], style={'padding-left': '10px'},)

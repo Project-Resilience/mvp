@@ -1,14 +1,14 @@
+from dash import html
 import pandas as pd
-import json
-import os
-from sklearn.preprocessing import MinMaxScaler
 import plotly.express as px
 import plotly.graph_objects as go
-from dash import html
+from sklearn.preprocessing import MinMaxScaler
 
 import app.constants as app_constants
 import data.constants as constants
 from predictors.predictor import Predictor
+from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
 
 class Encoder:
@@ -310,14 +310,23 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     return fig
 
 
-# def load_predictors() -> dict:
-#     """
-#     Loads in predictors from json file according to config.
-#     :return: dict of predictor name -> predictor object.
-#     """
-#     predictor_cfg = json.load(open(os.path.join(constants.PREDICTOR_PATH, "predictors.json")))
-#     predictors = dict()
-#     # This is ok because python dicts are ordered.
-#     for row in predictor_cfg["predictors"]:
-#         predictors[row["name"]] = Predictor.SkLearnPredictor(os.path.join(constants.PREDICTOR_PATH, row["filename"]))
-#     return predictors
+def load_predictors() -> dict:
+    """
+    Loads in predictors from disk.
+    TODO: Currently hard-coded to load specific predictors. We need to make this able to handle any amount!
+    :return: dict of predictor name -> predictor object.
+    """
+    print(app_constants.PREDICTOR_PATH)
+    predictors = {}
+    nn_path = "danyoung/eluc-global-nn"
+    linreg_path = "danyoung/eluc-global-linreg"
+    rf_path = "danyoung/eluc-global-rf"
+    global_nn = NeuralNetPredictor.from_pretrained(nn_path, local_dir=app_constants.PREDICTOR_PATH / nn_path.replace("/", "--"))
+    global_linreg = LinearRegressionPredictor.from_pretrained(linreg_path, local_dir=app_constants.PREDICTOR_PATH / linreg_path.replace("/", "--"))
+    global_rf = RandomForestPredictor.from_pretrained(rf_path, local_dir=app_constants.PREDICTOR_PATH / rf_path.replace("/", "--"))
+
+    predictors["Global Neural Network"] = global_nn
+    predictors["Global Linear Regression"] = global_linreg
+    predictors["Global Random Forest"] = global_rf
+
+    return predictors

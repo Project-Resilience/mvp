@@ -9,14 +9,16 @@ the raw files and processes it.
 ELUCData is the standard implementation of AbstractData that loads the ELUC
 data from the HuggingFace repo.
 """
-import warnings
-import os
 from abc import ABC
+import json
+import os
+from pathlib import Path
+import warnings
 
-import xarray as xr
-import regionmask
-import pandas as pd
 from datasets import load_dataset, Dataset
+import pandas as pd
+import regionmask
+import xarray as xr
 
 from data import constants
 from data.conversion import construct_countries_df
@@ -57,6 +59,22 @@ class ELUCEncoder():
                 max_val = self.fields[col]["range"][1]
                 new_df[col] = new_df[col] * (max_val - min_val) + min_val
         return new_df
+    
+    def save_fields(self, path: Path):
+        """
+        Saves the fields to a JSON file.
+        """
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(self.fields, f, indent=4)
+    
+    @classmethod
+    def from_json(cls, path: Path):
+        """
+        Loads the fields from a JSON file.
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            fields = json.load(f)
+        return cls(fields)
 
 
 class AbstractData(ABC):

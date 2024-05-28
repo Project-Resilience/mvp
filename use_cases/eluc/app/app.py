@@ -1,4 +1,5 @@
 from math import isclose
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -15,8 +16,10 @@ from dash import html
 import dash_bootstrap_components as dbc
 
 import data.constants as constants
+from data.eluc_data import ELUCEncoder
 import app.constants as app_constants
 from predictors.predictor import Predictor
+from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 from prescriptors.prescriptor import Prescriptor
 import app.utils as utils
 
@@ -26,11 +29,18 @@ app = Dash(__name__,
 server = app.server
 
 df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COLS)
+df.rename(columns={col + ".1": col for col in app_constants.INDEX_COLS}, inplace=True)
 countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
 # Prescriptor list should be in order of least to most change
 pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
-prescriptor_list = list(pareto_df["id"])
+combined_ids = pareto_df["gen"].astype(str) + "_" + pareto_df["id"].astype(str)
+prescriptor_list = list(combined_ids)
+print("Prescriptor list:")
+print(prescriptor_list)
+encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
+# TODO: How to not hard-code candidate params?
+prescriptor = TorchPrescriptor(None, encoder, None, 1, {"in_size": 12, "hidden_size": 16, "out_size": 5})
 
 # Cells
 min_lat = df.index.get_level_values("lat").min()
@@ -308,6 +318,7 @@ def click_map(click_data):
     :param click_data: Input data from click action.
     :return: The new longitude and latitude to put into the dropdowns.
     """
+    print(f'lat: {click_data["points"][0]["lat"]}, lon: {click_data["points"][0]["lon"]}')
     return click_data["points"][0]["lat"], click_data["points"][0]["lon"]
 
 @app.callback(
@@ -350,7 +361,8 @@ def update_map(year, lat, lon, location):
     # Filter data by year and location
     data = df.loc[year]
     data = data[data["country"] == country_idx]
-    data = data.copy().reset_index()
+    # Drop index because plotly requires single integer index
+    data = data.copy().reset_index(drop=True)
 
     # Find colored point
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
@@ -439,10 +451,16 @@ def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     :return: Updated slider values.
     """
     presc_id = prescriptor_list[presc_idx]
-    prescriptor = Prescriptor(presc_id)
     context = df.loc[year, lat, lon][constants.CAO_MAPPING["context"]]
     context_df = pd.DataFrame([context])
-    prescribed = prescriptor.prescribe_land_use(context_df)
+    prescribed = prescriptor.prescribe_land_use(context_df,
+                                                cand_id=presc_id,
+                                                results_dir=app_constants.PRESCRIPTOR_PATH)
+    # Prescribed gives it to us in diff format, we need to recompute recommendations
+    for col in constants.RECO_COLS:
+        prescribed[col] = context[col] + prescribed[f"{col}_diff"]
+    prescribed = prescribed[constants.RECO_COLS]
+    print(prescribed)
     return prescribed.iloc[0].tolist()
     
 
@@ -542,7 +560,8 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     chart_data["nonland"] = nonland
 
     assert chart_type in ("Treemap", "Pie Chart")
-
+    print("chart data:")
+    print(chart_data)
     if chart_type == "Treemap":
         return utils.create_treemap(chart_data, type_context=False, year=year)
     

@@ -141,8 +141,11 @@ def _create_hovertext(labels: list, parents: list, values: list, title: str) -> 
     hovertext = []
     for i, label in enumerate(labels):
         v = values[i] * 100
-        # Get value of parent or 100 if parent is ''
-        parent_v = values[labels.index(parents[i])] * 100 if parents[i] != '' else values[0] * 100
+        # Get value of parent or 100 if parent is '' or 0
+        if parents[i] == '' or values[labels.index(parents[i])] == 0:
+            parent_v = values[0] * 100
+        else:
+            parent_v = values[labels.index(parents[i])] * 100
         if parents[i] == '':
             hovertext.append(f"{label}: {v:.2f}%")
         elif parents[i] == title:

@@ -283,6 +283,7 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     :param presc_id: The currently selected prescriptor id
     :return: A pareto plot figure
     """
+    print(f"presc id: {presc_id}")
     fig = go.Figure(
             go.Scatter(
                 x=pareto_df['change'] * 100,

@@ -34,8 +34,7 @@ countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_
 
 # Prescriptor list should be in order of least to most change
 pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
-combined_ids = pareto_df["gen"].astype(str) + "_" + pareto_df["id"].astype(str)
-prescriptor_list = list(combined_ids)
+prescriptor_list = list(pareto_df["id"])
 encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
 # TODO: How to not hard-code candidate params?
 prescriptor = TorchPrescriptor(None, encoder, None, 1, {"in_size": 12, "hidden_size": 16, "out_size": 5})

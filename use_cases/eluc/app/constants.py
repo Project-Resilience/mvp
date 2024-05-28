@@ -37,4 +37,4 @@ PARETO_FRONT = base64.b64encode(open(PARETO_FRONT_PATH, 'rb').read()).decode('as
 
 FIELDS_PATH = PRESCRIPTOR_PATH / "fields.json"
 
-DEFAULT_PRESCRIPTOR_IDX = 3  # By default we select the fourth prescriptor that minimizes change
+DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change

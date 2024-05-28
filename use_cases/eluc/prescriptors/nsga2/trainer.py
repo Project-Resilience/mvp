@@ -39,7 +39,7 @@ class TorchTrainer():
         self.seed_dir=seed_dir
 
         # Store eval df if needed
-        if eval_df:
+        if eval_df is not None:
             self.eval_df = eval_df
             self.encoded_eval_df = encoder.encode_as_df(eval_df)
         self.prescriptor = TorchPrescriptor(eval_df, encoder, predictor, batch_size, candidate_params)

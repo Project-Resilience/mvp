@@ -27,7 +27,7 @@ class TorchPrescriptor(Prescriptor):
         self.candidate_params = candidate_params
 
         # Store eval df if needed
-        if eval_df:
+        if eval_df is not None:
             self.eval_df = eval_df
             self.encoded_eval_df = encoder.encode_as_df(eval_df)
             # We cache the training context here so that we don't have to repeatedly convert to tensor.

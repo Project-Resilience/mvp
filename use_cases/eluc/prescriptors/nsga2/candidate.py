@@ -85,7 +85,7 @@ class Candidate(torch.nn.Module):
         """
         if not isinstance(self.metrics, tuple):
             raise ValueError("Candidate has not been evaluated yet")
-        cand_state = {"cand_id": self.cand_id,
+        cand_state = {"id": self.cand_id,
                       "parents": self.parents,
                       "NSGA-II_rank": self.rank, # Named this to match ESP
                       "distance": self.distance,

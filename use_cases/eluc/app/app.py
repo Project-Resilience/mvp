@@ -734,7 +734,8 @@ in tons of carbon per hectare)
         html.Div(sliders_div, style={'grid-column': '2'}),
         dcc.Graph(id='context-fig', figure=utils.create_treemap(type_context=True), style={'grid-column': '3'}),
         dcc.Graph(id='presc-fig', figure=utils.create_treemap(type_context=False), style={'grid-clumn': '4'})
-    ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
+    # This can't be set to auto because the lines will overflow!
+    ], style={'display': 'grid', 'grid-template-columns': '4.5% 40% 1fr 1fr', "width": "100%"}),
     html.Div([
         frozen_div,
         html.Button("Sum to 100%", id='sum-button', n_clicks=0),

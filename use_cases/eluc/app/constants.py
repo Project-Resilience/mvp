@@ -37,7 +37,7 @@ PRESCRIPTOR_PATH = Path("prescriptors/nsga2/trained_prescriptors/demo")
 # Pareto front
 PARETO_CSV_PATH = PRESCRIPTOR_PATH / "pareto.csv"
 PARETO_FRONT_PATH = PRESCRIPTOR_PATH / "pareto_front.png"
-with open(PARETO_FRONT_PATH, 'rb', encoding='utf-8') as f:
+with open(PARETO_FRONT_PATH, 'rb') as f:
     PARETO_FRONT = base64.b64encode(f.read()).decode('ascii')
 
 FIELDS_PATH = PRESCRIPTOR_PATH / "fields.json"

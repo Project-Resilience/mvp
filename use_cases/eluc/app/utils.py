@@ -201,12 +201,11 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
+    # Attempt to match the colors from the treemap
     plo = px.colors.qualitative.Plotly
-    pas = px.colors.qualitative.Pastel1
     dar = px.colors.qualitative.Dark24
-    #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 
-    # 'range', 'secdf', 'secdn', 'urban', 'nonland]
-    colors = [plo[4], dar[8], pas[4], plo[9], pas[5], plo[0], plo[2], dar[14], plo[5], plo[7], dar[2], plo[3], plo[1]]
+    #['crop', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'nonland]
+    colors = [plo[4], plo[0], plo[2], dar[14], plo[5], plo[7], dar[2], plo[3], plo[1]]
     fig = go.Figure(
         go.Pie(
             values = values,
@@ -219,13 +218,11 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         )
     )
 
+    # Remove the legend from the left plot so that we don't have 2
     if type_context:
         fig.update_layout(showlegend=False)
-        # To make up for the hidden legend
-        fig.update_layout(margin={"t": 50, "b": 50, "l": 50, "r": 50})
 
-    else:
-        fig.update_layout(margin={"t": 0, "b": 0, "l": 0, "r": 0})
+    fig.update_layout(margin={"t": 0, "b": 0, "l": 0, "r": 0})
 
     return fig
 

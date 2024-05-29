@@ -13,6 +13,7 @@ from data.eluc_data import ELUCEncoder
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+import prescriptors.nsga2.nsga2_utils as nsga2_utils
 
 def get_fields(df):
     """
@@ -53,6 +54,38 @@ def get_fields(df):
     }
 
     return fields
+
+class TestNSGA2Utils(unittest.TestCase):
+    """
+    Tests the NGSA-II utility functions.
+    """
+    def test_distance_calculation(self):
+        """
+        Tests the calculation of crowding distance.
+        """
+        # Create a dummy front
+        front = []
+        tgt_distances = []
+        for i in range(4):
+            dummy_candidate = Candidate(16, 16, 16)
+            dummy_candidate.metrics = [i*2, i**2]
+            front.append(dummy_candidate)
+            if i == 0 or i == 3:
+                tgt_distances.append(np.inf)
+            else:
+                dist0 = ((i + 1) * 2 - (i - 1) * 2) / 6
+                dist1 = ((i + 1)**2 - (i - 1)**2) / 9
+                tgt_distances.append(dist0 + dist1)
+
+        # Manually shuffle the front
+        shuffled_indices = [1, 3, 0, 2]
+        shuffled_front = [front[i] for i in shuffled_indices]
+        shuffled_tgts = [tgt_distances[i] for i in shuffled_indices]
+
+        # Assign crowding distances
+        nsga2_utils.calculate_crowding_distance(shuffled_front)
+        for candidate, tgt in zip(shuffled_front, shuffled_tgts):
+            self.assertAlmostEqual(candidate.distance, tgt)
 
 class TestTorchPrescriptor(unittest.TestCase):
     """

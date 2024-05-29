@@ -1,7 +1,6 @@
 """
 Unit tests for the NSGA-II Torch implementation.
 """
-
 import unittest
 
 import numpy as np
@@ -105,14 +104,11 @@ class TestTorchPrescriptor(unittest.TestCase):
         predictor = LinearRegressionPredictor(dict(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1))
         predictor.fit(cls.dummy_data[constants.DIFF_LAND_USE_COLS], cls.dummy_data["ELUC"])
         cls.prescriptor = TorchPrescriptor(
-            100,
-            100,
-            0.2,
-            cls.dummy_data,
-            encoder,
-            predictor,
-            2048,
-            {"in_size": len(constants.CAO_MAPPING["context"]), "hidden_size": 16, "out_size": len(constants.RECO_COLS)}
+            eval_df=cls.dummy_data,
+            encoder=encoder,
+            predictor=predictor,
+            batch_size=1,
+            candidate_params={"in_size": len(constants.CAO_MAPPING["context"]), "hidden_size": 16, "out_size": len(constants.RECO_COLS)}
         )
 
     def test_reco_tensor_to_df(self):
@@ -197,7 +193,7 @@ class TestTorchPrescriptor(unittest.TestCase):
                               hidden_size=16,
                               out_size=len(constants.RECO_COLS))
         context_df = self.dummy_data.iloc[:100][constants.CAO_MAPPING["context"]]
-        context_actions_df = self.prescriptor._prescribe(candidate, context_df)
+        context_actions_df = self.prescriptor.prescribe(candidate, context_df)
 
         self.assertTrue(context_actions_df.index.equals(context_df.index))
         self.assertTrue(context_df.equals(context_actions_df[constants.CAO_MAPPING["context"]]))

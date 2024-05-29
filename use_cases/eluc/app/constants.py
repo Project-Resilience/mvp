@@ -17,6 +17,7 @@ CHART_COLS = LAND_USE_COLS + ["nonland"]
 SLIDER_PRECISION = 1e-5
 
 # Tonnes of CO2 per person for a flight from JFK to Geneva
+TC_TO_TCO2 = 3.67
 CO2_JFK_GVA = 2.2
 CO2_PERSON = 4
 

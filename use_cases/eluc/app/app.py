@@ -34,10 +34,17 @@ countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_
 
 # Prescriptor list should be in order of least to most change
 pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
+pareto_df = pareto_df.sort_values(by="change", ascending=True)
 prescriptor_list = list(pareto_df["id"])
+
 encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
-# TODO: How to not hard-code candidate params?
-prescriptor = TorchPrescriptor(None, encoder, None, 1, {"in_size": 12, "hidden_size": 16, "out_size": 5})
+# TODO: Stop hard-coding candidate params -> make cand config file?
+candidate_params = {
+    "in_size": len(constants.CAO_MAPPING["context"]),
+    "hidden_size": 16,
+    "out_size": len(constants.RECO_COLS)
+}
+prescriptor = TorchPrescriptor(None, encoder, None, 1, candidate_params)
 
 # Load predictors
 predictors = utils.load_predictors()
@@ -169,7 +176,6 @@ checklist_div = html.Div([
 
 sliders_div = html.Div([
     html.Div([
-        #html.P(col, style={"grid-column": "1"}),
         html.Div([
             dcc.Slider(
                 min=0,
@@ -281,7 +287,6 @@ references_div = html.Div([
     ]),
 ])
 
-
 @app.callback(
     Output("pareto-modal", "is_open"),
     Output("pareto-fig", "figure"),
@@ -301,7 +306,6 @@ def toggle_modal(n, is_open, presc_idx):
     if n:
         return not is_open, fig
     return is_open, fig
-
 
 @app.callback(
     Output("lat-dropdown", "value"),
@@ -336,7 +340,6 @@ def select_country(location, year):
     samples = df[df["country"] == country_idx].loc[year]
     example = samples.iloc[len(samples) // 2]
     return example.name[0], example.name[1]
-
 
 @app.callback(
     Output("map", "figure"),
@@ -518,7 +521,6 @@ def compute_land_change(sliders, year, lat, lon, locked):
 
     return warnings, f"{change * 100:.2f}"
 
-
 @app.callback(
     Output("presc-fig", "figure"),
     Input("chart-select", "value"),
@@ -560,7 +562,6 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
         return utils.create_pie(chart_data, type_context=False, year=year)
     else:
         raise ValueError(f"Invalid chart type: {chart_type}")
-
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
@@ -608,7 +609,6 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     presc[presc < 0] = 0
     return presc.tolist()
 
-
 @app.callback(
     Output("predict-eluc", "value"),
     Input("predict-button", "n_clicks"),
@@ -643,7 +643,6 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     eluc = eluc_df["ELUC"].iloc[0]
     return f"{eluc:.4f}"
 
-
 @app.callback(
     Output("total-em", "children"),
     Output("tickets", "children"),
@@ -668,11 +667,10 @@ def update_trivia(eluc_str, year, lat, lon):
 
     # Calculate total reduction
     eluc = float(eluc_str)
-    total_reduction = eluc * area
+    total_reduction = eluc * area * app_constants.TC_TO_TCO2
     return f"{-1 * total_reduction:,.2f} tonnes CO2", \
             f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
                 f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
-
 
 app.title = 'Land Use Optimization'
 app.css.config.serve_locally = False
@@ -724,7 +722,6 @@ in tons of carbon per hectare)
     dcc.Markdown('''## References'''),
     references_div
 ], style={'padding-left': '10px'},)
-
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)

@@ -12,8 +12,8 @@ def write_readme(model_path: str):
     TODO: Need to add more info to the readme and make it a proper template.
     """
     model_path = Path(model_path)
-    with open(model_path / "README.md", "w", encoding="utf-8") as f:
-        f.write("This is a demo model created for project resilience")
+    with open(model_path / "README.md", "w", encoding="utf-8") as file:
+        file.write("This is a demo model created for project resilience")
 
 def upload_to_repo(model_path: str, repo_id: str, token: str=None):
     """

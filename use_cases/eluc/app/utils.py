@@ -1,51 +1,15 @@
+"""
+Utility functions for the demo application.
+"""
 from dash import html
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from sklearn.preprocessing import MinMaxScaler
 
 import app.constants as app_constants
-import data.constants as constants
-from predictors.predictor import Predictor
+from data import constants
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
-
-
-class Encoder:
-    """
-    Takes a field dictionary and creates min/max scalers using their ranges.
-    Field dictionary needs to be in format (see prescriptors/fields.json):
-        {
-            "field a": {"range": [x, y]},
-            "field b": {"range": [z, s]}
-        }
-    """
-    def __init__(self, fields):
-        self.transformers = {}
-        for field in fields:
-            field_values = fields[field]["range"]
-            self.transformers[field] = MinMaxScaler(clip=True)
-            data_df = pd.DataFrame({field: field_values})
-            self.transformers[field].fit(data_df)
-
-
-    def encode_as_df(self, df):
-        """
-        Encodes a given dataframe using the min max scalers.
-        :param df: a dataframe to encode
-        :return: a dataframe of encoded values. Only returns columns in the transformer dictionary.
-        """
-        values_by_column = {}
-        for col in df:
-            if col in self.transformers:
-                encoded_values = self.transformers[col].transform(df[[col]])
-                values_by_column[col] = encoded_values.squeeze().tolist()
-
-        encoded_df = pd.DataFrame.from_records(values_by_column,
-                                               index=list(range(df.shape[0]))
-                                               )[values_by_column.keys()]
-        return encoded_df
-
 
 def add_nonland(data: pd.Series) -> pd.Series:
     """
@@ -60,7 +24,6 @@ def add_nonland(data: pd.Series) -> pd.Series:
     data['nonland'] = nonland
     return data[app_constants.CHART_COLS]
 
-
 def create_map(df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
     """
     Creates map figure with data centered and zoomed in with appropriate point marked.
@@ -73,7 +36,7 @@ def create_map(df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
     """
     color_seq = [px.colors.qualitative.Plotly[0], px.colors.qualitative.Plotly[1]]
 
-    # Add color column    
+    # Add color column
     color = ["blue" for _ in range(len(df))]
     if color_idx:
         color[color_idx] = "red"
@@ -90,9 +53,11 @@ def create_map(df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
     )
 
     map_fig.update_layout(margin={"l": 0, "r": 10, "t": 0, "b": 0}, showlegend=False)
-    map_fig.update_geos(projection_scale=zoom, projection_type="orthographic", showcountries=True, fitbounds="locations")
+    map_fig.update_geos(projection_scale=zoom,
+                        projection_type="orthographic",
+                        showcountries=True,
+                        fitbounds="locations")
     return map_fig
-
 
 def create_check_options(values: list) -> list:
     """
@@ -107,27 +72,17 @@ def create_check_options(values: list) -> list:
              "value": val})
     return options
 
-
-def compute_percent_change(context: pd.Series, presc: pd.Series) -> float:
+def context_presc_to_df(context: pd.Series, presc: pd.Series) -> pd.DataFrame:
     """
-    Computes percent land use change from context to presc
-    :param context: Context land use data
-    :param presc: Prescribed land use data
-    :return: Percent land use change
+    Takes a context with all columns and a presc with RECO_COLS and returns an updated context actions df.
+    This df takes the difference between the RECO_COLS in presc and context and sets the DIFF_RECO_COLS to that.
     """
-    diffs = presc[constants.RECO_COLS] - context[constants.RECO_COLS]
-    change = diffs[diffs > 0].sum()
-    total = context[constants.LAND_USE_COLS].sum()
-
-    # If we can't change the land use just return 0.
-    if total <= 0:
-        return 0
-    
-    percent_changed = change / total
-    assert percent_changed <= 1
-
-    return percent_changed
-
+    diff = presc - context[constants.RECO_COLS]
+    diff = diff.rename({col: f"{col}_diff" for col in diff.index})
+    context_actions = diff.combine_first(context[constants.CAO_MAPPING["context"]])
+    context_actions_df = pd.DataFrame([context_actions])
+    context_actions_df[constants.NO_CHANGE_COLS] = 0 # TODO: I'm not entirely sure why this line is necessary
+    return context_actions_df
 
 def _create_hovertext(labels: list, parents: list, values: list, title: str) -> list:
     """
@@ -140,21 +95,20 @@ def _create_hovertext(labels: list, parents: list, values: list, title: str) -> 
     """
     hovertext = []
     for i, label in enumerate(labels):
-        v = values[i] * 100
+        val = values[i] * 100
         # Get value of parent or 100 if parent is '' or 0
         if parents[i] == '' or values[labels.index(parents[i])] == 0:
             parent_v = values[0] * 100
         else:
             parent_v = values[labels.index(parents[i])] * 100
         if parents[i] == '':
-            hovertext.append(f"{label}: {v:.2f}%")
+            hovertext.append(f"{label}: {val:.2f}%")
         elif parents[i] == title:
-            hovertext.append(f"{label}<br>{v:.2f}% of {title}")
+            hovertext.append(f"{label}<br>{val:.2f}% of {title}")
         else:
-            hovertext.append(f"{label}<br>{v:.2f}% of {title}<br>{(v/parent_v)*100:.2f}% of {parents[i]}")
+            hovertext.append(f"{label}<br>{val:.2f}% of {title}<br>{(val/parent_v)*100:.2f}% of {parents[i]}")
 
     return hovertext
-
 
 def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     """
@@ -207,7 +161,7 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
         tree_params["customdata"] = _create_hovertext(labels, parents, values, title)
         tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
- 
+
     assert len(labels) == len(parents)
     assert len(parents) == len(values)
 
@@ -225,7 +179,6 @@ def create_treemap(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         margin={"t": 0, "b": 0, "l": 10, "r": 10}
     )
     return fig
-
 
 def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
     """
@@ -248,12 +201,12 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
 
     title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
-    p = px.colors.qualitative.Plotly
-    ps = px.colors.qualitative.Pastel1
-    d = px.colors.qualitative.Dark24
+    plo = px.colors.qualitative.Plotly
+    pas = px.colors.qualitative.Pastel1
+    dar = px.colors.qualitative.Dark24
     #['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per', 'pastr', 'primf', 'primn', 
     # 'range', 'secdf', 'secdn', 'urban', 'nonland]
-    colors = [p[4], d[8], ps[4], p[9], ps[5], p[0], p[2], d[14], p[5], p[7], d[2], p[3], p[1]]
+    colors = [plo[4], dar[8], pas[4], plo[9], pas[5], plo[0], plo[2], dar[14], plo[5], plo[7], dar[2], plo[3], plo[1]]
     fig = go.Figure(
         go.Pie(
             values = values,
@@ -275,7 +228,6 @@ def create_pie(data=pd.Series, type_context=True, year=2021) -> go.Figure:
         fig.update_layout(margin={"t": 0, "b": 0, "l": 0, "r": 0})
 
     return fig
-
 
 def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     """
@@ -310,7 +262,6 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
                                     " Average ELUC: %{y} tC/ha<extra></extra>")
     return fig
 
-
 def load_predictors() -> dict:
     """
     Loads in predictors from disk.
@@ -320,11 +271,17 @@ def load_predictors() -> dict:
     print(app_constants.PREDICTOR_PATH)
     predictors = {}
     nn_path = "danyoung/eluc-global-nn"
+    nn_local_dir = app_constants.PREDICTOR_PATH / nn_path.replace("/", "--")
     linreg_path = "danyoung/eluc-global-linreg"
+    linreg_local_dir = app_constants.PREDICTOR_PATH / linreg_path.replace("/", "--")
     rf_path = "danyoung/eluc-global-rf"
-    global_nn = NeuralNetPredictor.from_pretrained(nn_path, local_dir=app_constants.PREDICTOR_PATH / nn_path.replace("/", "--"))
-    global_linreg = LinearRegressionPredictor.from_pretrained(linreg_path, local_dir=app_constants.PREDICTOR_PATH / linreg_path.replace("/", "--"))
-    global_rf = RandomForestPredictor.from_pretrained(rf_path, local_dir=app_constants.PREDICTOR_PATH / rf_path.replace("/", "--"))
+    rf_local_dir = app_constants.PREDICTOR_PATH / rf_path.replace("/", "--")
+    global_nn = NeuralNetPredictor.from_pretrained(nn_path,
+                                                   local_dir=nn_local_dir)
+    global_linreg = LinearRegressionPredictor.from_pretrained(linreg_path,
+                                                              local_dir=linreg_local_dir)
+    global_rf = RandomForestPredictor.from_pretrained(rf_path,
+                                                      local_dir=rf_local_dir)
 
     predictors["Global Neural Network"] = global_nn
     predictors["Global Linear Regression"] = global_linreg

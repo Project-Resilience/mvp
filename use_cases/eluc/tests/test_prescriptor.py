@@ -2,10 +2,11 @@
 Tests the generic prescriptor class.
 TODO: This will eventually have to be moved into a ProjectResilienceSDK.
 """
-import pandas as pd
 import unittest
 
-import data.constants as constants
+import pandas as pd
+
+from data import constants
 from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 
 class TestComputeChange(unittest.TestCase):
@@ -75,7 +76,7 @@ class TestComputeChange(unittest.TestCase):
         """
         context_data = [0, 0, 0, 0, 0, 0, 0.33, 0.33, 0, 0, 0, 0.34]
         presc_data = context_data[0:6] + context_data [8:11]
-        
+
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
         percent_change = self.prescriptor.compute_percent_changed(context_actions_df)["change"].iloc[0]

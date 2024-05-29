@@ -1,9 +1,9 @@
 """
 Utilities for NSGA-II implementation.
 """
-
 from prescriptors.nsga2.candidate import Candidate
 
+# pylint: disable=invalid-name
 def fast_non_dominated_sort(candidates: list):
     """
     Fast non-dominated sort algorithm from ChatGPT

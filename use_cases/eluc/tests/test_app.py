@@ -5,8 +5,8 @@ import unittest
 import pandas as pd
 
 import app.constants as app_constants
-import app.utils as utils
-import data.constants as constants
+from app import utils
+from data import constants
 
 class TestUtilFunctions(unittest.TestCase):
     """

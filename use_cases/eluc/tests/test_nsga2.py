@@ -12,7 +12,7 @@ from data.eluc_data import ELUCEncoder
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
-import prescriptors.nsga2.nsga2_utils as nsga2_utils
+from prescriptors.nsga2 import nsga2_utils
 
 def get_fields(df):
     """
@@ -61,6 +61,8 @@ class TestNSGA2Utils(unittest.TestCase):
     def test_distance_calculation(self):
         """
         Tests the calculation of crowding distance.
+        Objective 1 is the candidate number times 2.
+        Objective 2 is the candidate number squared.
         """
         # Create a dummy front
         front = []
@@ -69,7 +71,7 @@ class TestNSGA2Utils(unittest.TestCase):
             dummy_candidate = Candidate(16, 16, 16)
             dummy_candidate.metrics = [i*2, i**2]
             front.append(dummy_candidate)
-            if i == 0 or i == 3:
+            if i in {0, 3}:
                 tgt_distances.append(np.inf)
             else:
                 dist0 = ((i + 1) * 2 - (i - 1) * 2) / 6
@@ -90,7 +92,6 @@ class TestTorchPrescriptor(unittest.TestCase):
     """
     Tests PyTorch prescriptor class
     """
-
     @classmethod
     def setUpClass(cls):
         cls.dummy_data = pd.DataFrame()
@@ -101,14 +102,16 @@ class TestTorchPrescriptor(unittest.TestCase):
         fields = get_fields(cls.dummy_data)
         encoder = ELUCEncoder(fields)
 
-        predictor = LinearRegressionPredictor(dict(features=constants.DIFF_LAND_USE_COLS, n_jobs=-1))
+        predictor = LinearRegressionPredictor({"features": constants.DIFF_LAND_USE_COLS, "n_jobs": -1})
         predictor.fit(cls.dummy_data[constants.DIFF_LAND_USE_COLS], cls.dummy_data["ELUC"])
         cls.prescriptor = TorchPrescriptor(
             eval_df=cls.dummy_data,
             encoder=encoder,
             predictor=predictor,
             batch_size=1,
-            candidate_params={"in_size": len(constants.CAO_MAPPING["context"]), "hidden_size": 16, "out_size": len(constants.RECO_COLS)}
+            candidate_params={"in_size": len(constants.CAO_MAPPING["context"]), 
+                              "hidden_size": 16, 
+                              "out_size": len(constants.RECO_COLS)}
         )
 
     def test_reco_tensor_to_df(self):

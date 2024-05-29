@@ -2,7 +2,7 @@
     "predictor_path": "predictors/trained_models/danyoung--eluc-global-nn",
     "evolution_params": {
         "pop_size": 10,
-        "n_generations": 10,
+        "n_generations": 3,
         "p_mutation": 0.2,
         "candidate_params": {
             "in_size": 12,

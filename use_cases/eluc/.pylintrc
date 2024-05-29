@@ -1,9 +1,9 @@
 [MASTER]
-ignore=demo, prescriptors/esp
+ignore=prescriptors/esp
 
 recursive=y
 
-fail-under=9.0
+fail-under=9.65
 
 jobs=0
 

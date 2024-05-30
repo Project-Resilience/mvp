@@ -10,6 +10,7 @@ experiments/figures
 # Ignores trained prescriptors and seeds
 prescriptors/*/trained_prescriptors
 prescriptors/*/seeds
+prescriptors/nsga2/transfer_prescriptors.ipynb
 
 data/*.zip
 data/processed/*.csv

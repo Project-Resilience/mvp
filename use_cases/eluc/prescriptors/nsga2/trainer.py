@@ -10,11 +10,14 @@ import numpy as np
 import pandas as pd
 import torch
 
+from data import constants
 from data.eluc_data import ELUCEncoder
+from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
+from prescriptors.nsga2.prescriptor_manager import PrescriptorManager
 
 class TorchTrainer():
     """
@@ -38,19 +41,25 @@ class TorchTrainer():
         self.p_mutation = p_mutation
         self.seed_dir=seed_dir
 
-        # Store eval df if needed
-        if eval_df is not None:
-            self.eval_df = eval_df
-            self.encoded_eval_df = encoder.encode_as_df(eval_df)
-        self.prescriptor = TorchPrescriptor(eval_df, encoder, predictor, batch_size, candidate_params)
+        # Evaluation params
+        self.encoder = encoder
+        self.predictor = predictor
+        self.context_df = eval_df[constants.CAO_MAPPING["context"]]
+        encoded_eval_df = encoder.encode_as_df(eval_df)
+        context_ds = TorchDataset(encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
+                                  np.zeros((len(encoded_eval_df), len(constants.RECO_COLS))))
+        self.encoded_context_dl = torch.utils.data.DataLoader(context_ds, batch_size=batch_size, shuffle=False)
+        self.batch_size = batch_size
 
     def _evaluate_candidates(self, candidates: list[Candidate]):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
         """
+        prescriptor_manager = PrescriptorManager(None, self.predictor)
         for candidate in candidates:
-            context_actions_df = self.prescriptor.prescribe(candidate)
-            eluc_df, change_df = self.prescriptor.predict_metrics(context_actions_df)
+            prescriptor = LandUsePrescriptor(candidate, self.encoder, self.batch_size)
+            context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
+            eluc_df, change_df = prescriptor_manager.predict_metrics(context_actions_df)
             candidate.metrics = (eluc_df["ELUC"].mean(), change_df["change"].mean())
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
@@ -107,7 +116,7 @@ class TorchTrainer():
         if save_path.exists():
             shutil.rmtree(save_path)
         save_path.mkdir(parents=True, exist_ok=False)
-        self.prescriptor.encoder.save_fields(save_path / "fields.json")
+        self.encoder.save_fields(save_path / "fields.json")
         results = []
         parents = [Candidate(**self.candidate_params, cand_id=f"1_{i}") for i in range(self.pop_size)]
         # Seeding the first generation with trained models

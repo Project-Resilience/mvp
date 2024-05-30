@@ -2,7 +2,6 @@
 Constants for the demo application.
 """
 from pathlib import Path
-import base64
 
 from data.constants import LAND_USE_COLS
 

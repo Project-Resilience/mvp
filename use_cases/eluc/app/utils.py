@@ -232,7 +232,6 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
     :param presc_id: The currently selected prescriptor id
     :return: A pareto plot figure
     """
-    print(f"presc id: {presc_id}")
     fig = go.Figure(
             go.Scatter(
                 x=pareto_df['change'] * 100,
@@ -265,7 +264,6 @@ def load_predictors() -> dict:
     TODO: Currently hard-coded to load specific predictors. We need to make this able to handle any amount!
     :return: dict of predictor name -> predictor object.
     """
-    print(app_constants.PREDICTOR_PATH)
     predictors = {}
     nn_path = "danyoung/eluc-global-nn"
     nn_local_dir = app_constants.PREDICTOR_PATH / nn_path.replace("/", "--")

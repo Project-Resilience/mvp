@@ -64,7 +64,7 @@ map_fig = go.Figure()
 
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
-    style={},
+    style={"margin-bottom": "100px"}, # Because we removed some crops, we extend this so the map doesn't shrink.
     children = [
         dcc.Markdown('''
 ### Land Use Types
@@ -83,12 +83,6 @@ Secondary: Vegetation that has been touched by humans
 Urban
 
 Crop
-
-    - c3ann: Annual C3 crops (e.g. wheat)
-    - c4ann: Annual C4 crops (e.g. maize)
-    - c3per: Perennial C3 crops (e.g. banana)
-    - c4per: Perennial C4 crops (e.g. sugarcane)
-    - c3nfx: Nitrogen fixing C3 crops (e.g. soybean)
 
 Pasture
 
@@ -575,7 +569,7 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     """
     # If we have no prescription just return an empty chart
     if all(slider == 0 for slider in sliders):
-        return utils.create_treemap(pd.Series([]), type_context=False, year=year)
+        return utils.create_treemap(pd.Series([], dtype=float), type_context=False, year=year)
 
     presc = pd.Series(sliders, index=constants.RECO_COLS)
     context = df.loc[year, lat, lon]
@@ -716,7 +710,6 @@ identified by its latitude and longitude coordinates, and a given year:
 * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare)
 
-*Note: the prescriptor model is currently only trained on Western Europe*
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([

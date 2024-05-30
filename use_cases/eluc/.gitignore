@@ -14,6 +14,3 @@ prescriptors/*/seeds
 data/*.zip
 data/processed/*.csv
 *.nc
-
-# Ignore demo folder
-demo/

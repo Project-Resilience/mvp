@@ -9,6 +9,7 @@ from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader
 
 from data import constants
 from data.eluc_data import ELUCEncoder
@@ -48,7 +49,7 @@ class TorchTrainer():
         encoded_eval_df = encoder.encode_as_df(eval_df)
         context_ds = TorchDataset(encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
                                   np.zeros((len(encoded_eval_df), len(constants.RECO_COLS))))
-        self.encoded_context_dl = torch.utils.data.DataLoader(context_ds, batch_size=batch_size, shuffle=False)
+        self.encoded_context_dl = DataLoader(context_ds, batch_size=batch_size, shuffle=False)
         self.batch_size = batch_size
 
     def _evaluate_candidates(self, candidates: list[Candidate]):

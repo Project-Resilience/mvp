@@ -17,9 +17,6 @@ class HeuristicPrescriptor(Prescriptor, ABC):
     Requires an implementation of reco_heuristic which takes a context dataframe and returns
     recommendations based on the heuristic.
     """
-    def __init__(self, predictor: Predictor):
-        self.predictor = predictor
-
     @abstractmethod
     def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -28,7 +25,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         """
         raise NotImplementedError
 
-    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def prescribe(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
         """
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
         Kwargs must contain a "pct" key that is the percentage of land-use change to prescribe up to.
@@ -44,19 +41,11 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         context_actions_df = pd.concat([context_df, prescribed_actions_df[constants.DIFF_LAND_USE_COLS]], axis=1)
         return context_actions_df
 
-    def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
-        column_order = constants.CAO_MAPPING["context"] + constants.CAO_MAPPING["actions"]
-        eluc_df = self.predictor.predict(context_actions_df[column_order])
-        change_df = self.compute_percent_changed(context_actions_df)
-        return eluc_df, change_df
-
-
 class EvenHeuristic(HeuristicPrescriptor):
     """
     Implementation of HeuristicPrescriptor that evenly distributes land use to a "best" column.
     """
-    def __init__(self, best_col: str, predictor: Predictor):
-        super().__init__(predictor)
+    def __init__(self, best_col: str):
         self.best_col = best_col
         self.presc_cols = [col for col in constants.RECO_COLS if col != best_col]
 
@@ -87,12 +76,11 @@ class PerfectHeuristic(HeuristicPrescriptor):
     Implementation of HeuristicPrescriptor that does an informed land use prescription 
     based on linear regression coefficients.
     """
-    def __init__(self, coefs: list[float], predictor: Predictor):
+    def __init__(self, coefs: list[float]):
         """
         We save and sort the columns by highest coefficient i.e. most emissions.
         Separate the best column according to the coefficients to add to.
         """
-        super().__init__(predictor)
         assert len(coefs) == len(constants.RECO_COLS)
         # Sort columns by coefficient
         reco_cols = list(constants.RECO_COLS)

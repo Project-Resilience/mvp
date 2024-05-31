@@ -2,21 +2,24 @@
 Heuristic to compare our prescriptors to.
 """
 from abc import ABC, abstractmethod
+import json
+from pathlib import Path
 
 import pandas as pd
 
 from data import constants
-from predictors.predictor import Predictor
 from prescriptors.prescriptor import Prescriptor
 
 class HeuristicPrescriptor(Prescriptor, ABC):
     """
     Abstract heuristic prescriptor class that inherits from prescriptor class.
     Has a percentage threshold that the heuristic is to reach but not exceed.
-    Also takes a predictor so that we can evaluate metrics.
     Requires an implementation of reco_heuristic which takes a context dataframe and returns
     recommendations based on the heuristic.
     """
+    def __init__(self, pct: float):
+        self.pct = pct
+
     @abstractmethod
     def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
         """
@@ -25,12 +28,11 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         """
         raise NotImplementedError
 
-    def prescribe(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def prescribe(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
-        Kwargs must contain a "pct" key that is the percentage of land-use change to prescribe up to.
         """
-        reco_df = self._reco_heuristic(kwargs["pct"], context_df)
+        reco_df = self._reco_heuristic(self.pct, context_df)
         prescribed_actions_df = reco_df[constants.RECO_COLS] - context_df[constants.RECO_COLS]
 
         # Rename the columns to match what the predictor expects
@@ -45,7 +47,8 @@ class EvenHeuristic(HeuristicPrescriptor):
     """
     Implementation of HeuristicPrescriptor that evenly distributes land use to a "best" column.
     """
-    def __init__(self, best_col: str):
+    def __init__(self, pct: float, best_col: str):
+        super().__init__(pct)
         self.best_col = best_col
         self.presc_cols = [col for col in constants.RECO_COLS if col != best_col]
 
@@ -70,18 +73,37 @@ class EvenHeuristic(HeuristicPrescriptor):
         adjusted.loc[to_change, self.best_col] = adjusted.loc[to_change, self.best_col] + max_change
         adjusted = adjusted.drop(["scaled_change", "row_sum", "max_change"], axis=1)
         return adjusted
+    
+    def save(self, path: Path):
+        """
+        Saves best column and percentage.
+        """
+        with open(path / "config.json", "w", encoding="utf-8") as file:
+            json.dump({"pct": self.pct, "best_col": self.best_col}, file)
+
+    @classmethod
+    def load(cls, path: Path) -> "EvenHeuristic":
+        """
+        Loads best column and percentage.
+        """
+        with open(path / "config.json", "r", encoding="utf-8") as file:
+            config = json.load(file)
+        return cls(config["pct"], config["best_col"])
 
 class PerfectHeuristic(HeuristicPrescriptor):
     """
     Implementation of HeuristicPrescriptor that does an informed land use prescription 
     based on linear regression coefficients.
     """
-    def __init__(self, coefs: list[float]):
+    def __init__(self, pct:float, coefs: list[float]):
         """
         We save and sort the columns by highest coefficient i.e. most emissions.
         Separate the best column according to the coefficients to add to.
         """
+        super().__init__(pct)
         assert len(coefs) == len(constants.RECO_COLS)
+        # Keep these so we can save them later
+        self.coefs = coefs
         # Sort columns by coefficient
         reco_cols = list(constants.RECO_COLS)
         zipped = zip(reco_cols, coefs)
@@ -114,3 +136,19 @@ class PerfectHeuristic(HeuristicPrescriptor):
         adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
         adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
         return adjusted
+    
+    def save(self, path: Path):
+        """
+        Saves coefficients and percentage.
+        """
+        with open(path / "config.json", "w", encoding="utf-8") as file:
+            json.dump({"pct": self.pct, "coefs": self.coefs}, file)
+
+    @classmethod
+    def load(cls, path: Path) -> "PerfectHeuristic":
+        """
+        Loads coefficients and percentage.
+        """
+        with open(path / "config.json", "r", encoding="utf-8") as file:
+            config = json.load(file)
+        return cls(config["pct"], config["coefs"])

@@ -65,7 +65,7 @@ class LandUsePrescriptor(Prescriptor):
         encoded_context_df = self.encoder.encode_as_df(context_df[constants.CAO_MAPPING["context"]])
         encoded_context_ds = TorchDataset(encoded_context_df.to_numpy(),
                                           np.zeros((len(encoded_context_df), len(constants.RECO_COLS))))
-        encoded_context_dl = torch.utils.data.DataLoader(encoded_context_ds, batch_size=self.batch_size, shuffle=False)
+        encoded_context_dl = DataLoader(encoded_context_ds, batch_size=self.batch_size, shuffle=False)
         return self.torch_prescribe(context_df, encoded_context_dl)
     
     def torch_prescribe(self, context_df: pd.DataFrame, encoded_context_dl: DataLoader):
@@ -76,6 +76,7 @@ class LandUsePrescriptor(Prescriptor):
         reco_list = []
         with torch.no_grad():
             for X, _ in encoded_context_dl:
+                X = X.to(self.candidate.device)
                 recos = self.candidate(X)
                 reco_list.append(recos)
             reco_tensor = torch.concatenate(reco_list, dim=0)

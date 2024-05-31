@@ -27,8 +27,8 @@ class Prescriptor(ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def load(cls, path: Path) -> "Prescriptor":
         """
         Loads a prescriptor from disk.

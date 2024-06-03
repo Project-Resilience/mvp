@@ -115,8 +115,9 @@ class TorchTrainer():
         3. Make new population from parents
         """
         if save_path.exists():
-            shutil.rmtree(save_path)
+            raise ValueError(f"Path {save_path} already exists. Please choose a new path.")
         save_path.mkdir(parents=True, exist_ok=False)
+        print(f"Saving to {save_path}")
         self.encoder.save_fields(save_path / "fields.json")
         results = []
         parents = [Candidate(**self.candidate_params, cand_id=f"1_{i}") for i in range(self.pop_size)]

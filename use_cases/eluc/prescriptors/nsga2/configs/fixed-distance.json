@@ -11,5 +11,5 @@
         },
         "seed_dir": "prescriptors/nsga2/seeds/small_sample"
     },
-    "save_path": "prescriptors/nsga2/trained_prescriptors/no-overlap"
+    "save_path": "prescriptors/nsga2/training_runs/no-overlap"
 }

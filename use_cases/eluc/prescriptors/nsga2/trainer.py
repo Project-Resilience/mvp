@@ -2,7 +2,6 @@
 PyTorch implementation of NSGA-II.
 """
 import random
-import shutil
 from pathlib import Path
 
 from tqdm import tqdm
@@ -18,7 +17,7 @@ from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
-from prescriptors.nsga2.prescriptor_manager import PrescriptorManager
+from prescriptors.prescriptor_manager import PrescriptorManager
 
 class TorchTrainer():
     """

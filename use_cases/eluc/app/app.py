@@ -18,10 +18,8 @@ from dash import html
 import dash_bootstrap_components as dbc
 
 from data import constants
-from data.eluc_data import ELUCEncoder
 import app.constants as app_constants
 from app import utils
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -32,19 +30,13 @@ df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COL
 df.rename(columns={col + ".1": col for col in app_constants.INDEX_COLS}, inplace=True)
 COUNTRIES_DF = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
-# Prescriptor list should be in order of least to most change
+# Load pareto df
 pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
-pareto_df = pareto_df.sort_values(by="change", ascending=True)
+pareto_df.sort_values(by="change", inplace=True)
 prescriptor_list = list(pareto_df["id"])
 
-encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
-# TODO: Stop hard-coding candidate params -> make cand config file?
-candidate_params = {
-    "in_size": len(constants.CAO_MAPPING["context"]),
-    "hidden_size": 16,
-    "out_size": len(constants.RECO_COLS)
-}
-prescriptor = TorchPrescriptor(None, encoder, None, 1, candidate_params)
+# Load prescriptors
+prescriptor_manager = utils.load_prescriptors()
 
 # Load predictors
 predictors = utils.load_predictors()
@@ -478,9 +470,7 @@ def select_prescriptor(_, presc_idx, year, lat, lon):
     presc_id = prescriptor_list[presc_idx]
     context = df.loc[year, lat, lon][constants.CAO_MAPPING["context"]]
     context_df = pd.DataFrame([context])
-    prescribed = prescriptor.prescribe_land_use(context_df,
-                                                cand_id=presc_id,
-                                                results_dir=app_constants.PRESCRIPTOR_PATH)
+    prescribed = prescriptor_manager.prescribe(presc_id, context_df)
     # Prescribed gives it to us in diff format, we need to recompute recommendations
     for col in constants.RECO_COLS:
         prescribed[col] = context[col] + prescribed[f"{col}_diff"]
@@ -544,7 +534,7 @@ def compute_land_change(sliders, year, lat, lon, locked):
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = prescriptor.compute_percent_changed(context_actions_df)
+    change = prescriptor_manager.compute_percent_changed(context_actions_df)
 
     return warnings, f"{change['change'].iloc[0] * 100:.2f}"
 

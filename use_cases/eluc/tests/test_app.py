@@ -12,10 +12,6 @@ class TestUtilFunctions(unittest.TestCase):
     """
     Tests app utilities.
     """
-    def setUp(self):
-        self.df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COLS)
-        self.df.rename(columns={f"{col}.1": col for col in app_constants.INDEX_COLS}, inplace=True)
-
     def test_add_nonland(self):
         """
         Simple vanilla test case for add_nonland(). Makes sure the nonland column added equals whatever we need left.

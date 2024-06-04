@@ -7,7 +7,7 @@ import unittest
 import pandas as pd
 
 from data import constants
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+from prescriptors.prescriptor_manager import PrescriptorManager
 
 class TestComputeChange(unittest.TestCase):
     """
@@ -18,13 +18,7 @@ class TestComputeChange(unittest.TestCase):
         Sets up a dummy prescriptor. This doesn't even really have to be instantiated properly it just needs to
         be able to call compute_percent_changed.
         """
-        self.prescriptor = TorchPrescriptor(
-            eval_df=None,
-            encoder=None,
-            predictor=None,
-            batch_size=1,
-            candidate_params=None
-        )
+        self.prescriptor_manager = PrescriptorManager(None, None)
 
     def _list_data_to_df(self, context_data: list, presc_data: list) -> pd.DataFrame:
         """
@@ -55,7 +49,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
         self.assertAlmostEqual(percent_change, even_amt * 2)
 
     def test_compute_percent_change_no_change(self):
@@ -67,7 +61,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
         self.assertAlmostEqual(percent_change, 0)
 
     def test_compute_percent_change_all_nonreco(self):
@@ -79,7 +73,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
         self.assertEqual(percent_change, 0)
 
     def test_compute_percent_change_not_sum_to_one(self):
@@ -91,6 +85,19 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
 
         self.assertAlmostEqual(percent_change, 0.02 / (0.01 * len(constants.LAND_USE_COLS)))
+
+    def test_compute_percent_changed_indices_same(self):
+        """
+        Makes sure the indices in change_df are the same as in the context_actions_df.
+        """
+        # TODO: Fix this test it's a good one
+        context_data = [0.01 for _ in range(len(constants.LAND_USE_COLS))]
+        presc_data = [0.02, 0.00, 0.02, 0.00, 0.01]
+    
+        context_actions_df = self._list_data_to_df(context_data, presc_data)
+        change_df = self.prescriptor_manager.compute_percent_changed(context_actions_df)
+
+        self.assertTrue(change_df.index.equals(context_actions_df.index))

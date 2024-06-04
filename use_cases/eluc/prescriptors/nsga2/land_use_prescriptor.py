@@ -51,7 +51,7 @@ class LandUsePrescriptor(Prescriptor):
                                             presc_actions_df[constants.CAO_MAPPING["actions"]]],
                                             axis=1)
         return context_actions_df
-    
+
     def prescribe(self, context_df) -> pd.DataFrame:
         """
         Prescribes actions from a context.
@@ -67,10 +67,11 @@ class LandUsePrescriptor(Prescriptor):
                                           np.zeros((len(encoded_context_df), len(constants.RECO_COLS))))
         encoded_context_dl = DataLoader(encoded_context_ds, batch_size=self.batch_size, shuffle=False)
         return self.torch_prescribe(context_df, encoded_context_dl)
-    
+
     def torch_prescribe(self, context_df: pd.DataFrame, encoded_context_dl: DataLoader):
         """
-        Prescribes straight from a torch DataLoader so that we can avoid the overhead of converting from pandas.
+        Prescribes straight from a torch DataLoader so that we can avoid the overhead of converting from pandas
+        during evolution.
         """
         # Aggregate recommendations
         reco_list = []
@@ -86,7 +87,7 @@ class LandUsePrescriptor(Prescriptor):
 
         context_actions_df = self._reco_to_context_actions(reco_df, context_df)
         return context_actions_df
-    
+
     def save(self, path: Path):
         """
         Saves the prescriptor to disk.

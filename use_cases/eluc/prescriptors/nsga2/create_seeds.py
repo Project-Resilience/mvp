@@ -11,7 +11,7 @@ from tqdm import tqdm
 from data import constants
 from data.eluc_data import ELUCData
 from data.torch_data import TorchDataset
-from prescriptors.nsga2.torch_prescriptor import Candidate
+from prescriptors.nsga2.candidate import Candidate
 
 def supervised_backprop(save_path: Path, ds: TorchDataset):
     """

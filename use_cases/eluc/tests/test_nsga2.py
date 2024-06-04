@@ -9,7 +9,6 @@ import torch
 
 from data import constants
 from data.eluc_data import ELUCData
-from data.eluc_data import ELUCEncoder
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 from prescriptors.nsga2 import nsga2_utils
@@ -62,6 +61,8 @@ class TestLandUsePrescriptor(unittest.TestCase):
 
         cls.n = 10
 
+    # Disable protected access warning so we can test the private methods
+    # pylint: disable=protected-access
     def test_reco_tensor_to_df_all_zero_tensor(self):
         """
         Tests the case where the tensor is all zeros.
@@ -110,6 +111,7 @@ class TestLandUsePrescriptor(unittest.TestCase):
         diff_df = diff_df[constants.DIFF_LAND_USE_COLS]
 
         self.assertTrue((diff_df == context_actions_df[constants.DIFF_LAND_USE_COLS]).all().all())
+    # pylint: enable=protected-access
 
     def test_prescribe_indices_same(self):
         """

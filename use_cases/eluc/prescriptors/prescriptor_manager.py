@@ -1,4 +1,8 @@
-
+"""
+Manages multiple Prescriptors and a Predictor. Allows the user to easily prescribe based on different Prescriptors and
+then predict on a uniform Predictor in order to compare them.
+Additionally handles the percent changed computation.
+"""
 import pandas as pd
 
 from data import constants
@@ -29,6 +33,7 @@ class PrescriptorManager():
 
         return eluc_df, change_df
 
+    # TODO: Move this to its own predictor
     def compute_percent_changed(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Calculates percent of land changed by prescriptor.

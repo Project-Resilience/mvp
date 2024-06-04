@@ -93,10 +93,9 @@ class TestComputeChange(unittest.TestCase):
         """
         Makes sure the indices in change_df are the same as in the context_actions_df.
         """
-        # TODO: Fix this test it's a good one
         context_data = [0.01 for _ in range(len(constants.LAND_USE_COLS))]
         presc_data = [0.02, 0.00, 0.02, 0.00, 0.01]
-    
+
         context_actions_df = self._list_data_to_df(context_data, presc_data)
         change_df = self.prescriptor_manager.compute_percent_changed(context_actions_df)
 

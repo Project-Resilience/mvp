@@ -73,7 +73,7 @@ class EvenHeuristic(HeuristicPrescriptor):
         adjusted.loc[to_change, self.best_col] = adjusted.loc[to_change, self.best_col] + max_change
         adjusted = adjusted.drop(["scaled_change", "row_sum", "max_change"], axis=1)
         return adjusted
-    
+
     def save(self, path: Path):
         """
         Saves best column and percentage.
@@ -136,7 +136,7 @@ class PerfectHeuristic(HeuristicPrescriptor):
         adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
         adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
         return adjusted
-    
+
     def save(self, path: Path):
         """
         Saves coefficients and percentage.

@@ -27,7 +27,6 @@ app = Dash(__name__,
 server = app.server
 
 df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COLS)
-df.rename(columns={col + ".1": col for col in app_constants.INDEX_COLS}, inplace=True)
 COUNTRIES_DF = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
 # Load pareto df
@@ -42,12 +41,12 @@ prescriptor_manager = utils.load_prescriptors()
 predictors = utils.load_predictors()
 
 # Cells
-min_lat = df.index.get_level_values("lat").min()
-max_lat = df.index.get_level_values("lat").max()
-min_lon = df.index.get_level_values("lon").min()
-max_lon = df.index.get_level_values("lon").max()
-min_time = df.index.get_level_values("time").min()
-max_time = df.index.get_level_values("time").max()
+min_lat = df["lat"].min()
+max_lat = df["lat"].max()
+min_lon = df["lon"].min()
+max_lon = df["lon"].max()
+min_time = df["time"].min()
+max_time = df["time"].max()
 
 lat_list = list(np.arange(min_lat, max_lat + app_constants.GRID_STEP, app_constants.GRID_STEP))
 lon_list = list(np.arange(min_lon, max_lon + app_constants.GRID_STEP, app_constants.GRID_STEP))

@@ -172,7 +172,6 @@ class ELUCData(AbstractData):
     """
     Loads ELUC data from HuggingFace repo and processes it.
     """
-
     def __init__(self, start_year=1851, test_year=2012, end_year=2022, countries=None):
         """
         If update_path is given, load raw data the old way using 2 files that are merged.
@@ -200,7 +199,10 @@ class ELUCData(AbstractData):
         """
         ds = load_dataset(hf_repo)["train"]
         df = ds.to_pandas()
-        df = df.set_index(["time", "lat", "lon"], drop=False)
+        df["time_idx"] = df["time"]
+        df["lat_idx"] = df["lat"]
+        df["lon_idx"] = df["lon"]
+        df = df.set_index(["time_idx", "lat_idx", "lon_idx"], drop=True)
         return df
 
 

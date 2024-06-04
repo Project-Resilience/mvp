@@ -11,7 +11,7 @@ APP_START_YEAR = 2012
 
 GRID_STEP = 0.25
 
-INDEX_COLS = ["time", "lat", "lon"]
+INDEX_COLS = ["time_idx", "lat_idx", "lon_idx"]
 
 NO_CHANGE_COLS = ["primf", "primn", "urban"]
 CHART_COLS = LAND_USE_COLS + ["nonland"]

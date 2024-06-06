@@ -92,7 +92,6 @@ class NeuralNetPredictor(Predictor):
         train_pct: percentage of training data to use
         step_lr_params: dictionary of parameters to pass to the step learning rate scheduler
         """
-        
         self.features = model_config.get("features", None)
         self.label = model_config.get("label", None)
         self.hidden_sizes = model_config.get("hidden_sizes", [4096])
@@ -114,7 +113,6 @@ class NeuralNetPredictor(Predictor):
         Loads a model from a given folder.
         :param path: path to folder containing model files.
         """
-        
         if isinstance(path, str):
             load_path = Path(path)
         else:
@@ -132,7 +130,10 @@ class NeuralNetPredictor(Predictor):
 
         nnp = cls(config)
 
-        nnp.model = ELUCNeuralNet(len(config["features"]), config["hidden_sizes"], config["linear_skip"], config["dropout"])
+        nnp.model = ELUCNeuralNet(len(config["features"]),
+                                  config["hidden_sizes"],
+                                  config["linear_skip"],
+                                  config["dropout"])
         nnp.model.load_state_dict(torch.load(load_path / "model.pt"))
         nnp.model.to(config["device"])
         nnp.model.eval()

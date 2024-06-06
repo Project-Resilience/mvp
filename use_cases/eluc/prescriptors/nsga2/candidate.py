@@ -10,7 +10,7 @@ class Candidate(torch.nn.Module):
     Keeps track of its own metrics and evolution logging information.
     """
     def __init__(self, in_size: int, hidden_size: int, out_size: int,
-                 device="cpu", gen=-1, cand_id=-1, parents=(None, None)):
+                 device="cpu", cand_id="-1", parents=(None, None)):
         super().__init__()
 
         self.in_size = in_size
@@ -38,12 +38,11 @@ class Candidate(torch.nn.Module):
         self.distance = -1
 
         # For evolution logging purposes
-        self.gen = gen
         self.cand_id = cand_id
         self.parents = parents
 
     @classmethod
-    def from_crossover(cls, parent1, parent2, p_mutation: float, gen: int, cand_id: int) -> "Candidate":
+    def from_crossover(cls, parent1, parent2, p_mutation: float, cand_id: str) -> "Candidate":
         """
         Crossover two parents to create a child.
         Take a random 50/50 choice of either parent's weights
@@ -52,9 +51,8 @@ class Candidate(torch.nn.Module):
                     hidden_size=parent1.hidden_size,
                     out_size=parent1.out_size,
                     device=parent1.device,
-                    gen=gen,
                     cand_id=cand_id,
-                    parents=((parent1.gen, parent1.cand_id), (parent2.gen, parent2.cand_id)))
+                    parents=(parent1.cand_id, parent2.cand_id))
 
         params = zip(child.parameters(), parent1.parameters(), parent2.parameters())
         for child_param, parent1_param, parent2_param in params:
@@ -87,10 +85,13 @@ class Candidate(torch.nn.Module):
         """
         if not isinstance(self.metrics, tuple):
             raise ValueError("Candidate has not been evaluated yet")
-        return {"gen": self.gen,
-                "id": self.cand_id,
-                "parents": self.parents,
-                "NSGA-II_rank": self.rank, # Named this to match ESP
-                "distance": self.distance,
-                "ELUC": self.metrics[0],
-                "change": self.metrics[1]}
+        cand_state = {"id": self.cand_id,
+                      "parents": self.parents,
+                      "NSGA-II_rank": self.rank, # Named this to match ESP
+                      "distance": self.distance,
+        }
+        metrics = self.metrics if self.metrics else [float("inf"), float("inf")]
+        cand_state["ELUC"] = metrics[0]
+        cand_state["change"] = metrics[1]
+
+        return cand_state

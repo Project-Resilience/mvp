@@ -1,6 +1,8 @@
+"""
+Main app file for ELUC demo.
+"""
 from math import isclose
 
-import os
 import numpy as np
 import pandas as pd
 import regionmask
@@ -15,22 +17,37 @@ from dash import dcc
 from dash import html
 import dash_bootstrap_components as dbc
 
-from . import Predictor
-from . import Prescriptor
-from . import constants
-from . import utils
+from data import constants
+from data.eluc_data import ELUCEncoder
+import app.constants as app_constants
+from app import utils
+from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            prevent_initial_callbacks="initial_duplicate")
 server = app.server
 
-df = pd.read_csv(constants.DATA_FILE_PATH, index_col=constants.INDEX_COLS)
-countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
+df = pd.read_csv(app_constants.DATA_FILE_PATH, index_col=app_constants.INDEX_COLS)
+df.rename(columns={col + ".1": col for col in app_constants.INDEX_COLS}, inplace=True)
+COUNTRIES_DF = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
 # Prescriptor list should be in order of least to most change
-pareto_df = pd.read_csv(constants.PARETO_CSV_PATH)
+pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
+pareto_df = pareto_df.sort_values(by="change", ascending=True)
 prescriptor_list = list(pareto_df["id"])
+
+encoder = ELUCEncoder.from_json(app_constants.PRESCRIPTOR_PATH / "fields.json")
+# TODO: Stop hard-coding candidate params -> make cand config file?
+candidate_params = {
+    "in_size": len(constants.CAO_MAPPING["context"]),
+    "hidden_size": 16,
+    "out_size": len(constants.RECO_COLS)
+}
+prescriptor = TorchPrescriptor(None, encoder, None, 1, candidate_params)
+
+# Load predictors
+predictors = utils.load_predictors()
 
 # Cells
 min_lat = df.index.get_level_values("lat").min()
@@ -40,17 +57,14 @@ max_lon = df.index.get_level_values("lon").max()
 min_time = df.index.get_level_values("time").min()
 max_time = df.index.get_level_values("time").max()
 
-lat_list = list(np.arange(min_lat, max_lat + constants.GRID_STEP, constants.GRID_STEP))
-lon_list = list(np.arange(min_lon, max_lon + constants.GRID_STEP, constants.GRID_STEP))
+lat_list = list(np.arange(min_lat, max_lat + app_constants.GRID_STEP, app_constants.GRID_STEP))
+lon_list = list(np.arange(min_lon, max_lon + app_constants.GRID_STEP, app_constants.GRID_STEP))
 
 map_fig = go.Figure()
 
-# Load predictors
-predictors = utils.load_predictors()
-
 # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
 legend_div = html.Div(
-    style={},
+    style={"margin-bottom": "100px"}, # Because we removed some crops, we extend this so the map doesn't shrink.
     children = [
         dcc.Markdown('''
 ### Land Use Types
@@ -70,12 +84,6 @@ Urban
 
 Crop
 
-    - c3ann: Annual C3 crops (e.g. wheat)
-    - c4ann: Annual C4 crops (e.g. maize)
-    - c3per: Perennial C3 crops (e.g. banana)
-    - c4per: Perennial C4 crops (e.g. sugarcane)
-    - c3nfx: Nitrogen fixing C3 crops (e.g. soybean)
-
 Pasture
 
     - pastr: Managed pasture land
@@ -92,8 +100,8 @@ context_div = html.Div(
         html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
         dcc.Dropdown(
             id="loc-dropdown",
-            options=list(countries_df["names"]),
-            value=list(countries_df["names"])[143],
+            options=list(COUNTRIES_DF["names"]),
+            value=list(COUNTRIES_DF["names"])[143],
             style={'grid-column': '2', 'grid-row': '1', 'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         ),
         html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
@@ -130,7 +138,7 @@ presc_select_div = html.Div([
     html.Div([
         dcc.Slider(id='presc-select',
                 min=0, max=len(prescriptor_list)-1, step=1,
-                value=constants.DEFAULT_PRESCRIPTOR_IDX,
+                value=app_constants.DEFAULT_PRESCRIPTOR_IDX,
                 included=False,
                 marks={i : "" for i in range(len(prescriptor_list))})
     ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
@@ -140,8 +148,13 @@ presc_select_div = html.Div([
     dbc.Modal(
             [
                 dbc.ModalHeader("Pareto front"),
-                dcc.Graph(id='pareto-fig', figure=utils.create_pareto(pareto_df=pareto_df,
-                                                                presc_id=prescriptor_list[constants.DEFAULT_PRESCRIPTOR_IDX])),
+                dcc.Graph(
+                    id='pareto-fig',
+                    figure=utils.create_pareto(
+                        pareto_df=pareto_df,
+                        presc_id=prescriptor_list[app_constants.DEFAULT_PRESCRIPTOR_IDX]
+                    )
+                ),
             ],
             id="pareto-modal",
             is_open=False,
@@ -149,9 +162,9 @@ presc_select_div = html.Div([
 ], style={"display": "grid", "grid-template-columns": "auto 1fr auto auto", "width": "100%", "align-content": "center"})
 
 chart_select_div = dcc.Dropdown(
-    options=constants.CHART_TYPES,
+    options=app_constants.CHART_TYPES,
     id="chart-select",
-    value=constants.CHART_TYPES[0],
+    value=app_constants.CHART_TYPES[0],
     clearable=False
 )
 
@@ -162,12 +175,11 @@ checklist_div = html.Div([
 
 sliders_div = html.Div([
     html.Div([
-        #html.P(col, style={"grid-column": "1"}),
         html.Div([
             dcc.Slider(
                 min=0,
                 max=1,
-                step=constants.SLIDER_PRECISION,
+                step=app_constants.SLIDER_PRECISION,
                 value=0,
                 marks=None,
                 tooltip={"placement": "bottom", "always_visible": False},
@@ -176,7 +188,7 @@ sliders_div = html.Div([
         ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
         dcc.Input(
             value="0%",
-            type="text", 
+            type="text",
             disabled=True,
             id={"type": "slider-value", "index": f"{col}"},
             style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
@@ -188,7 +200,7 @@ frozen_div = html.Div([
         value=f"{col}: 0.00%",
         type="text",
         disabled=True,
-        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in constants.NO_CHANGE_COLS + ["nonland"]
+        id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in app_constants.NO_CHANGE_COLS + ["nonland"]
 ])
 
 predict_div = html.Div([
@@ -215,37 +227,62 @@ predict_div = html.Div([
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
     html.Div(className="parent", children=[
-        html.P("Total emissions reduced from this land use change: ", className="child", style=inline_block),
+        html.P(
+            "Total emissions reduced from this land use change: ",
+            className="child",
+            style=inline_block
+        ),
         html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
-        html.P("Flight emissions from flying JFK to Geneva: ", className="child", style=inline_block),
-        html.P(f"{constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(
+            "Flight emissions from flying JFK to Geneva: ",
+            className="child",
+            style=inline_block
+        ),
+        html.P(f"{app_constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-airplane", style=inline_block),
-        html.P("Plane tickets mitigated: ", className="child", style=inline_block),
+        html.P(
+            "Plane tickets mitigated: ",
+            className="child",
+            style=inline_block
+        ),
         html.P(id="tickets", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
-        html.P("Total yearly carbon emissions of average world citizen: ", className="child", style=inline_block),
-        html.P(f"{constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+        html.P(
+            "Total yearly carbon emissions of average world citizen: ",
+            className="child",
+            style=inline_block
+        ),
+        html.P(f"{app_constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
     ]),
     html.Div(className="parent", children=[
         html.I(className="bi bi-person", style=inline_block),
-        html.P("Number of peoples' carbon emissions mitigated from this change : ", className="child", style=inline_block),
+        html.P(
+            "Number of peoples' carbon emissions mitigated from this change : ",
+            className="child",
+            style=inline_block
+        ),
         html.P(id="people", style={"font-weight": "bold"}|inline_block)
     ]),
-    html.P("(Sources: https://flightfree.org/flight-emissions-calculator https://scied.ucar.edu/learning-zone/climate-solutions/carbon-footprint)", style={"font-size": "10px"})
+    html.P(
+        "(Sources: https://flightfree.org/flight-emissions-calculator \
+            https://scied.ucar.edu/learning-zone/climate-solutions/carbon-footprint)",
+        style={"font-size": "10px"}
+    )
 ])
 
 references_div = html.Div([
     html.Div(className="parent", children=[
         html.P("Code for this project can be found here:  ",
                className="child", style=inline_block),
-        html.A("(Project Resilience MVP repo)", href="https://github.com/Project-Resilience/mvp/tree/main/use_cases/eluc\n"),
+        html.A("(Project Resilience MVP repo)",
+               href="https://github.com/Project-Resilience/mvp/tree/main/use_cases/eluc\n"),
     ]),
     html.Div(className="parent", children=[
         html.P("The paper for this project can be found here:  ",
@@ -255,7 +292,8 @@ references_div = html.Div([
     html.Div(className="parent", children=[
         html.P("ELUC data provided by the BLUE model  ",
                className="child", style=inline_block),
-        html.A("(BLUE: Bookkeeping of land use emissions)", href="https://agupubs.onlinelibrary.wiley.com/doi/10.1002/2014GB004997\n"),
+        html.A("(BLUE: Bookkeeping of land use emissions)",
+               href="https://agupubs.onlinelibrary.wiley.com/doi/10.1002/2014GB004997\n"),
     ]),
     html.Div(className="parent", children=[
         html.P("Land use change data provided by the LUH2 project",
@@ -265,15 +303,16 @@ references_div = html.Div([
     html.Div(className="parent", children=[
         html.P("Setup is described in Appendix C2.1 of the GCB 2022 report",
                className="child", style=inline_block),
-        html.A("(Global Carbon Budget 2022 report)", href="https://essd.copernicus.org/articles/14/4811/2022/#section10/\n"),
+        html.A("(Global Carbon Budget 2022 report)",
+               href="https://essd.copernicus.org/articles/14/4811/2022/#section10/\n"),
     ]),
     html.Div(className="parent", children=[
-        html.P("The Global Carbon Budget report assesses the global CO2 budget for the Intergovernmental Panel on Climate Change",
+        html.P("The Global Carbon Budget report assesses the global CO2 budget \
+               for the Intergovernmental Panel on Climate Change",
                className="child", style=inline_block),
         html.A("(IPCC)", href="https://www.ipcc.ch/\n"),
     ]),
 ])
-
 
 @app.callback(
     Output("pareto-modal", "is_open"),
@@ -294,7 +333,6 @@ def toggle_modal(n, is_open, presc_idx):
     if n:
         return not is_open, fig
     return is_open, fig
-
 
 @app.callback(
     Output("lat-dropdown", "value"),
@@ -325,11 +363,10 @@ def select_country(location, year):
     :param year: Used to get proper # of points to sample from.
     :return: A sample latitude/longitude point within the selected country.
     """
-    country_idx = countries_df[countries_df["names"] == location].index[0]
+    country_idx = COUNTRIES_DF[COUNTRIES_DF["names"] == location].index[0]
     samples = df[df["country"] == country_idx].loc[year]
     example = samples.iloc[len(samples) // 2]
     return example.name[0], example.name[1]
-
 
 @app.callback(
     Output("map", "figure"),
@@ -346,11 +383,12 @@ def update_map(year, lat, lon, location):
     :param year: The selected year.
     :return: A newly created map.
     """
-    country_idx = countries_df[countries_df["names"] == location].index[0]
+    country_idx = COUNTRIES_DF[COUNTRIES_DF["names"] == location].index[0]
     # Filter data by year and location
     data = df.loc[year]
     data = data[data["country"] == country_idx]
-    data = data.copy().reset_index()
+    # Drop index because plotly requires single integer index
+    data = data.copy().reset_index(drop=True)
 
     # Find colored point
     lat_lon = (data["lat"] == lat) & (data["lon"] == lon)
@@ -380,12 +418,12 @@ def set_frozen_reset_sliders(lat, lon, year):
 
     chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
 
-    frozen_cols = constants.NO_CHANGE_COLS + ["nonland"]
+    frozen_cols = app_constants.NO_CHANGE_COLS + ["nonland"]
     frozen = chart_data[frozen_cols].tolist()
     frozen = [f"{frozen_cols[i]}: {frozen[i]*100:.2f}%" for i in range(len(frozen_cols))]
 
     reset = [0 for _ in constants.RECO_COLS]
-    
+
     max_val = chart_data[constants.RECO_COLS].sum()
     maxes = [max_val for _ in range(len(constants.RECO_COLS))]
 
@@ -415,7 +453,7 @@ def update_context_chart(chart_type, year, lat, lon):
 
     if chart_type == "Treemap":
         return utils.create_treemap(chart_data, type_context=True, year=year)
-    
+
     return utils.create_pie(chart_data, type_context=True, year=year)
 
 
@@ -428,10 +466,9 @@ def update_context_chart(chart_type, year, lat, lon):
     State("lon-dropdown", "value"),
     prevent_initial_call=True
 )
-def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
+def select_prescriptor(_, presc_idx, year, lat, lon):
     """
     Selects prescriptor, runs on context, updates sliders.
-    :param n_clicks: Unused number of times button has been clicked.
     :param presc_idx: Index of prescriptor in PRESCRIPTOR_LIST to load.
     :param year: Selected context year.
     :param lat: Selected context lat.
@@ -439,12 +476,16 @@ def select_prescriptor(n_clicks, presc_idx, year, lat, lon):
     :return: Updated slider values.
     """
     presc_id = prescriptor_list[presc_idx]
-    prescriptor = Prescriptor.Prescriptor(presc_id)
-    context = df.loc[year, lat, lon][constants.CONTEXT_COLUMNS]
+    context = df.loc[year, lat, lon][constants.CAO_MAPPING["context"]]
     context_df = pd.DataFrame([context])
-    prescribed = prescriptor.run_prescriptor(context_df)
+    prescribed = prescriptor.prescribe_land_use(context_df,
+                                                cand_id=presc_id,
+                                                results_dir=app_constants.PRESCRIPTOR_PATH)
+    # Prescribed gives it to us in diff format, we need to recompute recommendations
+    for col in constants.RECO_COLS:
+        prescribed[col] = context[col] + prescribed[f"{col}_diff"]
+    prescribed = prescribed[constants.RECO_COLS]
     return prescribed.iloc[0].tolist()
-    
 
 @app.callback(
     Output({"type": "slider-value", "index": MATCH}, "value"),
@@ -457,7 +498,6 @@ def show_slider_value(slider):
     :return: Slider values.
     """
     return f"{slider * 100:.2f}%"
-
 
 @app.callback(
     Output("sum-warning", "children"),
@@ -480,8 +520,9 @@ def compute_land_change(sliders, year, lat, lon, locked):
     :param locked: Locked columns to check for warning.
     :return: Warning if necessary, land change percent.
     """
-    context = df.loc[year, lat, lon][constants.LAND_USE_COLS]
+    context = df.loc[year, lat, lon]
     presc = pd.Series(sliders, index=constants.RECO_COLS)
+    context_actions_df = utils.context_presc_to_df(context, presc)
 
     warnings = []
     # Check if prescriptions sum to 1
@@ -489,22 +530,23 @@ def compute_land_change(sliders, year, lat, lon, locked):
     new_sum = presc.sum()
     old_sum = context[constants.RECO_COLS].sum()
     if not isclose(new_sum, old_sum, rel_tol=1e-7):
-        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
+        warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} \
+                               instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
 
     # Check if sum of locked prescriptions are > sum(land use)
     # TODO: take a look at this logic.
     if locked and presc[locked].sum() > old_sum:
-        warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. Please reduce one before proceeding"))
+        warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. \
+                               Please reduce one before proceeding"))
 
     # Check if any prescriptions below 0
     if (presc < 0).any():
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = utils.compute_percent_change(context, presc)
+    change = prescriptor.compute_percent_changed(context_actions_df)
 
-    return warnings, f"{change * 100:.2f}"
-
+    return warnings, f"{change['change'].iloc[0] * 100:.2f}"
 
 @app.callback(
     Output("presc-fig", "figure"),
@@ -525,10 +567,9 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     :param lon: Selected context lon.
     :return: New chart of type chart_type using presc data.
     """
-
     # If we have no prescription just return an empty chart
     if all(slider == 0 for slider in sliders):
-        return utils.create_treemap(pd.Series([]), type_context=False, year=year)
+        return utils.create_treemap(pd.Series([], dtype=float), type_context=False, year=year)
 
     presc = pd.Series(sliders, index=constants.RECO_COLS)
     context = df.loc[year, lat, lon]
@@ -541,13 +582,11 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     nonland = nonland if nonland > 0 else 0
     chart_data["nonland"] = nonland
 
-    assert chart_type in ("Treemap", "Pie Chart")
-
     if chart_type == "Treemap":
         return utils.create_treemap(chart_data, type_context=False, year=year)
-    
-    return utils.create_pie(chart_data, type_context=False, year=year)
-
+    if chart_type == "Pie Chart":
+        return utils.create_pie(chart_data, type_context=False, year=year)
+    raise ValueError(f"Invalid chart type: {chart_type}")
 
 @app.callback(
     Output({"type": "presc-slider", "index": ALL}, "value", allow_duplicate=True),
@@ -559,11 +598,10 @@ def update_presc_chart(chart_type, sliders, year, lat, lon):
     State("locks", "value"),
     prevent_initial_call=True
 )
-def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
+def sum_to_1(_, sliders, year, lat, lon, locked):
     """
     Sets slider values to sum to how much land was used in context.
     Subtracts locked sum from both of these and doesn't adjust them.
-    :param n_clicks: Unused number of times button has been clicked.
     :param sliders: Prescribed slider values to set to sum to 1.
     :param year: Selected context year.
     :param lat: Selected context lat.
@@ -595,7 +633,6 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     presc[presc < 0] = 0
     return presc.tolist()
 
-
 @app.callback(
     Output("predict-eluc", "value"),
     Input("predict-button", "n_clicks"),
@@ -606,10 +643,9 @@ def sum_to_1(n_clicks, sliders, year, lat, lon, locked):
     State("pred-select", "value"),
     prevent_initial_call=True
 )
-def predict(n_clicks, year, lat, lon, sliders, predictor_name):
+def predict(_, year, lat, lon, sliders, predictor_name):
     """
     Predicts ELUC from context and prescription stores.
-    :param n_clicks: Unused number of times button has been clicked.
     :param year: Selected context year.
     :param lat: Selected context lat.
     :param lon: Selected context lon.
@@ -619,17 +655,12 @@ def predict(n_clicks, year, lat, lon, sliders, predictor_name):
     """
     context = df.loc[year, lat, lon]
     presc = pd.Series(sliders, index=constants.RECO_COLS)
-
-    # Preprocess presc into diffs
-    presc = presc.combine_first(context[constants.NO_CHANGE_COLS])
-    diff = presc[constants.LAND_USE_COLS] - context[constants.LAND_USE_COLS]
-    diff = diff.rename(constants.COLS_MAP)
-    diff_df = pd.DataFrame([diff])
+    context_actions_df = utils.context_presc_to_df(context, presc)
 
     predictor = predictors[predictor_name]
-    eluc = predictor.predict(diff_df)
+    eluc_df = predictor.predict(context_actions_df)
+    eluc = eluc_df["ELUC"].iloc[0]
     return f"{eluc:.4f}"
-
 
 @app.callback(
     Output("total-em", "children"),
@@ -655,11 +686,10 @@ def update_trivia(eluc_str, year, lat, lon):
 
     # Calculate total reduction
     eluc = float(eluc_str)
-    total_reduction = eluc * area
+    total_reduction = eluc * area * app_constants.TC_TO_TCO2
     return f"{-1 * total_reduction:,.2f} tonnes CO2", \
-            f"{-1 * total_reduction // constants.CO2_JFK_GVA:,.0f} tickets", \
-                f"{-1 * total_reduction // constants.CO2_PERSON:,.0f} people"
-
+            f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
+                f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
 
 app.title = 'Land Use Optimization'
 app.css.config.serve_locally = False
@@ -680,7 +710,6 @@ identified by its latitude and longitude coordinates, and a given year:
 * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
 in tons of carbon per hectare)
 
-*Note: the prescriptor model is currently only trained on Western Europe*
 '''),
     dcc.Markdown('''## Context'''),
     html.Div([
@@ -698,7 +727,8 @@ in tons of carbon per hectare)
         html.Div(sliders_div, style={'grid-column': '2'}),
         dcc.Graph(id='context-fig', figure=utils.create_treemap(type_context=True), style={'grid-column': '3'}),
         dcc.Graph(id='presc-fig', figure=utils.create_treemap(type_context=False), style={'grid-clumn': '4'})
-    ], style={'display': 'grid', 'grid-template-columns': 'auto 40% 1fr 1fr', "width": "100%"}),
+    # This can't be set to auto because the lines will overflow!
+    ], style={'display': 'grid', 'grid-template-columns': '4.5% 40% 1fr 1fr', "width": "100%"}),
     html.Div([
         frozen_div,
         html.Button("Sum to 100%", id='sum-button', n_clicks=0),
@@ -711,7 +741,6 @@ in tons of carbon per hectare)
     dcc.Markdown('''## References'''),
     references_div
 ], style={'padding-left': '10px'},)
-
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)

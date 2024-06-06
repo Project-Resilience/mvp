@@ -90,7 +90,7 @@ class TestNeuralNet(unittest.TestCase):
         """
         Tests the neural net with a single input.
         """
-        predictor = NeuralNetPredictor(dict(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu"))
+        predictor = NeuralNetPredictor({"hidden_sizes": [4], "epochs": 1, "batch_size": 1, "device": "cpu"})
 
         train_data = pd.DataFrame({"a": [1], "b": [2], "c": [3], "label": [4]})
         test_data = pd.DataFrame({"a": [4], "b": [5], "c": [6]})
@@ -103,7 +103,7 @@ class TestNeuralNet(unittest.TestCase):
         """
         Tests the neural net with multiple inputs.
         """
-        predictor = NeuralNetPredictor(dict(hidden_sizes=[4], epochs=1, batch_size=1, device="cpu"))
+        predictor = NeuralNetPredictor({"hidden_sizes": [4], "epochs": 1, "batch_size": 1, "device": "cpu"})
 
         train_data = pd.DataFrame({"a": [1, 2], "b": [2, 3], "c": [3, 4], "label": [4, 5]})
         test_data = pd.DataFrame({"a": [4, 5], "b": [5, 6], "c": [6, 7]})

@@ -9,14 +9,16 @@ the raw files and processes it.
 ELUCData is the standard implementation of AbstractData that loads the ELUC
 data from the HuggingFace repo.
 """
-import warnings
-import os
 from abc import ABC
+import json
+import os
+from pathlib import Path
+import warnings
 
-import xarray as xr
-import regionmask
-import pandas as pd
 from datasets import load_dataset, Dataset
+import pandas as pd
+import regionmask
+import xarray as xr
 
 from data import constants
 from data.conversion import construct_countries_df
@@ -58,6 +60,21 @@ class ELUCEncoder():
                 new_df[col] = new_df[col] * (max_val - min_val) + min_val
         return new_df
 
+    def save_fields(self, path: Path):
+        """
+        Saves the fields to a JSON file.
+        """
+        with open(path, "w", encoding="utf-8") as file:
+            json.dump(self.fields, file, indent=4)
+
+    @classmethod
+    def from_json(cls, path: Path):
+        """
+        Loads the fields from a JSON file.
+        """
+        with open(path, "r", encoding="utf-8") as file:
+            fields = json.load(file)
+        return cls(fields)
 
 class AbstractData(ABC):
     """
@@ -161,7 +178,7 @@ class ELUCData(AbstractData):
         If update_path is given, load raw data the old way using 2 files that are merged.
         Otherwise, path is taken to be a huggingface repo and we load the data from there.
         """
-        assert start_year < test_year and test_year < end_year
+        assert start_year < test_year < end_year
 
         super().__init__()
 
@@ -172,7 +189,7 @@ class ELUCData(AbstractData):
         self.train_df = df.loc[start_year:test_year-1]
         self.test_df = df.loc[test_year:end_year-1]
         assert self.train_df['time'].max() == self.test_df["time"].min() - 1
-        
+
         self.encoder = ELUCEncoder(self.get_fields())
 
     def hf_to_df(self, hf_repo):
@@ -199,7 +216,7 @@ class RawELUCData(AbstractData):
         self.train_df = df.loc[start_year:test_year-1]
         self.test_df = df.loc[test_year:end_year-1]
         assert self.train_df['time'].max() == self.test_df["time"].min() - 1
-        
+
         self.encoder = ELUCEncoder(self.get_fields())
 
     def import_data(self, path, update_path):

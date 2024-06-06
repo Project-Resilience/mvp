@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 from data.eluc_data import ELUCData
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+from prescriptors.nsga2.trainer import TorchTrainer
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 
 if __name__ == "__main__":
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     print("Initializing prescription...")
     if "seed_dir" in config["evolution_params"].keys():
         config["evolution_params"]["seed_dir"] = Path(config["evolution_params"]["seed_dir"])
-    tp = TorchPrescriptor(
+    tp = TorchTrainer(
         eval_df=dataset.train_df.sample(frac=0.001, random_state=42),
         encoder=dataset.encoder,
         predictor=nnp,

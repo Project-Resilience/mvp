@@ -11,7 +11,9 @@ def main():
     """
     Main function that loads the data and saves it.
     """
-    dataset = ELUCData(APP_START_YEAR-1, APP_START_YEAR, 2022)
+    # Subsets the dataset so train_df is from start_year-1 to test year which we discard.
+    # Then we take the app data as the test def which is from the app start year to the end of the dataset.
+    dataset = ELUCData(start_year=APP_START_YEAR-1, test_year=APP_START_YEAR)
     test_df = dataset.test_df
     save_dir = Path("data/processed")
     save_dir.mkdir(exist_ok=True)

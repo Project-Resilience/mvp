@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
+from data import constants
 from predictors.predictor import Predictor
 
 class SKLearnPredictor(Predictor, ABC):
@@ -26,6 +27,7 @@ class SKLearnPredictor(Predictor, ABC):
         label: name of the label to predict (optional, defaults to passed label during fit)
         Any other parameters are passed to the model.
         """
+        super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"], ["ELUC"])
         self.config = model_config
         self.model = None
 

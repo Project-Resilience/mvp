@@ -17,6 +17,16 @@ class Predictor(ABC):
     Save and load must be compatible with each other but not necessarily with other models.
     The expected flow of the model is fit -> predict -> save -> load -> predict.
     """
+    def __init__(self, context: list[str], actions: list[str], outcomes: list[str]):
+        """
+        Initializes the Predictor with the context, actions, and outcomes.
+        :param context: list of context columns
+        :param actions: list of action columns
+        :param outcomes: list of outcome columns
+        """
+        self.context = context
+        self.actions = actions
+        self.outcomes = outcomes
 
     @abstractmethod
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):

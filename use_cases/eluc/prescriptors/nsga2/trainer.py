@@ -54,6 +54,10 @@ class TorchTrainer():
     def _evaluate_candidates(self, candidates: list[Candidate]):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
+        This is where the Project Resilience Prescriptor logic is used in evolution, although it doesn't have to be.
+        We wrap a LandUsePrescriptor around the Candidate we are evaluating and call torch_prescribe which is a
+        special prescription method that goes straight from tensor to tensor instead of converting to DataFrame.
+        We use a dummy PrescriptorManager to compute the metrics using predict_metrics.
         """
         prescriptor_manager = PrescriptorManager(None, self.predictor)
         for candidate in candidates:

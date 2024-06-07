@@ -14,10 +14,18 @@ class ELUCEncoder():
     Special case for "change" column which doesn't have to be encoded
     Special case for "diff" colums which we want to force between [-1, 1] which stretches them out.
     """
-    def __init__(self, df: pd.DataFrame):
-        self.fields = self.get_fields(df)
+    def __init__(self, fields: dict):
+        self.fields = fields
 
-    def get_fields(self, df: pd.DataFrame) -> dict:
+    @classmethod
+    def from_pandas(cls, df: pd.DataFrame):
+        """
+        Records fields from a pandas dataframe.
+        """
+        return cls(cls.get_fields(df))
+
+    @staticmethod
+    def get_fields(df: pd.DataFrame) -> dict:
         """
         Creates fields json object for the data encoder/prescriptor.
         """

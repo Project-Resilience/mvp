@@ -24,10 +24,11 @@ class ELUCData():
         if countries:
             df = self.subset_countries(df, countries)
         self.train_df = df.loc[start_year:test_year-1].copy()
-        self.test_df = df.loc[test_year:end_year-1].copy()
-        assert self.train_df['time'].max() == self.test_df["time"].min() - 1
+        if test_year:
+            self.test_df = df.loc[test_year:end_year-1].copy()
+            assert self.train_df['time'].max() == self.test_df["time"].min() - 1
 
-        self.encoder = ELUCEncoder(self.train_df)
+        self.encoder = ELUCEncoder.from_pandas(self.train_df)
         # Set encoded values to None so that we don't encode them until we need to
         self.encoded_train_df = None
         self.encoded_test_df = None
@@ -42,7 +43,7 @@ class ELUCData():
         return df[df["country"].isin(idx)].copy()
 
     @classmethod
-    def from_hf(cls, start_year, test_year, end_year, countries=None):
+    def from_hf(cls, start_year=1851, test_year=2012, end_year=2022, countries=None):
         """
         Loads dataframe from HuggingFace dataset to be processed by ELUCData constructor.
         """
@@ -139,6 +140,7 @@ class ELUCData():
         """
         Same as above but for test data.
         """
+        assert self.test_df is not None, "No test data provided."
         if self.encoded_test_df is None:
             self.encoded_test_df = self.encoder.encode_as_df(self.test_df)
         return self.encoded_test_df

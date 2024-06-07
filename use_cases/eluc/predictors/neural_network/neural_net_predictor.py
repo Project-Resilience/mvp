@@ -243,13 +243,13 @@ class NeuralNetPredictor(Predictor):
         return result_dict
 
 
-    def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Generates prediction from model for given test data.
-        :param X_test: test data to predict on.
+        :param context_actions_df: test data to predict on.
         :return: DataFrame of predictions properly labeled.
         """
-        X_test_scaled = self.scaler.transform(X_test[self.features])
+        X_test_scaled = self.scaler.transform(context_actions_df[self.features])
         test_ds = TorchDataset(X_test_scaled, np.zeros(len(X_test_scaled)))
         test_dl = DataLoader(test_ds, self.batch_size, shuffle=False)
         pred_list = []
@@ -263,4 +263,4 @@ class NeuralNetPredictor(Predictor):
             y_pred = torch.concatenate(pred_list, dim=0).cpu().numpy()
         else:
             y_pred = pred_list[0].cpu().numpy()
-        return pd.DataFrame(y_pred, index=X_test.index, columns=[self.label])
+        return pd.DataFrame(y_pred, index=context_actions_df.index, columns=[self.label])

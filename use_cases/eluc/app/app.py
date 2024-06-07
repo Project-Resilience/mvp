@@ -20,6 +20,7 @@ import dash_bootstrap_components as dbc
 from data import constants
 import app.constants as app_constants
 from app import utils
+from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -38,7 +39,8 @@ prescriptor_list = list(pareto_df["id"])
 prescriptor_manager = utils.load_prescriptors()
 
 # Load predictors
-predictors = utils.load_predictors()
+eluc_predictors = utils.load_predictors()
+change_predictor = PercentChangePredictor()
 
 # Cells
 min_lat = df["lat"].min()
@@ -195,7 +197,7 @@ frozen_div = html.Div([
 ])
 
 predict_div = html.Div([
-    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
+    dcc.Dropdown(list((eluc_predictors.keys())), list(eluc_predictors.keys())[0], id="pred-select", style={"width": "200px"}),
     html.Button("Predict", id='predict-button', n_clicks=0,),
     html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
     dcc.Input(
@@ -533,9 +535,9 @@ def compute_land_change(sliders, year, lat, lon, locked):
         warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
     # Compute total change
-    change = prescriptor_manager.compute_percent_changed(context_actions_df)
+    change = change_predictor.predict(context_actions_df)["change"].iloc[0]
 
-    return warnings, f"{change['change'].iloc[0] * 100:.2f}"
+    return warnings, f"{change * 100:.2f}"
 
 @app.callback(
     Output("presc-fig", "figure"),
@@ -646,7 +648,7 @@ def predict(_, year, lat, lon, sliders, predictor_name):
     presc = pd.Series(sliders, index=constants.RECO_COLS)
     context_actions_df = utils.context_presc_to_df(context, presc)
 
-    predictor = predictors[predictor_name]
+    predictor = eluc_predictors[predictor_name]
     eluc_df = predictor.predict(context_actions_df)
     eluc = eluc_df["ELUC"].iloc[0]
     return f"{eluc:.4f}"

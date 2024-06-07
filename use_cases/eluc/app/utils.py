@@ -14,6 +14,7 @@ from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 
 from predictors.predictor import Predictor
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
 def add_nonland(data: pd.Series) -> pd.Series:
@@ -277,7 +278,8 @@ def load_prescriptors() -> tuple[list[str], PrescriptorManager]:
         cand_local_dir = app_constants.PRESCRIPTOR_PATH / cand_path.replace("/", "--")
         prescriptors[cand_id] = LandUsePrescriptor.from_pretrained(cand_path, local_dir=cand_local_dir)
 
-    prescriptor_manager = PrescriptorManager(prescriptors, None)
+    change_predictor = PercentChangePredictor()
+    prescriptor_manager = PrescriptorManager(prescriptors, {"change": change_predictor})
 
     return prescriptor_manager
 

@@ -29,7 +29,7 @@ class TorchTrainer():
                  p_mutation: float,
                  eval_df: pd.DataFrame,
                  encoder: ELUCEncoder,
-                 predictor: Predictor,
+                 predictors: dict[str, Predictor],
                  batch_size: int,
                  candidate_params: dict,
                  seed_dir=None):
@@ -43,7 +43,7 @@ class TorchTrainer():
 
         # Evaluation params
         self.encoder = encoder
-        self.predictor = predictor
+        self.predictors = predictors
         self.context_df = eval_df[constants.CAO_MAPPING["context"]]
         encoded_eval_df = encoder.encode_as_df(eval_df)
         context_ds = TorchDataset(encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
@@ -59,12 +59,12 @@ class TorchTrainer():
         special prescription method that goes straight from tensor to tensor instead of converting to DataFrame.
         We use a dummy PrescriptorManager to compute the metrics using predict_metrics.
         """
-        prescriptor_manager = PrescriptorManager(None, self.predictor)
+        prescriptor_manager = PrescriptorManager(None, self.predictors)
         for candidate in candidates:
             prescriptor = LandUsePrescriptor(candidate, self.encoder, self.batch_size)
             context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
-            eluc_df, change_df = prescriptor_manager.predict_metrics(context_actions_df)
-            candidate.metrics = (eluc_df["ELUC"].mean(), change_df["change"].mean())
+            outcomes_df = prescriptor_manager.predict_metrics(context_actions_df)
+            candidate.metrics = (outcomes_df["ELUC"].mean(), outcomes_df["change"].mean())
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """

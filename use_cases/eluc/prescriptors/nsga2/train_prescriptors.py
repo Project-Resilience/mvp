@@ -10,6 +10,7 @@ from pathlib import Path
 from data.eluc_data import ELUCData
 from prescriptors.nsga2.trainer import TorchTrainer
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 if __name__ == "__main__":
 
@@ -23,9 +24,11 @@ if __name__ == "__main__":
     print("Loading dataset...")
     dataset = ELUCData()
 
-    print("Loading predictor...")
+    print("Loading predictors...")
     # TODO: We need to make it so you can load any predictor here
     nnp = NeuralNetPredictor.load(Path(config["predictor_path"]))
+    pct_change = PercentChangePredictor()
+    predictors = {"ELUC": nnp, "change": pct_change}
 
     print("Initializing prescription...")
     if "seed_dir" in config["evolution_params"].keys():
@@ -33,7 +36,7 @@ if __name__ == "__main__":
     tp = TorchTrainer(
         eval_df=dataset.train_df.sample(frac=0.001, random_state=42),
         encoder=dataset.encoder,
-        predictor=nnp,
+        predictors=predictors,
         batch_size=4096,
         **config["evolution_params"]
     )

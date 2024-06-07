@@ -78,16 +78,16 @@ class SKLearnPredictor(Predictor, ABC):
         self.config["label"] = y_train.name
         self.model.fit(X_train, y_train)
 
-    def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Standard sklearn predict method.
         Makes sure to use the same features as were used in fit.
-        :param X_test: DataFrame with input data
+        :param context_actions_df: DataFrame with input data
         :return: properly labeled DataFrame with predictions and matching index.
         """
-        X_test = X_test[self.config["features"]]
-        y_pred = self.model.predict(X_test)
-        return pd.DataFrame(y_pred, index=X_test.index, columns=[self.config["label"]])
+        context_actions_df = context_actions_df[self.config["features"]]
+        y_pred = self.model.predict(context_actions_df)
+        return pd.DataFrame(y_pred, index=context_actions_df.index, columns=[self.config["label"]])
 
 class LinearRegressionPredictor(SKLearnPredictor):
     """

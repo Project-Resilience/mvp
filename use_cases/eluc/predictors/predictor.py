@@ -40,12 +40,12 @@ class Predictor(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def predict(self, X_test: pd.DataFrame) -> pd.DataFrame:
+    def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """
         Creates a DataFrame with predictions for the input DataFrame.
         The Predictor model is expected to keep track of the label so that it can label the output
         DataFrame properly.
-        :param X_test: DataFrame with input data
+        :param context_actions_df: DataFrame with input data
         :return: DataFrame with predictions
         """
         raise NotImplementedError

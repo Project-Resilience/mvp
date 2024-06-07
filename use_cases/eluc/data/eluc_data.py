@@ -54,7 +54,7 @@ class ELUCData():
         df["lon_idx"] = df["lon"]
         df = df.set_index(["time_idx", "lat_idx", "lon_idx"], drop=True)
         return cls(df, start_year, test_year, end_year, countries)
-    
+
     @classmethod
     def from_file(cls, path, update_path, start_year, test_year, end_year, countries=None):
         """
@@ -64,7 +64,7 @@ class ELUCData():
         raw = cls.import_data(path, update_path)
         df = cls.da_to_df(raw)
         return cls(df, start_year, test_year, end_year, countries)
-    
+
     @staticmethod
     def import_data(path, update_path):
         """
@@ -96,7 +96,7 @@ class ELUCData():
             country_mask = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.mask(raw)
             raw["country"] = country_mask
         return raw
-    
+
     @staticmethod
     def da_to_df(da: xr.DataArray) -> pd.DataFrame:
         """
@@ -127,7 +127,7 @@ class ELUCData():
         df = df.drop("mask", axis=1)
 
         return df
-    
+
     def get_encoded_train(self):
         """
         Reduces cost of encoding data by caching the encoded version.

@@ -14,10 +14,10 @@ class PredictorEvaluator():
         """
         Initializes the evalutor with a test set to consistently test on.
         """
-        dataset = ELUCData(start_year=test_start_year-1,
-                           test_year=test_start_year,
-                           end_year=test_end_year,
-                           countries=test_countries)
+        dataset = ELUCData.from_hf(start_year=test_start_year-1,
+                                   test_year=test_start_year,
+                                   end_year=test_end_year,
+                                   countries=test_countries)
         self.X_test = dataset.test_df.drop("ELUC", axis=1)
         self.y_test = dataset.test_df["ELUC"]
 

@@ -3,7 +3,7 @@ ignore=prescriptors/esp
 
 recursive=y
 
-fail-under=9.65
+fail-under=9.7
 
 jobs=0
 

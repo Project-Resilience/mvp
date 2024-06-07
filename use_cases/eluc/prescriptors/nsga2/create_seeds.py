@@ -78,7 +78,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     supervised_backprop(seed_dir / "max_change.pt", ds)
 
 if __name__ == "__main__":
-    dataset = ELUCData()
+    dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(10000)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
     seed_no_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)

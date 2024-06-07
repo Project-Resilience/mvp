@@ -1,15 +1,7 @@
 """
-Objects used to handle preprocessing the ELUC dataset.
-
-ELUCEncoder performs simple min/max scaling on numerical columns.
-
-AbstractData contains the member variables and methods usable by the user.
-RawELUCData is an implementation of AbstractData that loads the ELUC data via.
-the raw files and processes it.
-ELUCData is the standard implementation of AbstractData that loads the ELUC
-data from the HuggingFace repo.
+File handling the processing of data for the ELUC use case.
+Dataset wraps around a pandas dataframe and provides an encoder for prescriptors to use.
 """
-from abc import ABC
 import os
 import warnings
 

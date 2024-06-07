@@ -8,6 +8,11 @@ import plotly.graph_objects as go
 
 import app.constants as app_constants
 from data import constants
+
+from prescriptors.prescriptor_manager import PrescriptorManager
+from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
+
+from predictors.predictor import Predictor
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
@@ -258,9 +263,27 @@ def create_pareto(pareto_df: pd.DataFrame, presc_id: int) -> go.Figure:
                                     " Average ELUC: %{y} tC/ha<extra></extra>")
     return fig
 
-def load_predictors() -> dict:
+def load_prescriptors() -> tuple[list[str], PrescriptorManager]:
     """
-    Loads in predictors from disk.
+    Loads in prescriptors from disk, downloads from HuggingFace first if needed.
+    TODO: Currently hard-coded to load specific prescriptors from pareto path.
+    :return: dict of prescriptor name -> prescriptor object.
+    """
+    prescriptors = {}
+    pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
+    pareto_df = pareto_df.sort_values(by="change")
+    for cand_id in pareto_df["id"]:
+        cand_path = f"danyoung/eluc-{cand_id}"
+        cand_local_dir = app_constants.PRESCRIPTOR_PATH / cand_path.replace("/", "--")
+        prescriptors[cand_id] = LandUsePrescriptor.from_pretrained(cand_path, local_dir=cand_local_dir)
+
+    prescriptor_manager = PrescriptorManager(prescriptors, None)
+
+    return prescriptor_manager
+
+def load_predictors() -> dict[str, Predictor]:
+    """
+    Loads in predictors from disk, downloads from HuggingFace first if needed.
     TODO: Currently hard-coded to load specific predictors. We need to make this able to handle any amount!
     :return: dict of predictor name -> predictor object.
     """

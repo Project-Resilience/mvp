@@ -1,44 +1,57 @@
 """
 Abstract prescriptor class to be implemented.
 """
-from abc import ABC
+from abc import ABC, abstractmethod
+from pathlib import Path
 
+from huggingface_hub import snapshot_download
 import pandas as pd
-
-from data import constants
 
 class Prescriptor(ABC):
     """
     Abstract class for prescriptors to allow us to experiment with different implementations.
+    Save and load must be compatible with each other but not necessarily with other models.
     """
-
-    def prescribe_land_use(self, context_df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    @abstractmethod
+    def prescribe(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Loads a candidate prescriptor using kwargs.
-        Then takes in a context dataframe, and prescribes actions.
+        Takes in a context dataframe and prescribes actions.
         Outputs a concatenation of the context and actions.
         """
         raise NotImplementedError
 
-    def predict_metrics(self, context_actions_df: pd.DataFrame) -> tuple:
+    @abstractmethod
+    def save(self, path: Path):
         """
-        Takes in a context actions dataframe and uses the predictor the prescriptor
-        was trained on to predict ELUC. Then computes change.
-        Returns a dataframe of ELUC and change.
+        Saves a prescriptor to disk.
         """
         raise NotImplementedError
 
-    def compute_percent_changed(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
+    @classmethod
+    @abstractmethod
+    def load(cls, path: Path) -> "Prescriptor":
         """
-        Calculates percent of land changed by prescriptor.
+        Loads a prescriptor from disk.
         """
-        # Sum the positive diffs
-        pos_diffs = context_actions_df[context_actions_df[constants.DIFF_LAND_USE_COLS] > 0]
-        percent_changed = pos_diffs[constants.DIFF_LAND_USE_COLS].sum(axis=1)
-        # Divide by sum of used land
-        total_land = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
-        total_land = total_land.replace(0, 1) # Avoid division by 0
-        percent_changed = percent_changed / total_land
-        change_df = pd.DataFrame(percent_changed, columns=["change"])
-        return change_df
-    
+        raise NotImplementedError
+
+    @classmethod
+    def from_pretrained(cls, path_or_url: str, **hf_args) -> "Prescriptor":
+        """
+        Loads a model from a path or if it is not found, from a huggingface repo.
+        TODO: This code is copied from predictor. We need to refactor this to avoid code duplication.
+        :param path_or_url: path to the model or url to the huggingface repo.
+        :param hf_args: arguments to pass to the snapshot_download function from huggingface.
+        """
+        path = Path(path_or_url)
+        if path.exists() and path.is_dir():
+            return cls.load(path)
+        # TODO: Need a try except block to catch download errors
+        url_path = path_or_url.replace("/", "--")
+        local_dir = hf_args.get("local_dir", f"prescriptors/trained_models/{url_path}")
+
+        if not Path(local_dir).exists() or not Path(local_dir).is_dir():
+            hf_args["local_dir"] = local_dir
+            snapshot_download(repo_id=path_or_url, **hf_args)
+
+        return cls.load(Path(local_dir))

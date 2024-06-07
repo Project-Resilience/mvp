@@ -5,13 +5,13 @@ from pathlib import Path
 
 from data.constants import LAND_USE_COLS
 
-DATA_FILE_PATH = Path("data/processed/app_data.csv")
+DATA_FILE_PATH = Path("app/data/app_data.csv")
 
 APP_START_YEAR = 2012
 
 GRID_STEP = 0.25
 
-INDEX_COLS = ["time", "lat", "lon"]
+INDEX_COLS = ["time_idx", "lat_idx", "lon_idx"]
 
 NO_CHANGE_COLS = ["primf", "primn", "urban"]
 CHART_COLS = LAND_USE_COLS + ["nonland"]
@@ -31,12 +31,9 @@ FIELDS = ['pastr', 'range']
 CHART_TYPES = ["Treemap", "Pie Chart"]
 
 PREDICTOR_PATH = Path("predictors/trained_models")
-PRESCRIPTOR_PATH = Path("prescriptors/nsga2/trained_prescriptors/demo")
+PRESCRIPTOR_PATH = Path("prescriptors/trained_models")
 
 # Pareto front
-PARETO_CSV_PATH = PRESCRIPTOR_PATH / "pareto.csv"
-PARETO_FRONT_PATH = PRESCRIPTOR_PATH / "pareto_front.png"
-
-FIELDS_PATH = PRESCRIPTOR_PATH / "fields.json"
+PARETO_CSV_PATH = Path("app/data/pareto.csv")
 
 DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change

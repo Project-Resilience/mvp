@@ -22,15 +22,15 @@ class Candidate(torch.nn.Module):
             torch.nn.Tanh(),
             torch.nn.Linear(hidden_size, out_size))
 
-        self.device = device
-        self.model.to(device)
-        self.model.eval()
-
         # Orthogonal initialization
         for layer in self.model:
             if isinstance(layer, torch.nn.Linear):
                 torch.nn.init.orthogonal_(layer.weight)
                 layer.bias.data.fill_(0.01)
+
+        self.device = device
+        self.model.to(device)
+        self.model.eval()
 
         # To keep track of metrics
         self.metrics = None

@@ -1,8 +1,8 @@
 {
-    "predictor_path": "predictors/trained_models/danyoung--eluc-global-nn",
+    "predictor_path": "predictors/neural_network/trained_models/no_overlap_nn",
     "evolution_params": {
-        "pop_size": 10,
-        "n_generations": 3,
+        "pop_size": 100,
+        "n_generations": 100,
         "p_mutation": 0.2,
         "candidate_params": {
             "in_size": 12,
@@ -11,5 +11,5 @@
         },
         "seed_dir": "prescriptors/nsga2/seeds/small_sample"
     },
-    "save_path": "prescriptors/nsga2/trained_prescriptors/reformat-test"
+    "save_path": "prescriptors/nsga2/training_runs/no-overlap"
 }

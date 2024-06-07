@@ -2,19 +2,22 @@
 PyTorch implementation of NSGA-II.
 """
 import random
-import shutil
 from pathlib import Path
 
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import torch
+from torch.utils.data import DataLoader
 
+from data import constants
 from data.eluc_data import ELUCEncoder
+from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
-from prescriptors.nsga2.torch_prescriptor import TorchPrescriptor
+from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
+from prescriptors.prescriptor_manager import PrescriptorManager
 
 class TorchTrainer():
     """
@@ -38,19 +41,29 @@ class TorchTrainer():
         self.p_mutation = p_mutation
         self.seed_dir=seed_dir
 
-        # Store eval df if needed
-        if eval_df is not None:
-            self.eval_df = eval_df
-            self.encoded_eval_df = encoder.encode_as_df(eval_df)
-        self.prescriptor = TorchPrescriptor(eval_df, encoder, predictor, batch_size, candidate_params)
+        # Evaluation params
+        self.encoder = encoder
+        self.predictor = predictor
+        self.context_df = eval_df[constants.CAO_MAPPING["context"]]
+        encoded_eval_df = encoder.encode_as_df(eval_df)
+        context_ds = TorchDataset(encoded_eval_df[constants.CAO_MAPPING["context"]].to_numpy(),
+                                  np.zeros((len(encoded_eval_df), len(constants.RECO_COLS))))
+        self.encoded_context_dl = DataLoader(context_ds, batch_size=batch_size, shuffle=False)
+        self.batch_size = batch_size
 
     def _evaluate_candidates(self, candidates: list[Candidate]):
         """
         Calls prescribe and predict on candidates and assigns their metrics to the results.
+        This is where the Project Resilience Prescriptor logic is used in evolution, although it doesn't have to be.
+        We wrap a LandUsePrescriptor around the Candidate we are evaluating and call torch_prescribe which is a
+        special prescription method that goes straight from tensor to tensor instead of converting to DataFrame.
+        We use a dummy PrescriptorManager to compute the metrics using predict_metrics.
         """
+        prescriptor_manager = PrescriptorManager(None, self.predictor)
         for candidate in candidates:
-            context_actions_df = self.prescriptor.prescribe(candidate)
-            eluc_df, change_df = self.prescriptor.predict_metrics(context_actions_df)
+            prescriptor = LandUsePrescriptor(candidate, self.encoder, self.batch_size)
+            context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
+            eluc_df, change_df = prescriptor_manager.predict_metrics(context_actions_df)
             candidate.metrics = (eluc_df["ELUC"].mean(), change_df["change"].mean())
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
@@ -105,9 +118,10 @@ class TorchTrainer():
         3. Make new population from parents
         """
         if save_path.exists():
-            shutil.rmtree(save_path)
+            raise ValueError(f"Path {save_path} already exists. Please choose a new path.")
         save_path.mkdir(parents=True, exist_ok=False)
-        self.prescriptor.encoder.save_fields(save_path / "fields.json")
+        print(f"Saving to {save_path}")
+        self.encoder.save_fields(save_path / "fields.json")
         results = []
         parents = [Candidate(**self.candidate_params, cand_id=f"1_{i}") for i in range(self.pop_size)]
         # Seeding the first generation with trained models

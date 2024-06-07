@@ -35,7 +35,10 @@ def upload_to_repo(model_path: str, repo_id: str, token: str=None):
         token=token
     )
 
-if __name__ == "__main__":
+def main():
+    """
+    Main logic for uploading a model.
+    """
     parser = ArgumentParser()
     parser.add_argument("--model_path", type=str, required=True)
     parser.add_argument("--repo_id", type=str, required=True)
@@ -47,3 +50,6 @@ if __name__ == "__main__":
     if args.token:
         upload_args["token"] = args.token
     upload_to_repo(**upload_args)
+
+if __name__ == "__main__":
+    main()

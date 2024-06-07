@@ -7,10 +7,14 @@ experiments/predictor_significance
 # Ignores figures for paper
 experiments/figures
 
+prescriptors/esp
 # Ignores trained prescriptors and seeds
-prescriptors/*/trained_prescriptors
+prescriptors/*/training_runs
 prescriptors/*/seeds
+prescriptors/trained_models
+prescriptors/nsga2/transfer_prescriptors.ipynb
 
+app/data/app_data.csv
 data/*.zip
-data/processed/*.csv
 *.nc
+

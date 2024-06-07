@@ -11,7 +11,7 @@ from tqdm import tqdm
 from data import constants
 from data.eluc_data import ELUCData
 from data.torch_data import TorchDataset
-from prescriptors.nsga2.torch_prescriptor import Candidate
+from prescriptors.nsga2.candidate import Candidate
 
 def supervised_backprop(save_path: Path, ds: TorchDataset):
     """
@@ -78,7 +78,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     supervised_backprop(seed_dir / "max_change.pt", ds)
 
 if __name__ == "__main__":
-    dataset = ELUCData()
+    dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(10000)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
     seed_no_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)

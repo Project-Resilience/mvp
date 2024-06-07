@@ -58,10 +58,10 @@ def train_and_test(n: int,
         for _ in tqdm(range(n)):
             result_row = {"train": train_region}
             model = model_constructor(**config)
-            s = time.time()
+            start = time.time()
             _ = model.fit(train_region_df, train_region_df["ELUC"])
-            e = time.time()
-            result_row["time"] = e - s
+            end = time.time()
+            result_row["time"] = end - start
             # Evaluate on each region
             for test_region, countries in constants.COUNTRY_DICT.items():
                 if test_region != "ALL":
@@ -85,7 +85,7 @@ def main():
     train_and_test to train and test the models n times.
     """
     print("Loading data...")
-    dataset = ELUCData()
+    dataset = ELUCData.from_hf()
 
     nn_config = {
         "features": constants.NN_FEATS,

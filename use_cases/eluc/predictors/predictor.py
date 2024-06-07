@@ -58,16 +58,15 @@ class Predictor(ABC):
         path = Path(path_or_url)
         if path.exists() and path.is_dir():
             return cls.load(path)
-        else:
-            # TODO: Need a try except block to catch download errors
-            url_path = path_or_url.replace("/", "--")
-            local_dir = hf_args.get("local_dir", f"predictors/trained_models/{url_path}")
+        # TODO: Need a try except block to catch download errors
+        url_path = path_or_url.replace("/", "--")
+        local_dir = hf_args.get("local_dir", f"predictors/trained_models/{url_path}")
 
-            if not Path(local_dir).exists() or not Path(local_dir).is_dir():
-                hf_args["local_dir"] = local_dir
-                snapshot_download(repo_id=path_or_url, **hf_args)
+        if not Path(local_dir).exists() or not Path(local_dir).is_dir():
+            hf_args["local_dir"] = local_dir
+            snapshot_download(repo_id=path_or_url, **hf_args)
 
-            return cls.load(Path(local_dir))
+        return cls.load(Path(local_dir))
 
     @classmethod
     def load(cls, path: Path) -> "Predictor":

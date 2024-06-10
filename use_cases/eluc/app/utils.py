@@ -280,29 +280,3 @@ def load_prescriptors() -> tuple[list[str], PrescriptorManager]:
     prescriptor_manager = PrescriptorManager(prescriptors, None)
 
     return prescriptor_manager
-
-def load_predictors() -> dict[str, Predictor]:
-    """
-    Loads in predictors from disk, downloads from HuggingFace first if needed.
-    TODO: Currently hard-coded to load specific predictors. We need to make this able to handle any amount!
-    :return: dict of predictor name -> predictor object.
-    """
-    predictors = {}
-    nn_path = "danyoung/eluc-global-nn"
-    nn_local_dir = app_constants.PREDICTOR_PATH / nn_path.replace("/", "--")
-    linreg_path = "danyoung/eluc-global-linreg"
-    linreg_local_dir = app_constants.PREDICTOR_PATH / linreg_path.replace("/", "--")
-    rf_path = "danyoung/eluc-global-rf"
-    rf_local_dir = app_constants.PREDICTOR_PATH / rf_path.replace("/", "--")
-    global_nn = NeuralNetPredictor.from_pretrained(nn_path,
-                                                   local_dir=nn_local_dir)
-    global_linreg = LinearRegressionPredictor.from_pretrained(linreg_path,
-                                                              local_dir=linreg_local_dir)
-    global_rf = RandomForestPredictor.from_pretrained(rf_path,
-                                                      local_dir=rf_local_dir)
-
-    predictors["Global Neural Network"] = global_nn
-    predictors["Global Linear Regression"] = global_linreg
-    predictors["Global Random Forest"] = global_rf
-
-    return predictors

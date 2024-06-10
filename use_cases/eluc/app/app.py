@@ -20,6 +20,7 @@ import dash_bootstrap_components as dbc
 from data import constants
 import app.constants as app_constants
 from app import utils
+from app.components.prediction import PredictionComponent
 
 app = Dash(__name__,
            external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
@@ -37,8 +38,8 @@ prescriptor_list = list(pareto_df["id"])
 # Load prescriptors
 prescriptor_manager = utils.load_prescriptors()
 
-# Load predictors
-predictors = utils.load_predictors()
+prediction_component = PredictionComponent(df)
+prediction_component.register_predictor_callbacks(app)
 
 # Cells
 min_lat = df["lat"].min()
@@ -193,27 +194,6 @@ frozen_div = html.Div([
         disabled=True,
         id={"type": "frozen-input", "index": f"{col}-frozen"}) for col in app_constants.NO_CHANGE_COLS + ["nonland"]
 ])
-
-predict_div = html.Div([
-    dcc.Dropdown(list((predictors.keys())), list(predictors.keys())[0], id="pred-select", style={"width": "200px"}),
-    html.Button("Predict", id='predict-button', n_clicks=0,),
-    html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
-    dcc.Input(
-        value="",
-        type="text",
-        disabled=True,
-        id="predict-eluc",
-    ),
-    html.Label("tC/ha", style={'padding-left': '2px'}),
-    html.Label("Land Change:", style={'padding-left': '10px'}),
-    dcc.Input(
-        value="",
-        type="text",
-        disabled=True,
-        id="predict-change",
-    ),
-    html.Label("%", style={'padding-left': '2px'}),
-], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
 
 inline_block = {"display": "inline-block", "padding-right": "10px"}
 trivia_div = html.Div([
@@ -623,35 +603,6 @@ def sum_to_1(_, sliders, year, lat, lon, locked):
     return presc.tolist()
 
 @app.callback(
-    Output("predict-eluc", "value"),
-    Input("predict-button", "n_clicks"),
-    State("year-input", "value"),
-    State("lat-dropdown", "value"),
-    State("lon-dropdown", "value"),
-    State({"type": "presc-slider", "index": ALL}, "value"),
-    State("pred-select", "value"),
-    prevent_initial_call=True
-)
-def predict(_, year, lat, lon, sliders, predictor_name):
-    """
-    Predicts ELUC from context and prescription stores.
-    :param year: Selected context year.
-    :param lat: Selected context lat.
-    :param lon: Selected context lon.
-    :param sliders: Prescribed slider values.
-    :param predictor_name: String name of predictor to use from dropdown.
-    :return: Predicted ELUC.
-    """
-    context = df.loc[year, lat, lon]
-    presc = pd.Series(sliders, index=constants.RECO_COLS)
-    context_actions_df = utils.context_presc_to_df(context, presc)
-
-    predictor = predictors[predictor_name]
-    eluc_df = predictor.predict(context_actions_df)
-    eluc = eluc_df["ELUC"].iloc[0]
-    return f"{eluc:.4f}"
-
-@app.callback(
     Output("total-em", "children"),
     Output("tickets", "children"),
     Output("people", "children"),
@@ -724,7 +675,7 @@ in tons of carbon per hectare)
         html.Div(id='sum-warning')
     ]),
     dcc.Markdown('''## Outcomes'''),
-    predict_div,
+    prediction_component.get_predict_div(),
     dcc.Markdown('''## Trivia'''),
     trivia_div,
     dcc.Markdown('''## References'''),

@@ -2,12 +2,8 @@
 Abstract SKLearn predictor and its implementations.
 Since the SKLearn library is standardized we can easily make more.
 """
-import json
-
-from pathlib import Path
 from abc import ABC
 
-import joblib
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
@@ -20,7 +16,7 @@ class SKLearnPredictor(Predictor, ABC):
     Simple abstract class for sklearn predictors.
     Keeps track of features fit on and label to predict.
     """
-    def __init__(self, model_config: dict):
+    def __init__(self, model, model_config: dict):
         """
         Model config contains the following:
         features: list of features to use for prediction (optional, defaults to all features)
@@ -29,40 +25,7 @@ class SKLearnPredictor(Predictor, ABC):
         """
         super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"], ["ELUC"])
         self.config = model_config
-        self.model = None
-
-    def save(self, path: str):
-        """
-        Saves saves model and features into format for loading.
-        Generates path to folder if it does not exist.
-        :param path: path to folder to save model files.
-        """
-        if isinstance(path, str):
-            save_path = Path(path)
-        else:
-            save_path = path
-        save_path.mkdir(parents=True, exist_ok=True)
-        with open(save_path / "config.json", "w", encoding="utf-8") as file:
-            json.dump(self.config, file)
-        joblib.dump(self.model, save_path / "model.joblib")
-
-    @classmethod
-    def load(cls, path) -> "SKLearnPredictor":
-        """
-        Loads saved model and config from a local folder.
-        :param path: path to folder to load model files from.
-        """
-        load_path = Path(path)
-        if not load_path.exists() or not load_path.is_dir():
-            raise FileNotFoundError(f"Path {path} does not exist.")
-        if not (load_path / "config.json").exists() or not (load_path / "model.joblib").exists():
-            raise FileNotFoundError("Model files not found in path.")
-
-        with open(load_path / "config.json", "r", encoding="utf-8") as file:
-            config = json.load(file)
-        sklearn_predictor = cls(config)
-        sklearn_predictor.model = joblib.load(load_path / "model.joblib")
-        return sklearn_predictor
+        self.model = model
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
@@ -97,10 +60,10 @@ class LinearRegressionPredictor(SKLearnPredictor):
     def __init__(self, model_config: dict):
         if not model_config:
             model_config = {}
-        super().__init__(model_config)
         lr_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
-        self.model = LinearRegression(**lr_config)
-
+        model = LinearRegression(**lr_config)
+        super().__init__(model, model_config)
+        
 class RandomForestPredictor(SKLearnPredictor):
     """
     Simple random forest predictor.
@@ -108,18 +71,8 @@ class RandomForestPredictor(SKLearnPredictor):
     Overrides save method in order to compress it.
     """
     def __init__(self, model_config: dict):
-        super().__init__(model_config)
         rf_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
-        self.model = RandomForestRegressor(**rf_config)
+        model = RandomForestRegressor(**rf_config)
+        super().__init__(model, model_config)
 
-    def save(self, path: str, compression=0):
-        """
-        Overrides save method to compress file since Random Forests are extremely large.
-        :param path: path to folder to save model files.
-        """
-        save_path = Path(path)
-        save_path.mkdir(parents=True, exist_ok=True)
-        with open(save_path / "config.json", "w", encoding="utf-8") as file:
-            json.dump(self.config, file)
-        joblib.dump(self.model, save_path / "model.joblib", compress=compression)
         

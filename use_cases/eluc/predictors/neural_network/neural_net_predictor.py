@@ -3,11 +3,8 @@ Implementation of predictor.py using a simple feed-forward NeuralNetwork
 implemented in PyTorch.
 """
 import copy
-import json
-from pathlib import Path
 import time
 
-import joblib
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -60,69 +57,6 @@ class NeuralNetPredictor(Predictor):
 
         self.model = None
         self.scaler = StandardScaler()
-
-    @classmethod
-    def load(cls, path: str) -> "NeuralNetPredictor":
-        """
-        Loads a model from a given folder.
-        :param path: path to folder containing model files.
-        """
-        if isinstance(path, str):
-            load_path = Path(path)
-        else:
-            load_path = path
-        if not load_path.exists() or not load_path.is_dir():
-            raise FileNotFoundError(f"Path {path} does not exist.")
-        if not (load_path / "config.json").exists() or \
-            not (load_path / "model.pt").exists() or \
-            not (load_path / "scaler.joblib").exists():
-            raise FileNotFoundError("Model files not found in path.")
-
-        # Initialize model with config
-        with open(load_path / "config.json", "r", encoding="utf-8") as file:
-            config = json.load(file)
-
-        nnp = cls(config)
-
-        nnp.model = ELUCNeuralNet(len(config["features"]),
-                                  config["hidden_sizes"],
-                                  config["linear_skip"],
-                                  config["dropout"])
-        nnp.model.load_state_dict(torch.load(load_path / "model.pt"))
-        nnp.model.to(config["device"])
-        nnp.model.eval()
-        nnp.scaler = joblib.load(load_path / "scaler.joblib")
-        return nnp
-
-    def save(self, path: str):
-        """
-        Saves model, config, and scaler into format for loading.
-        Generates path to folder if it does not exist.
-        :param path: path to folder to save model files.
-        """
-        if self.model is None:
-            raise ValueError("Model not fitted yet.")
-        save_path = Path(path)
-        save_path.mkdir(parents=True, exist_ok=True)
-
-        config = {
-            "features": self.features,
-            "label": self.label,
-            "hidden_sizes": self.hidden_sizes,
-            "linear_skip": self.linear_skip,
-            "dropout": self.dropout,
-            "device": self.device,
-            "epochs": self.epochs,
-            "batch_size": self.batch_size,
-            "optim_params": self.optim_params,
-            "train_pct": self.train_pct,
-            "step_lr_params": self.step_lr_params
-        }
-        with open(save_path / "config.json", "w", encoding="utf-8") as file:
-            json.dump(config, file)
-        torch.save(self.model.state_dict(), save_path / "model.pt")
-        joblib.dump(self.scaler, save_path / "scaler.joblib")
-
 
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series,
             X_val=None, y_val=None,

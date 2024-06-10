@@ -49,39 +49,3 @@ class Predictor(ABC):
         :return: DataFrame with predictions
         """
         raise NotImplementedError
-
-    @abstractmethod
-    def save(self, path: str):
-        """
-        Saves the model to a local path.
-        :param path: path to save the model
-        """
-        raise NotImplementedError
-
-    @classmethod
-    def from_pretrained(cls, path_or_url: str, **hf_args) -> "Predictor":
-        """
-        Loads a model from a path or if it is not found, from a huggingface repo.
-        :param path_or_url: path to the model or url to the huggingface repo.
-        :param hf_args: arguments to pass to the snapshot_download function from huggingface.
-        """
-        path = Path(path_or_url)
-        if path.exists() and path.is_dir():
-            return cls.load(path)
-        # TODO: Need a try except block to catch download errors
-        url_path = path_or_url.replace("/", "--")
-        local_dir = hf_args.get("local_dir", f"predictors/trained_models/{url_path}")
-
-        if not Path(local_dir).exists() or not Path(local_dir).is_dir():
-            hf_args["local_dir"] = local_dir
-            snapshot_download(repo_id=path_or_url, **hf_args)
-
-        return cls.load(Path(local_dir))
-
-    @classmethod
-    def load(cls, path: Path) -> "Predictor":
-        """
-        Loads a model from the path on disk.
-        :param path: path to the model
-        """
-        raise NotImplementedError

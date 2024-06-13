@@ -12,9 +12,6 @@ class HuggingFacePersistor(Persistor):
     """
     Persists models to and from HuggingFace repo.
     """
-    def __init__(self, file_serializer: Serializer):
-        super().__init__(file_serializer)
-
     def write_readme(self, model_path: str):
         """
         Writes readme to model save path to upload.

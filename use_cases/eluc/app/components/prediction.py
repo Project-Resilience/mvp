@@ -1,17 +1,19 @@
 """
 Prediction component for ELUC predictor selection and predict button.
 """
+from math import isclose
+
 from dash import Input, State, Output, ALL
 from dash import dcc
 from dash import html
 import pandas as pd
 
 from app import constants as app_constants
-from app import utils
 from data import constants
 from predictors.predictor import Predictor
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
+from prescriptors.prescriptor_manager import PrescriptorManager
 
 class PredictionComponent:
     """
@@ -20,6 +22,8 @@ class PredictionComponent:
     def __init__(self, df):
         self.df = df
         self.predictors = self.load_predictors()
+        # TODO: This needs to change to a percent change predictor when next PR is merged
+        self.prescriptor_manager = PrescriptorManager(None, None)
 
     def load_predictors(self) -> dict[str, Predictor]:
         """
@@ -52,7 +56,10 @@ class PredictionComponent:
         HTML div for the predictor selector and predict button showing outcomes.
         """
         predict_div = html.Div([
-            dcc.Dropdown(list((self.predictors.keys())), list(self.predictors.keys())[0], id="pred-select", style={"width": "200px"}),
+            dcc.Dropdown(list((self.predictors.keys())),
+                         list(self.predictors.keys())[0],
+                         id="pred-select",
+                         style={"width": "200px"}),
             html.Button("Predict", id='predict-button', n_clicks=0,),
             html.Label("Predicted ELUC:", style={'padding-left': '10px'}),
             dcc.Input(
@@ -73,7 +80,7 @@ class PredictionComponent:
         ], style={"display": "flex", "flex-direction": "row", "width": "90%", "align-items": "center"})
         return predict_div
 
-    def register_predictor_callbacks(self, app):
+    def register_predictor_callback(self, app):
         """
         Registers predict button callback to predict ELUC from context df and prescription sliders
         """
@@ -99,9 +106,74 @@ class PredictionComponent:
             """
             context = self.df.loc[year, lat, lon]
             presc = pd.Series(sliders, index=constants.RECO_COLS)
-            context_actions_df = utils.context_presc_to_df(context, presc)
+            context_actions_df = self.context_presc_to_df(context, presc)
 
             predictor = self.predictors[predictor_name]
             eluc_df = predictor.predict(context_actions_df)
             eluc = eluc_df["ELUC"].iloc[0]
             return f"{eluc:.4f}"
+
+    def register_land_use_callback(self, app):
+        """
+        Registers callback that automatically updates the percent land changed when sliders are changed.
+        """
+        @app.callback(
+            Output("sum-warning", "children"),
+            Output("predict-change", "value"),
+            Input({"type": "presc-slider", "index": ALL}, "value"),
+            State("year-input", "value"),
+            State("lat-dropdown", "value"),
+            State("lon-dropdown", "value"),
+            State("locks", "value"),
+            prevent_initial_call=True
+        )
+        def compute_land_change(sliders, year, lat, lon, locked):
+            """
+            Computes land change percent for output.
+            Warns user if values don't sum to 1.
+            :param sliders: Slider values to store.
+            :param year: Selected context year.
+            :param lat: Selected context lat.
+            :param lon: Selected context lon.
+            :param locked: Locked columns to check for warning.
+            :return: Warning if necessary, land change percent.
+            """
+            context = self.df.loc[year, lat, lon]
+            presc = pd.Series(sliders, index=constants.RECO_COLS)
+            context_actions_df = self.context_presc_to_df(context, presc)
+
+            warnings = []
+            # Check if prescriptions sum to 1
+            # TODO: Are we being precise enough?
+            new_sum = presc.sum()
+            old_sum = context[constants.RECO_COLS].sum()
+            if not isclose(new_sum, old_sum, rel_tol=1e-7):
+                warnings.append(html.P(f"WARNING: Please make sure prescriptions sum to: {str(old_sum * 100)} \
+                                    instead of {str(new_sum * 100)} by clicking \"Sum to 100\""))
+
+            # Check if sum of locked prescriptions are > sum(land use)
+            # TODO: take a look at this logic.
+            if locked and presc[locked].sum() > old_sum:
+                warnings.append(html.P("WARNING: Sum of locked prescriptions is greater than sum of land use. \
+                                    Please reduce one before proceeding"))
+
+            # Check if any prescriptions below 0
+            if (presc < 0).any():
+                warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
+
+            # Compute total change
+            change = self.prescriptor_manager.compute_percent_changed(context_actions_df)
+
+            return warnings, f"{change['change'].iloc[0] * 100:.2f}"
+
+    def context_presc_to_df(self, context: pd.Series, presc: pd.Series) -> pd.DataFrame:
+        """
+        Takes a context with all columns and a presc with RECO_COLS and returns an updated context actions df.
+        This df takes the difference between the RECO_COLS in presc and context and sets the DIFF_RECO_COLS to that.
+        """
+        diff = presc - context[constants.RECO_COLS]
+        diff = diff.rename({col: f"{col}_diff" for col in diff.index})
+        context_actions = diff.combine_first(context[constants.CAO_MAPPING["context"]])
+        context_actions_df = pd.DataFrame([context_actions])
+        context_actions_df[constants.NO_CHANGE_COLS] = 0 # TODO: I'm not entirely sure why this line is necessary
+        return context_actions_df

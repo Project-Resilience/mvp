@@ -5,7 +5,6 @@ Additionally handles the percent changed computation.
 """
 import pandas as pd
 
-from data import constants
 from predictors.predictor import Predictor
 from prescriptors.prescriptor import Prescriptor
 
@@ -38,4 +37,3 @@ class PrescriptorManager():
             outcome_df[outcome] = predictor.predict(context_actions_df)
 
         return outcome_df
-

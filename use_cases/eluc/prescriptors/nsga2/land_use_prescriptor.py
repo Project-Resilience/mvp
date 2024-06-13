@@ -1,9 +1,6 @@
 """
 Base implementation of the land use prescriptor as used in the paper.
 """
-import json
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import torch
@@ -87,30 +84,3 @@ class LandUsePrescriptor(Prescriptor):
 
         context_actions_df = self._reco_to_context_actions(reco_df, context_df)
         return context_actions_df
-
-    def save(self, path: Path):
-        """
-        Saves the prescriptor to disk.
-        """
-        path.mkdir(parents=True, exist_ok=True)
-        cand_params = {
-            "in_size": self.candidate.in_size,
-            "hidden_size": self.candidate.hidden_size,
-            "out_size": self.candidate.out_size
-        }
-        with open(path / "cand_params.json", "w", encoding="utf-8") as file:
-            json.dump(cand_params, file)
-        self.encoder.save_fields(path / "fields.json")
-        torch.save(self.candidate.state_dict(), path / "model.pt")
-
-    @classmethod
-    def load(cls, path: Path) -> "LandUsePrescriptor":
-        """
-        Loads a prescriptor from disk.
-        """
-        with open(path / "cand_params.json", "r", encoding="utf-8") as file:
-            cand_params = json.load(file)
-        candidate = Candidate(**cand_params)
-        candidate.load_state_dict(torch.load(path / "model.pt"))
-        encoder = ELUCEncoder.from_json(path / "fields.json")
-        return cls(candidate, encoder)

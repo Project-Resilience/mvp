@@ -9,8 +9,8 @@ from pathlib import Path
 
 from data.eluc_data import ELUCData
 from data.eluc_encoder import ELUCEncoder
+from persistence.serializers.neural_network_serializer import NeuralNetSerializer
 from prescriptors.nsga2.trainer import TorchTrainer
-from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 if __name__ == "__main__":
@@ -28,7 +28,8 @@ if __name__ == "__main__":
 
     print("Loading predictors...")
     # TODO: We need to make it so you can load any predictor here
-    nnp = NeuralNetPredictor.load(Path(config["predictor_path"]))
+    nnp_serializer = NeuralNetSerializer()
+    nnp = nnp_serializer.load(Path(config["predictor_path"]))
     pct_change = PercentChangePredictor()
     predictors = {"ELUC": nnp, "change": pct_change}
 

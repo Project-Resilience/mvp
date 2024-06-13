@@ -2,8 +2,6 @@
 Heuristic to compare our prescriptors to.
 """
 from abc import ABC, abstractmethod
-import json
-from pathlib import Path
 
 import pandas as pd
 
@@ -74,22 +72,6 @@ class EvenHeuristic(HeuristicPrescriptor):
         adjusted = adjusted.drop(["scaled_change", "row_sum", "max_change"], axis=1)
         return adjusted
 
-    def save(self, path: Path):
-        """
-        Saves best column and percentage.
-        """
-        with open(path / "config.json", "w", encoding="utf-8") as file:
-            json.dump({"pct": self.pct, "best_col": self.best_col}, file)
-
-    @classmethod
-    def load(cls, path: Path) -> "EvenHeuristic":
-        """
-        Loads best column and percentage.
-        """
-        with open(path / "config.json", "r", encoding="utf-8") as file:
-            config = json.load(file)
-        return cls(config["pct"], config["best_col"])
-
 class PerfectHeuristic(HeuristicPrescriptor):
     """
     Implementation of HeuristicPrescriptor that does an informed land use prescription 
@@ -136,19 +118,3 @@ class PerfectHeuristic(HeuristicPrescriptor):
         adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
         adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
         return adjusted
-
-    def save(self, path: Path):
-        """
-        Saves coefficients and percentage.
-        """
-        with open(path / "config.json", "w", encoding="utf-8") as file:
-            json.dump({"pct": self.pct, "coefs": self.coefs}, file)
-
-    @classmethod
-    def load(cls, path: Path) -> "PerfectHeuristic":
-        """
-        Loads coefficients and percentage.
-        """
-        with open(path / "config.json", "r", encoding="utf-8") as file:
-            config = json.load(file)
-        return cls(config["pct"], config["coefs"])

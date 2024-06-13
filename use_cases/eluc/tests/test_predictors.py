@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from persistence.serializers.neural_network_serializer import NeuralNetSerializer
+from persistence.serializers.sklearn_serializer import SKLearnSerializer
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
@@ -24,6 +26,11 @@ class TestPredictors(unittest.TestCase):
             NeuralNetPredictor,
             LinearRegressionPredictor,
             RandomForestPredictor
+        ]
+        self.serializers = [
+            NeuralNetSerializer(),
+            SKLearnSerializer(),
+            SKLearnSerializer()
         ]
         self.configs = [
             {'hidden_sizes': [4], 'epochs': 1, 'batch_size': 1, 'device': 'cpu'},
@@ -43,11 +50,11 @@ class TestPredictors(unittest.TestCase):
             ["model.joblib", "config.json"],
             ["model.joblib", "config.json"]
         ]
-        for model, config, test_names in zip(self.models, self.configs, save_file_names):
+        for model, serializer, config, test_names in zip(self.models, self.serializers, self.configs, save_file_names):
             with self.subTest(model=model):
                 predictor = model(config)
                 predictor.fit(self.dummy_data, self.dummy_target)
-                predictor.save(self.temp_path)
+                serializer.save(predictor, self.temp_path)
                 files = [f.name for f in self.temp_path.glob("**/*") if f.is_file()]
                 self.assertEqual(set(files), set(test_names))
                 shutil.rmtree(self.temp_path)
@@ -59,14 +66,14 @@ class TestPredictors(unittest.TestCase):
         Fits a predictor then saves and loads it, then checks if the predictions are the same.
         """
 
-        for model, config in zip(self.models, self.configs):
+        for model, serializer, config in zip(self.models, self.serializers, self.configs):
             with self.subTest(model=model):
                 predictor = model(config)
                 predictor.fit(self.dummy_data.iloc[:2], self.dummy_target.iloc[:2])
                 output = predictor.predict(self.dummy_data.iloc[2:])
-                predictor.save(self.temp_path)
+                serializer.save(predictor, self.temp_path)
 
-                loaded = model.load(self.temp_path)
+                loaded = serializer.load(self.temp_path)
                 loaded_output = loaded.predict(self.dummy_data.iloc[2:])
 
                 self.assertTrue((output == loaded_output).all().all()) # Pandas is so annoying why is this necessary?

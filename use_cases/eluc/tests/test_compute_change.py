@@ -1,6 +1,5 @@
 """
-Tests the generic prescriptor class.
-TODO: This will eventually have to be moved into a ProjectResilienceSDK.
+Tests the predictor that computes percent change.
 """
 import unittest
 

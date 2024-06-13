@@ -1,52 +1,18 @@
 """
-Unit tests for the NSGA-II Torch implementation.
+Tests prescriptor LandUsePrescriptor class.
 """
 from pathlib import Path
+import shutil
 import unittest
 
-import numpy as np
 import pandas as pd
 import torch
 
 from data import constants
 from data.eluc_encoder import ELUCEncoder
+from persistence.serializers.prescriptor_serializer import PrescriptorSerializer
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
-from prescriptors.nsga2 import nsga2_utils
-
-class TestNSGA2Utils(unittest.TestCase):
-    """
-    Tests the NGSA-II utility functions.
-    """
-    def test_distance_calculation(self):
-        """
-        Tests the calculation of crowding distance.
-        Objective 1 is the candidate number times 2.
-        Objective 2 is the candidate number squared.
-        """
-        # Create a dummy front
-        front = []
-        tgt_distances = []
-        for i in range(4):
-            dummy_candidate = Candidate(16, 16, 16)
-            dummy_candidate.metrics = [i*2, i**2]
-            front.append(dummy_candidate)
-            if i in {0, 3}:
-                tgt_distances.append(np.inf)
-            else:
-                dist0 = ((i + 1) * 2 - (i - 1) * 2) / 6
-                dist1 = ((i + 1)**2 - (i - 1)**2) / 9
-                tgt_distances.append(dist0 + dist1)
-
-        # Manually shuffle the front
-        shuffled_indices = [1, 3, 0, 2]
-        shuffled_front = [front[i] for i in shuffled_indices]
-        shuffled_tgts = [tgt_distances[i] for i in shuffled_indices]
-
-        # Assign crowding distances
-        nsga2_utils.calculate_crowding_distance(shuffled_front)
-        for candidate, tgt in zip(shuffled_front, shuffled_tgts):
-            self.assertAlmostEqual(candidate.distance, tgt)
 
 class TestLandUsePrescriptor(unittest.TestCase):
     """
@@ -68,6 +34,9 @@ class TestLandUsePrescriptor(unittest.TestCase):
 
         candidate = Candidate(len(constants.CAO_MAPPING["context"]), 16, len(constants.RECO_COLS))
         cls.prescriptor = LandUsePrescriptor(candidate, encoder)
+
+        # For serialization tests
+        cls.temp_path = Path("tests/temp")
 
     # Disable protected access warning so we can test the private methods
     # pylint: disable=protected-access
@@ -131,5 +100,25 @@ class TestLandUsePrescriptor(unittest.TestCase):
         self.assertTrue(context_actions_df.index.equals(context_df.index))
         self.assertTrue(context_df.equals(context_actions_df[constants.CAO_MAPPING["context"]]))
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_serialization(self):
+        """
+        Makes sure after we save to disk and load from disk, the prescriptor is the same.
+        """
+        persistor = PrescriptorSerializer()
+        persistor.save(self.prescriptor, self.temp_path / "prescriptor")
+
+        loaded_prescriptor = persistor.load(self.temp_path / "prescriptor")
+
+        for old_param, new_param in zip(self.prescriptor.candidate.parameters(),
+                                        loaded_prescriptor.candidate.parameters()):
+
+            self.assertTrue(torch.equal(old_param, new_param))
+
+        self.assertEqual(self.prescriptor.encoder.fields, loaded_prescriptor.encoder.fields)
+
+    @classmethod
+    def tearDownClass(cls):
+        """
+        Clean up temp directory.
+        """
+        shutil.rmtree(cls.temp_path)

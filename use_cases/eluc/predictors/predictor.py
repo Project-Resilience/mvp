@@ -2,11 +2,8 @@
 Abstract class for predictors to inherit from.
 """
 from abc import ABC, abstractmethod
-from pathlib import Path
 
-from huggingface_hub import snapshot_download
 import pandas as pd
-
 
 class Predictor(ABC):
     """

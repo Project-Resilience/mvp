@@ -16,6 +16,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
     recommendations based on the heuristic.
     """
     def __init__(self, pct: float):
+        super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"])
         self.pct = pct
 
     @abstractmethod

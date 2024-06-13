@@ -8,8 +8,11 @@ import pandas as pd
 class Prescriptor(ABC):
     """
     Abstract class for prescriptors to allow us to experiment with different implementations.
-    Save and load must be compatible with each other but not necessarily with other models.
     """
+    def __init__(self, context: list[str], actions: list[str]):
+        self.context = context
+        self.actions = actions
+
     @abstractmethod
     def prescribe(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """

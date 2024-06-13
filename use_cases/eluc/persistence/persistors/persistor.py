@@ -2,10 +2,15 @@ from pathlib import Path
 
 from abc import ABC, abstractmethod
 
+from persistence.serializers.serializer import Serializer
+
 class Persistor(ABC):
     """
     Abstract class for persistors to inherit from.
     """
+    def __init__(self, file_serializer: Serializer):
+        self.file_serializer = file_serializer
+
     @abstractmethod
     def persist(self, model, model_path: Path, repo_id: str, **persistence_args):
         """

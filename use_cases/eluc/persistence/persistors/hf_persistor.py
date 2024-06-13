@@ -5,14 +5,15 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 
+from persistence.persistors.persistor import Persistor
 from persistence.serializers.serializer import Serializer
 
-class HuggingFacePersistor():
+class HuggingFacePersistor(Persistor):
     """
     Persists models to and from HuggingFace repo.
     """
     def __init__(self, file_serializer: Serializer):
-        self.file_serializer = file_serializer
+        super().__init__(file_serializer)
 
     def write_readme(self, model_path: str):
         """
@@ -23,7 +24,7 @@ class HuggingFacePersistor():
         with open(model_path / "README.md", "w", encoding="utf-8") as file:
             file.write("This is a demo model created for project resilience")
 
-    def persist(self, model, model_path: Path, repo_id: str, token: str=None):
+    def persist(self, model, model_path: Path, repo_id: str, **persistence_args):
         """
         Serializes the model to a local path using the file_serializer,
         then uploads the model to a HuggingFace repo.
@@ -31,6 +32,9 @@ class HuggingFacePersistor():
         # Save model and write readme
         self.file_serializer.save(model, model_path)
         self.write_readme(model_path)
+
+        # Get token if it exists
+        token = persistence_args.get("token", None)
 
         api = HfApi()
         # Create repo if it doesn't exist

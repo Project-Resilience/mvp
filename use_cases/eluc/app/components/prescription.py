@@ -11,8 +11,9 @@ import plotly.graph_objects as go
 
 from app import constants as app_constants
 from data import constants
+from persistence.persistors.hf_persistor import HuggingFacePersistor
+from persistence.serializers.prescriptor_serializer import PrescriptorSerializer
 from prescriptors.prescriptor_manager import PrescriptorManager
-from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 
 class PrescriptionComponent():
     """
@@ -35,13 +36,15 @@ class PrescriptionComponent():
         TODO: Currently hard-coded to load specific prescriptors from pareto path.
         :return: dict of prescriptor name -> prescriptor object.
         """
+        persistor = HuggingFacePersistor(PrescriptorSerializer())
+
         prescriptors = {}
         pareto_df = pd.read_csv(app_constants.PARETO_CSV_PATH)
         pareto_df = pareto_df.sort_values(by="change")
         for cand_id in pareto_df["id"]:
             cand_path = f"danyoung/eluc-{cand_id}"
             cand_local_dir = app_constants.PRESCRIPTOR_PATH / cand_path.replace("/", "--")
-            prescriptors[cand_id] = LandUsePrescriptor.from_pretrained(cand_path, local_dir=cand_local_dir)
+            prescriptors[cand_id] = persistor.from_pretrained(cand_path, local_dir=cand_local_dir)
 
         prescriptor_manager = PrescriptorManager(prescriptors, None)
 

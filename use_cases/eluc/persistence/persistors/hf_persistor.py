@@ -60,7 +60,7 @@ class HuggingFacePersistor():
             return self.file_serializer.load(path)
         # TODO: Need a try except block to catch download errors
         url_path = path_or_url.replace("/", "--")
-        local_dir = hf_args.get("local_dir", f"predictors/trained_models/{url_path}")
+        local_dir = hf_args.get("local_dir", f"huggingface_models/{url_path}")
 
         if not Path(local_dir).exists() or not Path(local_dir).is_dir():
             hf_args["local_dir"] = local_dir

@@ -4,6 +4,7 @@ Tests the demo app
 import unittest
 import pandas as pd
 
+from app.components.lock import LockComponent
 import app.constants as app_constants
 from app import utils
 from data import constants
@@ -12,6 +13,9 @@ class TestUtilFunctions(unittest.TestCase):
     """
     Tests app utilities.
     """
+    def setUp(self):
+        self.lock_component = LockComponent()
+
     def test_add_nonland(self):
         """
         Simple vanilla test case for add_nonland(). Makes sure the nonland column added equals whatever we need left.
@@ -35,7 +39,7 @@ class TestUtilFunctions(unittest.TestCase):
         Makes sure the checklist we create has the same number of options as the input.
         """
         values = ["a", "b", "c"]
-        options = utils.create_check_options(values)
+        options = self.lock_component.create_check_options(values)
         self.assertEqual(len(options), len(values))
 
     def test_create_check_options_values(self):
@@ -43,6 +47,6 @@ class TestUtilFunctions(unittest.TestCase):
         Checks if the values in the options are correct
         """
         values = ["a", "b", "c"]
-        options = utils.create_check_options(values)
+        options = self.lock_component.create_check_options(values)
         for i, option in enumerate(options):
             self.assertEqual(option["value"], values[i])

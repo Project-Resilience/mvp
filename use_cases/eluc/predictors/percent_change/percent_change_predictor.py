@@ -32,15 +32,3 @@ class PercentChangePredictor(Predictor):
         percent_changed = percent_changed / total_land
         change_df = pd.DataFrame(percent_changed, columns=["change"])
         return change_df
-    
-    def save(self, path: str):
-        """
-        No saving required for this model.
-        """
-
-    @classmethod
-    def load(cls, path) -> "PercentChangePredictor":
-        """
-        No loading required for this model.
-        """
-        return cls()

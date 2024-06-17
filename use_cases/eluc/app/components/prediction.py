@@ -10,10 +10,11 @@ import pandas as pd
 
 from app import constants as app_constants
 from data import constants
+from persistence.persistors.hf_persistor import HuggingFacePersistor
+from persistence.serializers.neural_network_serializer import NeuralNetSerializer
+from persistence.serializers.sklearn_serializer import SKLearnSerializer
 from predictors.predictor import Predictor
-from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
-from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
-from prescriptors.prescriptor_manager import PrescriptorManager
+from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 class PredictionComponent:
     """
@@ -22,8 +23,7 @@ class PredictionComponent:
     def __init__(self, df):
         self.df = df
         self.predictors = self.load_predictors()
-        # TODO: This needs to change to a percent change predictor when next PR is merged
-        self.prescriptor_manager = PrescriptorManager(None, None)
+        self.change_predictor = PercentChangePredictor()
 
     def load_predictors(self) -> dict[str, Predictor]:
         """
@@ -31,6 +31,8 @@ class PredictionComponent:
         TODO: Currently hard-coded to load specific predictors. We need to make this able to handle any amount!
         :return: dict of predictor name -> predictor object.
         """
+        nn_persistor = HuggingFacePersistor(NeuralNetSerializer())
+        sklearn_persistor = HuggingFacePersistor(SKLearnSerializer())
         predictors = {}
         nn_path = "danyoung/eluc-global-nn"
         nn_local_dir = app_constants.PREDICTOR_PATH / nn_path.replace("/", "--")
@@ -38,11 +40,11 @@ class PredictionComponent:
         linreg_local_dir = app_constants.PREDICTOR_PATH / linreg_path.replace("/", "--")
         rf_path = "danyoung/eluc-global-rf"
         rf_local_dir = app_constants.PREDICTOR_PATH / rf_path.replace("/", "--")
-        global_nn = NeuralNetPredictor.from_pretrained(nn_path,
+        global_nn = nn_persistor.from_pretrained(nn_path,
                                                     local_dir=nn_local_dir)
-        global_linreg = LinearRegressionPredictor.from_pretrained(linreg_path,
+        global_linreg = sklearn_persistor.from_pretrained(linreg_path,
                                                                 local_dir=linreg_local_dir)
-        global_rf = RandomForestPredictor.from_pretrained(rf_path,
+        global_rf = sklearn_persistor.from_pretrained(rf_path,
                                                         local_dir=rf_local_dir)
 
         predictors["Global Neural Network"] = global_nn
@@ -162,7 +164,7 @@ class PredictionComponent:
                 warnings.append(html.P("WARNING: Negative values detected. Please lower the value of a locked slider."))
 
             # Compute total change
-            change = self.prescriptor_manager.compute_percent_changed(context_actions_df)
+            change = self.change_predictor.predict(context_actions_df)
 
             return warnings, f"{change['change'].iloc[0] * 100:.2f}"
 

@@ -1,13 +1,12 @@
 """
-Tests the generic prescriptor class.
-TODO: This will eventually have to be moved into a ProjectResilienceSDK.
+Tests the predictor that computes percent change.
 """
 import unittest
 
 import pandas as pd
 
 from data import constants
-from prescriptors.prescriptor_manager import PrescriptorManager
+from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 class TestComputeChange(unittest.TestCase):
     """
@@ -18,7 +17,7 @@ class TestComputeChange(unittest.TestCase):
         Sets up a dummy prescriptor. This doesn't even really have to be instantiated properly it just needs to
         be able to call compute_percent_changed.
         """
-        self.prescriptor_manager = PrescriptorManager(None, None)
+        self.predictor = PercentChangePredictor()
 
     def _list_data_to_df(self, context_data: list, presc_data: list) -> pd.DataFrame:
         """
@@ -49,7 +48,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.predictor.predict(context_actions_df)["change"].iloc[0]
         self.assertAlmostEqual(percent_change, even_amt * 2)
 
     def test_compute_percent_change_no_change(self):
@@ -61,7 +60,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.predictor.predict(context_actions_df)["change"].iloc[0]
         self.assertAlmostEqual(percent_change, 0)
 
     def test_compute_percent_change_all_nonreco(self):
@@ -73,7 +72,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.predictor.predict(context_actions_df)["change"].iloc[0]
         self.assertEqual(percent_change, 0)
 
     def test_compute_percent_change_not_sum_to_one(self):
@@ -85,7 +84,7 @@ class TestComputeChange(unittest.TestCase):
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
-        percent_change = self.prescriptor_manager.compute_percent_changed(context_actions_df)["change"].iloc[0]
+        percent_change = self.predictor.predict(context_actions_df)["change"].iloc[0]
 
         self.assertAlmostEqual(percent_change, 0.02 / (0.01 * len(constants.LAND_USE_COLS)))
 
@@ -97,6 +96,6 @@ class TestComputeChange(unittest.TestCase):
         presc_data = [0.02, 0.00, 0.02, 0.00, 0.01]
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
-        change_df = self.prescriptor_manager.compute_percent_changed(context_actions_df)
+        change_df = self.predictor.predict(context_actions_df)
 
         self.assertTrue(change_df.index.equals(context_actions_df.index))

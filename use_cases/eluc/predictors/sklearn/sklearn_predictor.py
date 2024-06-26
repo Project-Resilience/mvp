@@ -74,5 +74,3 @@ class RandomForestPredictor(SKLearnPredictor):
         rf_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
         model = RandomForestRegressor(**rf_config)
         super().__init__(model, model_config)
-
-        

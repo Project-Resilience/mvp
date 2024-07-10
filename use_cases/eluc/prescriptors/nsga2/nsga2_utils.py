@@ -84,8 +84,8 @@ def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:
     """
     better = False
     for obj1, obj2 in zip(candidate1.metrics, candidate2.metrics):
-        if obj1 < obj2:
-            return False
         if obj1 > obj2:
+            return False
+        if obj1 < obj2:
             better = True
     return better

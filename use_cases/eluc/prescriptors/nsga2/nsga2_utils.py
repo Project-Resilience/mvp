@@ -81,7 +81,8 @@ def calculate_crowding_distance(front):
 def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:
     """
     Determine if one individual dominates another.
-    One individual dominates another if it's doing better in at least one objective and better than or equal to in all the rest.
+    One individual dominates another if it's doing better in at least one objective
+    and better than or equal to in all the rest.
     Metrics are always minimized: lower is better.
     """
     better = False

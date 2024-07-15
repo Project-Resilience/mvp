@@ -1,3 +1,7 @@
+"""
+Persistor abstract class. Wraps a serializer and provides an interface for persisting models
+(ex to HuggingFace) and loading models from a persistence location.
+"""
 from pathlib import Path
 
 from abc import ABC, abstractmethod

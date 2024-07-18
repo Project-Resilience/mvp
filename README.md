@@ -34,4 +34,8 @@ Please have a look at the [draft dataset description](https://docs.google.com/sp
 
 Proposed architecture for Project Resilience: [PDF](./project_resilience_conceptual_architecture.pdf)
 
+## Test Status
+
+![ELUC Use Case](https://github.com/ProjectResilience/mvp/actions/workflows/eluc.yml/badge.svg)
+
 

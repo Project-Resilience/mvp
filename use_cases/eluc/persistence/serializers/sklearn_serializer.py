@@ -7,7 +7,7 @@ from pathlib import Path
 import joblib
 
 from persistence.serializers.serializer import Serializer
-from predictors.sklearn.sklearn_predictor import SKLearnPredictor
+from predictors.sklearn_predictor.sklearn_predictor import SKLearnPredictor
 
 class SKLearnSerializer(Serializer):
     """

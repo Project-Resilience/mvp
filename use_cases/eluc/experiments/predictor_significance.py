@@ -14,7 +14,7 @@ from data.eluc_data import ELUCData
 from data import constants
 from data.conversion import construct_countries_df
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
-from predictors.sklearn.sklearn_predictor import RandomForestPredictor, LinearRegressionPredictor
+from predictors.sklearn_predictor.sklearn_predictor import RandomForestPredictor, LinearRegressionPredictor
 
 def train_and_test(n: int,
                    model_constructor,

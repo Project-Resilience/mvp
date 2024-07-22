@@ -6,7 +6,7 @@ This directory contains custom predictors that can be used with the ELUC use cas
 
 An example custom predictor can be found in the [template](predictors/custom/template) folder. In order to create a custom predictor, 2 steps must be completed.
 
-1. You need to implement the `Predictor` interface. This is defined in [predictor.py](predictors/predictor.py). It is a simple interface that requires a `predict` method that takes in a dataframe of context and actions and returns a dataframe of outcomes.
+1. You need to implement the `Predictor` interface. This is defined in [predictor.py](predictors/predictor.py). It is a simple abstract class that requires a `predict` method that takes in a dataframe of context and actions and returns a dataframe of outcomes.
 
 2. You need, either in the same class or a specific serializer class, to implement a `load` method that takes in a path to a model on disk and returns an instance of the `Predictor`. (See [serializer.py](persistence/persistors/serializers/serializer.py) for the interface for serialization and [neural_network_serializer.py](persistence/persistors/serializers/neural_network_serializer.py) for an example of how to implement serialization.)
 

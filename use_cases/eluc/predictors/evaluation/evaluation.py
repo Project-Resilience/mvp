@@ -8,9 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
+import data.constants as constants
 from data.eluc_data import ELUCData
 from persistence.persistors.hf_persistor import HuggingFacePersistor
 from predictors.predictor import Predictor
+from predictors.evaluation.validator import Validator
 
 class Evaluator():
     """
@@ -24,6 +26,8 @@ class Evaluator():
         Initializes the Evaluator with the custom classes it has to load.
         """
         self.predictors = self.dynamically_load_models(config)
+        # We don't pass change into the outcomes column.
+        self.validator = Validator(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"], ["ELUC"])
 
     def dynamically_load_models(self, config: dict) -> list[Predictor]:
         """
@@ -61,10 +65,12 @@ class Evaluator():
         Evaluates our list of predictors on a given test dataframe.
         The dataframe is expected to be raw data.
         """
-        results = {}
         y_true = test_df["ELUC"]
+        test_df = self.validator.validate_input(test_df)
+        results = {}
         for predictor_path, predictor in self.predictors.items():
             outcome_df = predictor.predict(test_df)
+            assert self.validator.validate_output(test_df, outcome_df)
             y_pred = outcome_df["ELUC"]
             mae = (y_true - y_pred).abs().mean()
             results[predictor_path] = mae

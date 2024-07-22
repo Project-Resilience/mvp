@@ -3,6 +3,7 @@ Class to evaluate predictors given a config on a dataset.
 Also a script to demo how it works.
 """
 import importlib
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -69,45 +70,17 @@ class Evaluator():
             results[predictor_path] = mae
         return results
 
-def main():
+def run_evaluation():
     """
     A demo script to show how the Evaluator class works.
     """
-    config = {
-        "models": [
-            {
-                "type": "local",
-                "name": "TemplatePredictor",
-                "classpath": "predictors/custom/template/template_predictor.py",
-                "filepath": "predictors/custom/template/model.pt"
-            },
-            {
-                "type": "hf",
-                "name": "NeuralNetSerializer",
-                "classpath": "persistence/serializers/neural_network_serializer.py",
-                "url": "danyoung/eluc-global-nn",
-                "filepath": "predictors/trained_models/danyoung--eluc-global-nn"
-            },
-            {
-                "type": "hf",
-                "name": "SKLearnSerializer",
-                "url": "danyoung/eluc-global-linreg",
-                "classpath": "persistence/serializers/sklearn_serializer.py",
-                "filepath": "predictors/trained_models/danyoung--eluc-global-linreg"
-            },
-            {
-                "type": "hf",
-                "name": "SKLearnSerializer",
-                "url": "danyoung/eluc-global-rf",
-                "classpath": "persistence/serializers/sklearn_serializer.py",
-                "filepath": "predictors/trained_models/danyoung--eluc-global-rf"
-            }
-        ]
-    }
+    print("Evaluating models in config.json...")
+    config = json.load(open(Path("predictors/evaluation/config.json"), "r", encoding="utf-8"))
     evaluator = Evaluator(config)
     dataset = ELUCData.from_hf()
     results = evaluator.evaluate(dataset.test_df)
+    print("Results:")
     print(results)
 
 if __name__ == "__main__":
-    main()
+    run_evaluation()

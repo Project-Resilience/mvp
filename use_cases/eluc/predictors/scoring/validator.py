@@ -1,13 +1,13 @@
 """
-Validation of input and output dataframes for predictor evaluation.
+Validation of input and output dataframes for predictor scoring.
 """
 import pandas as pd
 
 class Validator():
     """
-    Validates input and output dataframes for predictor evaluation.
+    Validates input and output dataframes for predictor scoring.
     Context, actions, outcomes do not necessarily have to match the project's CAO_MAPPING. For example, if we are
-    just evaluating ELUC we can just pass the single column as outcomes.
+    just scoring on ELUC we can just pass the single column as outcomes.
     """
     def __init__(self, context: list[str], actions: list[str], outcomes: list[str]):
         self.context = context

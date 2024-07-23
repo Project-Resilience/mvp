@@ -1,5 +1,5 @@
 """
-Class to evaluate predictors given a config on a dataset.
+Class to score predictors given a config on a dataset.
 Also a script to demo how it works.
 """
 import importlib
@@ -12,18 +12,18 @@ import data.constants as constants
 from data.eluc_data import ELUCData
 from persistence.persistors.hf_persistor import HuggingFacePersistor
 from predictors.predictor import Predictor
-from predictors.evaluation.validator import Validator
+from predictors.scoring.validator import Validator
 
-class Evaluator():
+class PredictorScorer:
     """
-    Evaluator class to evaluate predictors on a dataset.
+    Scoring class to evaluate predictors on a dataset.
     Uses a config to dynamically load predictors.
     The config must point to the classpath of a serializer that can call .load() to return a Predictor object.
     Alternatively, it may use a HuggingFace url to download a model to a given path, THEN load with the serializer.
     """
     def __init__(self, config: dict):
         """
-        Initializes the Evaluator with the custom classes it has to load.
+        Initializes the Scorer with the custom classes it has to load.
         """
         self.predictors = self.dynamically_load_models(config)
         # We don't pass change into the outcomes column.
@@ -60,10 +60,11 @@ class Evaluator():
             predictors[model["filepath"]] = predictor
         return predictors
     
-    def evaluate(self, test_df: pd.DataFrame):
+    def score_models(self, test_df: pd.DataFrame) -> dict[str, float]:
         """
-        Evaluates our list of predictors on a given test dataframe.
+        Scores our list of predictors on a given test dataframe.
         The dataframe is expected to be raw data.
+        We sort our results by MAE.
         """
         y_true = test_df["ELUC"]
         test_df = self.validator.validate_input(test_df)
@@ -74,19 +75,20 @@ class Evaluator():
             y_pred = outcome_df["ELUC"]
             mae = (y_true - y_pred).abs().mean()
             results[predictor_path] = mae
+        results = dict(sorted(results.items(), key=lambda item: item[1]))
         return results
 
-def run_evaluation():
+def run_scoring():
     """
-    A demo script to show how the Evaluator class works.
+    A demo script to show how the PredictorScorer class works.
     """
     print("Evaluating models in config.json...")
-    config = json.load(open(Path("predictors/evaluation/config.json"), "r", encoding="utf-8"))
-    evaluator = Evaluator(config)
+    config = json.load(open(Path("predictors/scoring/config.json"), "r", encoding="utf-8"))
+    comparator = PredictorScorer(config)
     dataset = ELUCData.from_hf()
-    results = evaluator.evaluate(dataset.test_df)
+    results = comparator.score_models(dataset.test_df)
     print("Results:")
     print(results)
 
 if __name__ == "__main__":
-    run_evaluation()
+    run_scoring()

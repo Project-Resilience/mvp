@@ -6,6 +6,7 @@ import pandas as pd
 from data import constants
 from predictors.predictor import Predictor
 
+
 class TemplatePredictor(Predictor):
     """
     A template predictor returning dummy values for ELUC.
@@ -23,7 +24,7 @@ class TemplatePredictor(Predictor):
     def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         dummy_eluc = list(range(len(context_actions_df)))
         return pd.DataFrame({"ELUC": dummy_eluc}, index=context_actions_df.index)
-    
+
     @classmethod
     def load(cls, path: str) -> "TemplatePredictor":
         """

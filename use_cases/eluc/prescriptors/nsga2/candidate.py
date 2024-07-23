@@ -4,6 +4,7 @@ of its own metrics and logging information.
 """
 import torch
 
+
 class Candidate(torch.nn.Module):
     """
     Simple fixed topology 1 hidden layer feed-forward nn candidate.
@@ -87,9 +88,8 @@ class Candidate(torch.nn.Module):
             raise ValueError("Candidate has not been evaluated yet")
         cand_state = {"id": self.cand_id,
                       "parents": self.parents,
-                      "NSGA-II_rank": self.rank, # Named this to match ESP
-                      "distance": self.distance,
-        }
+                      "NSGA-II_rank": self.rank,  # Named this to match ESP
+                      "distance": self.distance}
         metrics = self.metrics if self.metrics else [float("inf"), float("inf")]
         cand_state["ELUC"] = metrics[0]
         cand_state["change"] = metrics[1]

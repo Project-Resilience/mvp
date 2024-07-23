@@ -13,6 +13,7 @@ from data.eluc_data import ELUCData
 from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
 
+
 def supervised_backprop(save_path: Path, ds: TorchDataset):
     """
     Performs supervised backpropagation on the given dataset to create a Candidate.
@@ -51,6 +52,7 @@ def supervised_backprop(save_path: Path, ds: TorchDataset):
 
     torch.save(seed.state_dict(), save_path)
 
+
 def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     """
     Creates a seed that attempts to prescribe the same reco cols as the input.
@@ -58,6 +60,7 @@ def seed_no_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     ds = TorchDataset(encoded_df[constants.CAO_MAPPING["context"]].to_numpy(), df[constants.RECO_COLS].to_numpy())
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "no_change.pt", ds)
+
 
 def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     """
@@ -76,6 +79,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
 
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds)
+
 
 if __name__ == "__main__":
     dataset = ELUCData.from_hf()

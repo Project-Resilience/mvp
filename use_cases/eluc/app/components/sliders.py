@@ -10,6 +10,7 @@ from app import constants as app_constants
 from app import utils
 from data import constants
 
+
 class SlidersComponent:
     """
     Component that displays the sliders, shows their values in frozen inputs, resets the sliders when context changes,
@@ -56,7 +57,7 @@ class SlidersComponent:
                 type="text",
                 disabled=True,
                 id={"type": "frozen-input", "index": f"{col}-frozen"})
-                for col in app_constants.NO_CHANGE_COLS + ["nonland"]
+            for col in app_constants.NO_CHANGE_COLS + ["nonland"]
         ])
         return frozen_div
 

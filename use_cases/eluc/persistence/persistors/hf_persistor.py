@@ -7,6 +7,7 @@ from huggingface_hub import HfApi, snapshot_download
 
 from persistence.persistors.persistor import Persistor
 
+
 class HuggingFacePersistor(Persistor):
     """
     Persists models to and from HuggingFace repo.

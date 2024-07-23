@@ -13,8 +13,8 @@ from persistence.serializers.neural_network_serializer import NeuralNetSerialize
 from prescriptors.nsga2.trainer import TorchTrainer
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
     # Load config
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_path", type=str, required=True)

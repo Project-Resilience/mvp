@@ -8,6 +8,7 @@ import pandas as pd
 from data import constants
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
+
 class TestComputeChange(unittest.TestCase):
     """
     Tests the prescriptor compute change method.
@@ -56,7 +57,7 @@ class TestComputeChange(unittest.TestCase):
         Tests compute percent change when nothing changes.
         """
         context_data = [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.12]
-        presc_data = context_data[0:6] + context_data [8:11]
+        presc_data = context_data[0:6] + context_data[8:11]
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 
@@ -68,7 +69,7 @@ class TestComputeChange(unittest.TestCase):
         Tests compute change when there is only urban/primf/primn.
         """
         context_data = [0, 0, 0, 0, 0, 0, 0.33, 0.33, 0, 0, 0, 0.34]
-        presc_data = context_data[0:6] + context_data [8:11]
+        presc_data = context_data[0:6] + context_data[8:11]
 
         context_actions_df = self._list_data_to_df(context_data, presc_data)
 

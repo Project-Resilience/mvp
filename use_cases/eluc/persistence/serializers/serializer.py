@@ -4,6 +4,7 @@ Abstract class responsible for defining the interface of the serializer classes.
 from abc import ABC, abstractmethod
 from pathlib import Path
 
+
 class Serializer(ABC):
     """
     Abstract class responsible for saving and loading predictor/prescriptor models locally.

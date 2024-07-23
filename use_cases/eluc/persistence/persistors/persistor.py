@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 
 from persistence.serializers.serializer import Serializer
 
+
 class Persistor(ABC):
     """
     Abstract class for persistors to inherit from.

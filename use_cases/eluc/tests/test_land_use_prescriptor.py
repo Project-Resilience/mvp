@@ -14,6 +14,7 @@ from persistence.serializers.prescriptor_serializer import PrescriptorSerializer
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 
+
 class TestLandUsePrescriptor(unittest.TestCase):
     """
     Tests PyTorch prescriptor class

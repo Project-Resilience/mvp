@@ -3,6 +3,7 @@ Utilities for NSGA-II implementation.
 """
 from prescriptors.nsga2.candidate import Candidate
 
+
 # pylint: disable=invalid-name
 def fast_non_dominated_sort(candidates: list):
     """
@@ -57,6 +58,7 @@ def fast_non_dominated_sort(candidates: list):
 
     return candidate_fronts, rank
 
+
 def calculate_crowding_distance(front):
     """
     Set crowding distance of each candidate in front.
@@ -77,6 +79,7 @@ def calculate_crowding_distance(front):
             # If all candidates have the same value, their distances are 0
             else:
                 sorted_front[i].distance += 0
+
 
 def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:
     """

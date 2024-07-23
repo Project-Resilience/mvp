@@ -11,6 +11,7 @@ from persistence.serializers.serializer import Serializer
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 
+
 class NeuralNetSerializer(Serializer):
     """
     Serializer for the NeuralNetPredictor.
@@ -53,7 +54,7 @@ class NeuralNetSerializer(Serializer):
             raise FileNotFoundError(f"Path {path} does not exist.")
         if not (path / "config.json").exists() or \
             not (path / "model.pt").exists() or \
-            not (path / "scaler.joblib").exists():
+                not (path / "scaler.joblib").exists():
             raise FileNotFoundError("Model files not found in path.")
 
         # Initialize model with config

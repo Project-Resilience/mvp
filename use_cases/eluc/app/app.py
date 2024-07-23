@@ -74,8 +74,8 @@ This site is for demonstration purposes only.
 For a given context cell representing a portion of the earth,
 identified by its latitude and longitude coordinates, and a given year:
 * What changes can we make to the land usage
-* In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC, 
-in tons of carbon per hectare)
+* In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC,
+ in tons of carbon per hectare)
 
 '''),
     dcc.Markdown('''## Context'''),
@@ -99,8 +99,8 @@ in tons of carbon per hectare)
         dcc.Graph(id='presc-fig',
                   figure=chart_component.create_treemap(type_context=False),
                   style={'grid-clumn': '4'})
-    # This can't be set to auto because the lines will overflow!
     ], style={'display': 'grid', 'grid-template-columns': '4.5% 40% 1fr 1fr', "width": "100%"}),
+    # The above line can't be set to auto because the lines will overflow!
     html.Div([
         sliders_component.get_frozen_div(),
         html.Button("Sum to 100%", id='sum-button', n_clicks=0),

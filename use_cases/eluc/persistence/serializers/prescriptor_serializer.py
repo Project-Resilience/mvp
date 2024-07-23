@@ -11,6 +11,7 @@ from persistence.serializers.serializer import Serializer
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 
+
 class PrescriptorSerializer(Serializer):
     """
     Serializer in charge of saving single prescriptor model from LandUsePrescriptor.

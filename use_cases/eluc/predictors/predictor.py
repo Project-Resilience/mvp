@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+
 class Predictor(ABC):
     """
     Abstract class for predictors to inherit from.

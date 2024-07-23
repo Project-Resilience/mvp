@@ -11,6 +11,7 @@ from sklearn.ensemble import RandomForestRegressor
 from data import constants
 from predictors.predictor import Predictor
 
+
 class SKLearnPredictor(Predictor, ABC):
     """
     Simple abstract class for sklearn predictors.
@@ -52,6 +53,7 @@ class SKLearnPredictor(Predictor, ABC):
         y_pred = self.model.predict(context_actions_df)
         return pd.DataFrame(y_pred, index=context_actions_df.index, columns=[self.config["label"]])
 
+
 class LinearRegressionPredictor(SKLearnPredictor):
     """
     Simple linear regression predictor.
@@ -63,7 +65,8 @@ class LinearRegressionPredictor(SKLearnPredictor):
         lr_config = {key: value for key, value in model_config.items() if key not in ["features", "label"]}
         model = LinearRegression(**lr_config)
         super().__init__(model, model_config)
-        
+
+
 class RandomForestPredictor(SKLearnPredictor):
     """
     Simple random forest predictor.

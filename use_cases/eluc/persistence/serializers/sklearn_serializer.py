@@ -9,6 +9,7 @@ import joblib
 from persistence.serializers.serializer import Serializer
 from predictors.sklearn_predictor.sklearn_predictor import SKLearnPredictor
 
+
 class SKLearnSerializer(Serializer):
     """
     Serializer for the SKLearnPredictor.

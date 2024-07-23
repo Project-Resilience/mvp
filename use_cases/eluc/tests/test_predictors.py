@@ -10,7 +10,7 @@ import pandas as pd
 from persistence.serializers.neural_network_serializer import NeuralNetSerializer
 from persistence.serializers.sklearn_serializer import SKLearnSerializer
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
-from predictors.sklearn.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
+from predictors.sklearn_predictor.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
 class TestPredictors(unittest.TestCase):
     """

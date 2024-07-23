@@ -11,6 +11,7 @@ from app import constants as app_constants
 from app import utils
 from data import constants
 
+
 class ChartComponent:
     """
     Component in charge of handling the context and prescription charts.
@@ -161,24 +162,24 @@ class ChartComponent:
             fields = data[app_constants.FIELDS].sum()
 
             labels = [title, "Nonland",
-                    "Crops", 
-                    "Primary Vegetation", "primf", "primn", 
-                    "Secondary Vegetation", "secdf", "secdn",
-                    "Urban",
-                    "Fields", "pastr", "range"]
+                      "Crops",
+                      "Primary Vegetation", "primf", "primn",
+                      "Secondary Vegetation", "secdf", "secdn",
+                      "Urban",
+                      "Fields", "pastr", "range"]
             parents = ["", title,
-                    title,
-                    title, "Primary Vegetation", "Primary Vegetation",
-                    title, "Secondary Vegetation", "Secondary Vegetation",
-                    title,
-                    title, "Fields", "Fields"]
+                       title,
+                       title, "Primary Vegetation", "Primary Vegetation",
+                       title, "Secondary Vegetation", "Secondary Vegetation",
+                       title,
+                       title, "Fields", "Fields"]
 
-            values =  [total + data["nonland"], data["nonland"],
-                        data["crop"],
-                        primary, data["primf"], data["primn"],
-                        secondary, data["secdf"], data["secdn"],
-                        data["urban"],
-                        fields, data["pastr"], data["range"]]
+            values = [total + data["nonland"], data["nonland"],
+                      data["crop"],
+                      primary, data["primf"], data["primn"],
+                      secondary, data["secdf"], data["secdn"],
+                      data["urban"],
+                      fields, data["pastr"], data["range"]]
 
             tree_params["customdata"] = self._create_hovertext(labels, parents, values, title)
             tree_params["hovertemplate"] = "%{customdata}<extra></extra>"
@@ -188,15 +189,15 @@ class ChartComponent:
 
         fig = go.Figure(
             go.Treemap(
-                labels = labels,
-                parents = parents,
-                values = values,
+                labels=labels,
+                parents=parents,
+                values=values,
                 **tree_params
             )
         )
         colors = px.colors.qualitative.Plotly
         fig.update_layout(
-            treemapcolorway = [colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
+            treemapcolorway=[colors[1], colors[4], colors[2], colors[7], colors[3], colors[0]],
             margin={"t": 0, "b": 0, "l": 10, "r": 10}
         )
         return fig
@@ -219,24 +220,24 @@ class ChartComponent:
         else:
             values = data[app_constants.CHART_COLS].tolist()
 
-        assert(len(values) == len(app_constants.CHART_COLS))
+        assert len(values) == len(app_constants.CHART_COLS)
 
         title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
 
         # Attempt to match the colors from the treemap
         plo = px.colors.qualitative.Plotly
         dar = px.colors.qualitative.Dark24
-        #['crop', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'nonland]
+        # ['crop', 'pastr', 'primf', 'primn', 'range', 'secdf', 'secdn', 'urban', 'nonland]
         colors = [plo[4], plo[0], plo[2], dar[14], plo[5], plo[7], dar[2], plo[3], plo[1]]
         fig = go.Figure(
             go.Pie(
-                values = values,
-                labels = app_constants.CHART_COLS,
-                textposition = "inside",
-                sort = False,
-                marker_colors = colors,
-                hovertemplate = "%{label}<br>%{value}<br>%{percent}<extra></extra>",
-                title = title
+                values=values,
+                labels=app_constants.CHART_COLS,
+                textposition="inside",
+                sort=False,
+                marker_colors=colors,
+                hovertemplate="%{label}<br>%{value}<br>%{percent}<extra></extra>",
+                title=title
             )
         )
 

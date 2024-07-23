@@ -3,6 +3,7 @@ Simple feed-forward neural network to be used in the Neural Network Predictor.
 """
 import torch
 
+
 class ELUCNeuralNet(torch.nn.Module):
     """
     Custom torch neural network module.
@@ -23,6 +24,7 @@ class ELUCNeuralNet(torch.nn.Module):
                 torch.nn.ReLU(),
                 torch.nn.Dropout(p=dropout)
             )
+
         def forward(self, X: torch.FloatTensor) -> torch.FloatTensor:
             """
             Passes input through the block.

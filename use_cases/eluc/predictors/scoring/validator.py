@@ -3,6 +3,7 @@ Validation of input and output dataframes for predictor scoring.
 """
 import pandas as pd
 
+
 class Validator():
     """
     Validates input and output dataframes for predictor scoring.

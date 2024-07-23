@@ -9,6 +9,7 @@ import numpy as np
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2 import nsga2_utils
 
+
 class TestNSGA2Utils(unittest.TestCase):
     """
     Tests the NGSA-II utility functions.
@@ -66,5 +67,5 @@ class TestNSGA2Utils(unittest.TestCase):
             candidate2 = Candidate(16, 16, 16)
             candidate1.metrics = [comb[0], comb[1]]
             candidate2.metrics = [comb[2], comb[3]]
-            self.assertEqual(nsga2_utils.dominates(candidate1, candidate2), self.manual_two_obj_dominate(candidate1, candidate2))
-
+            self.assertEqual(nsga2_utils.dominates(candidate1, candidate2),
+                             self.manual_two_obj_dominate(candidate1, candidate2))

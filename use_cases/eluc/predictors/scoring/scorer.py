@@ -14,6 +14,7 @@ from persistence.persistors.hf_persistor import HuggingFacePersistor
 from predictors.predictor import Predictor
 from predictors.scoring.validator import Validator
 
+
 class PredictorScorer:
     """
     Scoring class to evaluate predictors on a dataset.
@@ -59,7 +60,7 @@ class PredictorScorer:
                 raise ValueError("Model type must be either 'hf' or 'local'")
             predictors[model["filepath"]] = predictor
         return predictors
-    
+
     def score_models(self, test_df: pd.DataFrame) -> dict[str, float]:
         """
         Scores our list of predictors on a given test dataframe.
@@ -78,6 +79,7 @@ class PredictorScorer:
         results = dict(sorted(results.items(), key=lambda item: item[1]))
         return results
 
+
 def run_scoring():
     """
     A demo script to show how the PredictorScorer class works.
@@ -89,6 +91,7 @@ def run_scoring():
     results = comparator.score_models(dataset.test_df)
     print("Results:")
     print(results)
+
 
 if __name__ == "__main__":
     run_scoring()

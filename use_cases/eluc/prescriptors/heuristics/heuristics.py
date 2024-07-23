@@ -8,6 +8,7 @@ import pandas as pd
 from data import constants
 from prescriptors.prescriptor import Prescriptor
 
+
 class HeuristicPrescriptor(Prescriptor, ABC):
     """
     Abstract heuristic prescriptor class that inherits from prescriptor class.
@@ -22,7 +23,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
     @abstractmethod
     def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
         """
-        Abstract method that takes a percentage threshold of land change and a 
+        Abstract method that takes a percentage threshold of land change and a
         context dataframe and returns a dataframe of recommendations based on the heuristic.
         """
         raise NotImplementedError
@@ -41,6 +42,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         # Aggregate the context and actions dataframes.
         context_actions_df = pd.concat([context_df, prescribed_actions_df[constants.DIFF_LAND_USE_COLS]], axis=1)
         return context_actions_df
+
 
 class EvenHeuristic(HeuristicPrescriptor):
     """
@@ -73,12 +75,13 @@ class EvenHeuristic(HeuristicPrescriptor):
         adjusted = adjusted.drop(["scaled_change", "row_sum", "max_change"], axis=1)
         return adjusted
 
+
 class PerfectHeuristic(HeuristicPrescriptor):
     """
-    Implementation of HeuristicPrescriptor that does an informed land use prescription 
+    Implementation of HeuristicPrescriptor that does an informed land use prescription
     based on linear regression coefficients.
     """
-    def __init__(self, pct:float, coefs: list[float]):
+    def __init__(self, pct: float, coefs: list[float]):
         """
         We save and sort the columns by highest coefficient i.e. most emissions.
         Separate the best column according to the coefficients to add to.

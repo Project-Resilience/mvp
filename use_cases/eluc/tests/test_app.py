@@ -9,6 +9,7 @@ import app.constants as app_constants
 from app import utils
 from data import constants
 
+
 class TestUtilFunctions(unittest.TestCase):
     """
     Tests app utilities.

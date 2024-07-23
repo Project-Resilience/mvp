@@ -4,6 +4,7 @@ Simple component that returns a div with a markdown text that explains the land 
 from dash import dcc
 from dash import html
 
+
 # pylint: disable=too-few-public-methods
 class LegendComponent:
     """
@@ -15,8 +16,8 @@ class LegendComponent:
         """
         # Legend examples come from https://hess.copernicus.org/preprints/hess-2021-247/hess-2021-247-ATC3.pdf
         legend_div = html.Div(
-            style={"margin-bottom": "100px"}, # Because we removed some crops, we extend this so the map doesn't shrink.
-            children = [
+            style={"margin-bottom": "100px"},  # Because we removed some crops, we extend this so the map doesn't shrink
+            children=[
                 dcc.Markdown('''
         ### Land Use Types
 
@@ -25,7 +26,7 @@ class LegendComponent:
             - primf: Primary forest
             - primn: Primary nonforest vegetation
 
-            
+
         Secondary: Vegetation that has been touched by humans
 
             - secdf: Secondary forest

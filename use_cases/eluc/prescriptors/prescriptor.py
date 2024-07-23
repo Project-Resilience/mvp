@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+
 class Prescriptor(ABC):
     """
     Abstract class for prescriptors to allow us to experiment with different implementations.

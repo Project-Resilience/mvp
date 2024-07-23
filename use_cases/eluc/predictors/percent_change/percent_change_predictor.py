@@ -6,6 +6,7 @@ import pandas as pd
 from data import constants
 from predictors.predictor import Predictor
 
+
 class PercentChangePredictor(Predictor):
     """
     Heuristic that calculates the percent change of land use from actions and context.
@@ -28,7 +29,7 @@ class PercentChangePredictor(Predictor):
         percent_changed = pos_diffs[constants.DIFF_LAND_USE_COLS].sum(axis=1)
         # Divide by sum of used land
         total_land = context_actions_df[constants.LAND_USE_COLS].sum(axis=1)
-        total_land = total_land.replace(0, 1) # Avoid division by 0
+        total_land = total_land.replace(0, 1)  # Avoid division by 0
         percent_changed = percent_changed / total_land
         change_df = pd.DataFrame(percent_changed, columns=["change"])
         return change_df

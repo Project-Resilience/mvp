@@ -19,6 +19,7 @@ from data.torch_data import TorchDataset
 from predictors.predictor import Predictor
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 
+
 class NeuralNetPredictor(Predictor):
     """
     Simple feed-forward neural network predictor implemented in PyTorch.
@@ -75,7 +76,7 @@ class NeuralNetPredictor(Predictor):
         :param y_test: test labels.
         :param log_path: path to log training data to tensorboard.
         :param verbose: whether to print progress bars.
-        :return: dictionary of results from training containing time taken, best epoch, best loss, 
+        :return: dictionary of results from training containing time taken, best epoch, best loss,
         and test loss if applicable.
         """
         if not self.features:
@@ -175,7 +176,6 @@ class NeuralNetPredictor(Predictor):
             result_dict["test_loss"] = mae
 
         return result_dict
-
 
     def predict(self, context_actions_df: pd.DataFrame) -> pd.DataFrame:
         """

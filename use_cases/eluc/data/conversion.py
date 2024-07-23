@@ -45,6 +45,7 @@ MANUAL_MAP = {
     "SS": 728
 }
 
+
 def construct_countries_df():
     """
     Constructs a dataframe mapping of countries, their abbreviations, and their proper codes.

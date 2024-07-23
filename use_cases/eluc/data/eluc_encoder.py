@@ -8,6 +8,7 @@ import pandas as pd
 
 from data import constants
 
+
 class ELUCEncoder():
     """
     Creates an encoder for a pandas dataset by collecting fields used for minmax scaling.

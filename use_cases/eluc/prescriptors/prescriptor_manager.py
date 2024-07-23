@@ -8,6 +8,7 @@ import pandas as pd
 from predictors.predictor import Predictor
 from prescriptors.prescriptor import Prescriptor
 
+
 class PrescriptorManager():
     """
     Stores many Prescriptor objects and some predictors.

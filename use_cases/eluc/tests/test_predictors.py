@@ -12,6 +12,7 @@ from persistence.serializers.sklearn_serializer import SKLearnSerializer
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 from predictors.sklearn_predictor.sklearn_predictor import LinearRegressionPredictor, RandomForestPredictor
 
+
 class TestPredictors(unittest.TestCase):
     """
     Tests the 3 base predictor implementations' saving and loading behavior.
@@ -76,7 +77,7 @@ class TestPredictors(unittest.TestCase):
                 loaded = serializer.load(self.temp_path)
                 loaded_output = loaded.predict(self.dummy_data.iloc[2:])
 
-                self.assertTrue((output == loaded_output).all().all()) # Pandas is so annoying why is this necessary?
+                self.assertTrue((output == loaded_output).all().all())
                 shutil.rmtree(self.temp_path)
                 self.assertFalse(self.temp_path.exists())
 

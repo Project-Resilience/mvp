@@ -19,6 +19,7 @@ from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 from prescriptors.prescriptor_manager import PrescriptorManager
 
+
 class TorchTrainer():
     """
     Handles prescriptor candidate evolution
@@ -39,7 +40,7 @@ class TorchTrainer():
         self.pop_size = pop_size
         self.n_generations = n_generations
         self.p_mutation = p_mutation
-        self.seed_dir=seed_dir
+        self.seed_dir = seed_dir
 
         # Evaluation params
         self.encoder = encoder
@@ -95,7 +96,7 @@ class TorchTrainer():
         idx2 = min(random.choices(range(len(sorted_parents)), k=2))
         return sorted_parents[idx1], sorted_parents[idx2]
 
-    def _make_new_pop(self, parents: list[Candidate], pop_size: int, gen:int) -> list[Candidate]:
+    def _make_new_pop(self, parents: list[Candidate], pop_size: int, gen: int) -> list[Candidate]:
         """
         Makes new population by creating children from parents.
         We use tournament selection to select parents for crossover.
@@ -176,4 +177,3 @@ class TorchTrainer():
         avg_eluc = np.mean([c.metrics[0] for c in candidates])
         avg_change = np.mean([c.metrics[1] for c in candidates])
         return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
-    

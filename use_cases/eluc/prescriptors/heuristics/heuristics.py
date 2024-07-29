@@ -5,8 +5,9 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+from prsdk.prescriptors.prescriptor import Prescriptor
+
 from data import constants
-from prescriptors.prescriptor import Prescriptor
 
 
 class HeuristicPrescriptor(Prescriptor, ABC):

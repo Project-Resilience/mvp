@@ -5,7 +5,7 @@ from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
 
-from persistence.persistors.persistor import Persistor
+from prsdk.persistence.persistors.persistor import Persistor
 
 
 class HuggingFacePersistor(Persistor):
@@ -27,7 +27,7 @@ class HuggingFacePersistor(Persistor):
         then uploads the model to a HuggingFace repo.
         """
         # Save model and write readme
-        self.file_serializer.save(model, model_path)
+        self.serializer.save(model, model_path)
         self.write_readme(model_path)
 
         # Get token if it exists
@@ -58,7 +58,7 @@ class HuggingFacePersistor(Persistor):
         """
         path = Path(path_or_url)
         if path.exists() and path.is_dir():
-            return self.file_serializer.load(path)
+            return self.serializer.load(path)
         # TODO: Need a try except block to catch download errors
         url_path = path_or_url.replace("/", "--")
         local_dir = hf_args.get("local_dir", f"huggingface_models/{url_path}")
@@ -67,4 +67,4 @@ class HuggingFacePersistor(Persistor):
             hf_args["local_dir"] = local_dir
             snapshot_download(repo_id=path_or_url, **hf_args)
 
-        return self.file_serializer.load(Path(local_dir))
+        return self.serializer.load(Path(local_dir))

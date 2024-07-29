@@ -3,8 +3,9 @@ See here for how to impelement a predictor:
 """
 import pandas as pd
 
+from prsdk.predictors.predictor import Predictor
+
 from data import constants
-from predictors.predictor import Predictor
 
 
 class TemplatePredictor(Predictor):

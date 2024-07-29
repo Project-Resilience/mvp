@@ -6,8 +6,9 @@ from pathlib import Path
 
 import torch
 
+from prsdk.persistence.serializers.serializer import Serializer
+
 from data.eluc_encoder import ELUCEncoder
-from persistence.serializers.serializer import Serializer
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 

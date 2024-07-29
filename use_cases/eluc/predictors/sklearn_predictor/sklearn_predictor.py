@@ -8,8 +8,9 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
 
+from prsdk.predictors.predictor import Predictor
+
 from data import constants
-from predictors.predictor import Predictor
 
 
 class SKLearnPredictor(Predictor, ABC):

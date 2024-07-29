@@ -6,11 +6,12 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
+from prsdk.prescriptors.prescriptor import Prescriptor
+
 from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
-from prescriptors.prescriptor import Prescriptor
 
 
 class LandUsePrescriptor(Prescriptor):

@@ -3,8 +3,9 @@ Our heuristic model that calculates the percent change of land use from actions 
 """
 import pandas as pd
 
+from prsdk.predictors.predictor import Predictor
+
 from data import constants
-from predictors.predictor import Predictor
 
 
 class PercentChangePredictor(Predictor):

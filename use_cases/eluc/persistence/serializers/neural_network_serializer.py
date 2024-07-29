@@ -7,7 +7,8 @@ from pathlib import Path
 import joblib
 import torch
 
-from persistence.serializers.serializer import Serializer
+from prsdk.persistence.serializers.serializer import Serializer
+
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 

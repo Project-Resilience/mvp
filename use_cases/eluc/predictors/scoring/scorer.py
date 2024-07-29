@@ -8,10 +8,11 @@ from pathlib import Path
 
 import pandas as pd
 
+from prsdk.predictors.predictor import Predictor
+
 import data.constants as constants
 from data.eluc_data import ELUCData
 from persistence.persistors.hf_persistor import HuggingFacePersistor
-from predictors.predictor import Predictor
 from predictors.scoring.validator import Validator
 
 

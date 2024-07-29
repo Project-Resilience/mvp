@@ -14,9 +14,10 @@ import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
+from prsdk.predictors.predictor import Predictor
+
 from data import constants
 from data.torch_data import TorchDataset
-from predictors.predictor import Predictor
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 
 

@@ -5,9 +5,10 @@ Since the SKLearn library is standardized we can easily make more.
 from abc import ABC
 
 import pandas as pd
-from prsdk.predictors.predictor import Predictor
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+
+from prsdk.predictors.predictor import Predictor
 
 from data import constants
 

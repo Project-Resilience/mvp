@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 import pandas as pd
+
 from prsdk.predictors.predictor import Predictor
 
 import data.constants as constants

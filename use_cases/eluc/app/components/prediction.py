@@ -7,6 +7,7 @@ from dash import Input, State, Output, ALL
 from dash import dcc
 from dash import html
 import pandas as pd
+
 from prsdk.predictors.predictor import Predictor
 
 from app import constants as app_constants

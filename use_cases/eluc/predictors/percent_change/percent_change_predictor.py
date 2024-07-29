@@ -2,6 +2,7 @@
 Our heuristic model that calculates the percent change of land use from actions and context.
 """
 import pandas as pd
+
 from prsdk.predictors.predictor import Predictor
 
 from data import constants

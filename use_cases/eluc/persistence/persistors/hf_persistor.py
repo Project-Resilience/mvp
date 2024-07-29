@@ -4,6 +4,7 @@ Persistor for models to and from HuggingFace repo.
 from pathlib import Path
 
 from huggingface_hub import HfApi, snapshot_download
+
 from prsdk.persistence.persistors.persistor import Persistor
 
 

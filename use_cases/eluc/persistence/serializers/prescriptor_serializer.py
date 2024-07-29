@@ -4,8 +4,9 @@ Serializer for LandUsePrescriptor.
 import json
 from pathlib import Path
 
-from prsdk.persistence.serializers.serializer import Serializer
 import torch
+
+from prsdk.persistence.serializers.serializer import Serializer
 
 from data.eluc_encoder import ELUCEncoder
 from prescriptors.nsga2.candidate import Candidate

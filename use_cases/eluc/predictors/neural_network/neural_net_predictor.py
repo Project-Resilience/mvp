@@ -7,13 +7,14 @@ import time
 
 import numpy as np
 import pandas as pd
-from prsdk.predictors.predictor import Predictor
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+
+from prsdk.predictors.predictor import Predictor
 
 from data import constants
 from data.torch_data import TorchDataset

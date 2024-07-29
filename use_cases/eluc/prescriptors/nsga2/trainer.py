@@ -7,9 +7,10 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
-from prsdk.predictors.predictor import Predictor
 import torch
 from torch.utils.data import DataLoader
+
+from prsdk.predictors.predictor import Predictor
 
 from data import constants
 from data.eluc_data import ELUCEncoder

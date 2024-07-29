@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 
 import joblib
+from prsdk.persistence.serializers.serializer import Serializer
 
-from persistence.serializers.serializer import Serializer
 from predictors.sklearn_predictor.sklearn_predictor import SKLearnPredictor
 
 

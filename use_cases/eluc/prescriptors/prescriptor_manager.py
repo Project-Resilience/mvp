@@ -4,9 +4,8 @@ then predict on a uniform Predictor in order to compare them.
 Additionally handles the percent changed computation.
 """
 import pandas as pd
-
-from predictors.predictor import Predictor
-from prescriptors.prescriptor import Prescriptor
+from prsdk.predictors.predictor import Predictor
+from prsdk.prescriptors.prescriptor import Prescriptor
 
 
 class PrescriptorManager():

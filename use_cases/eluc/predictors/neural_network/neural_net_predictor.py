@@ -7,6 +7,7 @@ import time
 
 import numpy as np
 import pandas as pd
+from prsdk.predictors.predictor import Predictor
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
@@ -16,7 +17,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 from data import constants
 from data.torch_data import TorchDataset
-from predictors.predictor import Predictor
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 
 

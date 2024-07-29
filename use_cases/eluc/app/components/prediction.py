@@ -7,13 +7,13 @@ from dash import Input, State, Output, ALL
 from dash import dcc
 from dash import html
 import pandas as pd
+from prsdk.predictors.predictor import Predictor
 
 from app import constants as app_constants
 from data import constants
 from persistence.persistors.hf_persistor import HuggingFacePersistor
 from persistence.serializers.neural_network_serializer import NeuralNetSerializer
 from persistence.serializers.sklearn_serializer import SKLearnSerializer
-from predictors.predictor import Predictor
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 
 

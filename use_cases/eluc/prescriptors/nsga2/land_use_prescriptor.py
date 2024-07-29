@@ -3,6 +3,7 @@ Base implementation of the land use prescriptor as used in the paper.
 """
 import numpy as np
 import pandas as pd
+from prsdk.prescriptors.prescriptor import Prescriptor
 import torch
 from torch.utils.data import DataLoader
 
@@ -10,7 +11,6 @@ from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
-from prescriptors.prescriptor import Prescriptor
 
 
 class LandUsePrescriptor(Prescriptor):

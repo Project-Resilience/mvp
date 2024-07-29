@@ -7,13 +7,13 @@ from pathlib import Path
 from tqdm import tqdm
 import numpy as np
 import pandas as pd
+from prsdk.predictors.predictor import Predictor
 import torch
 from torch.utils.data import DataLoader
 
 from data import constants
 from data.eluc_data import ELUCEncoder
 from data.torch_data import TorchDataset
-from predictors.predictor import Predictor
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor

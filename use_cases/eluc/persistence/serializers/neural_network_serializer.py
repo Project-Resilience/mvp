@@ -5,9 +5,9 @@ import json
 from pathlib import Path
 
 import joblib
+from prsdk.persistence.serializers.serializer import Serializer
 import torch
 
-from persistence.serializers.serializer import Serializer
 from predictors.neural_network.eluc_neural_net import ELUCNeuralNet
 from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
 

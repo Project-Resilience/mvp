@@ -10,11 +10,13 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import mean_absolute_error
 
+from prsdk.predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from prsdk.predictors.sklearn_predictors.linear_regression_predictor import LinearRegressionPredictor
+from prsdk.predictors.sklearn_predictors.random_forest_predictor import RandomForestPredictor
+
 from data.eluc_data import ELUCData
 from data import constants
 from data.conversion import construct_countries_df
-from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
-from predictors.sklearn_predictor.sklearn_predictor import RandomForestPredictor, LinearRegressionPredictor
 
 
 def train_and_test(n: int,

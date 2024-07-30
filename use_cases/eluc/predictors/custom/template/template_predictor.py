@@ -5,8 +5,6 @@ import pandas as pd
 
 from prsdk.predictors.predictor import Predictor
 
-from data import constants
-
 
 class TemplatePredictor(Predictor):
     """
@@ -14,11 +12,6 @@ class TemplatePredictor(Predictor):
     The class that gets passed into the Evaluator should call the load method which should return a Predictor.
     The Predictor just needs to impelement predict.
     """
-    def __init__(self):
-        super().__init__(context=constants.CAO_MAPPING["context"],
-                         actions=constants.CAO_MAPPING["actions"],
-                         outcomes=constants.CAO_MAPPING["outcomes"])
-
     def fit(self, X_train, y_train):
         pass
 

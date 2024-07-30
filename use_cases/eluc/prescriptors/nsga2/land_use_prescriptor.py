@@ -6,11 +6,11 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
+from prsdk.data.torch_data import TorchDataset
 from prsdk.prescriptors.prescriptor import Prescriptor
 
 from data import constants
 from data.eluc_data import ELUCEncoder
-from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
 
 
@@ -20,7 +20,6 @@ class LandUsePrescriptor(Prescriptor):
     evolution using NSGA-II.
     """
     def __init__(self, candidate: Candidate, encoder: ELUCEncoder, batch_size: int = 4096):
-        super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"])
         self.candidate = candidate
         self.encoder = encoder
         self.batch_size = batch_size
@@ -47,7 +46,8 @@ class LandUsePrescriptor(Prescriptor):
         presc_actions_df = reco_df - context_df[constants.RECO_COLS]
         presc_actions_df = presc_actions_df.rename(constants.RECO_MAP, axis=1)
         presc_actions_df[constants.NO_CHANGE_COLS] = 0
-        context_actions_df = pd.concat([context_df[self.context], presc_actions_df[self.actions]], axis=1)
+        context_actions_df = pd.concat([context_df[constants.CAO_MAPPING["context"]],
+                                        presc_actions_df[constants.CAO_MAPPING["actions"]]], axis=1)
         return context_actions_df
 
     def prescribe(self, context_df) -> pd.DataFrame:

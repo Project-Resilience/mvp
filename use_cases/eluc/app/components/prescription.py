@@ -9,9 +9,10 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 
+from prsdk.persistence.persistors.hf_persistor import HuggingFacePersistor
+
 from app import constants as app_constants
 from data import constants
-from persistence.persistors.hf_persistor import HuggingFacePersistor
 from persistence.serializers.prescriptor_serializer import PrescriptorSerializer
 from prescriptors.prescriptor_manager import PrescriptorManager
 

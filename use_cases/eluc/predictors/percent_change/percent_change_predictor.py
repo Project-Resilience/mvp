@@ -12,9 +12,6 @@ class PercentChangePredictor(Predictor):
     """
     Heuristic that calculates the percent change of land use from actions and context.
     """
-    def __init__(self):
-        super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"], ["change"])
-
     def fit(self, X_train: pd.DataFrame, y_train: pd.Series):
         """
         No fitting required for this model.

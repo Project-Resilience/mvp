@@ -7,9 +7,10 @@ import argparse
 import json
 from pathlib import Path
 
+from prsdk.persistence.serializers.neural_network_serializer import NeuralNetSerializer
+
 from data.eluc_data import ELUCData
 from data.eluc_encoder import ELUCEncoder
-from persistence.serializers.neural_network_serializer import NeuralNetSerializer
 from prescriptors.nsga2.trainer import TorchTrainer
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
 

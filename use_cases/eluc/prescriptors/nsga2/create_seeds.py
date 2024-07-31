@@ -8,9 +8,10 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
+from prsdk.data.torch_data import TorchDataset
+
 from data import constants
 from data.eluc_data import ELUCData
-from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
 
 

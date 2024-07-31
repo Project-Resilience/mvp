@@ -19,7 +19,7 @@ numpy==1.23.5
 pandas==1.5.3
 plotly==5.14.1
 protobuf==3.20.3
--e git+https://github.com/Project-Resilience/sdk.git@368bcb03378d5456e98f5c839e264f8c117d5abb#egg=prsdk
+-e git+https://github.com/Project-Resilience/sdk.git@c0e5300e56f5fce2f6cf55c328c83e7055e541be#egg=prsdk
 pylint==2.17.4
 regionmask==0.10.0
 scikit-learn==1.2.2

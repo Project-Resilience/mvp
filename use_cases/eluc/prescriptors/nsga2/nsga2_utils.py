@@ -66,19 +66,18 @@ def calculate_crowding_distance(front):
     n_objectives = len(front[0].metrics)
     for candidate in front:
         candidate.distance = 0
+        
+    # Front is sorted by each metric
     for m in range(n_objectives):
-        sorted_front = sorted(front, key=lambda candidate: candidate.metrics[m])
-        obj_min = sorted_front[0].metrics[m]
-        obj_max = sorted_front[-1].metrics[m]
-        sorted_front[0].distance = float('inf')
-        sorted_front[-1].distance = float('inf')
-        for i in range(1, len(sorted_front) - 1):
-            if obj_max != obj_min:
-                dist = sorted_front[i+1].metrics[m] - sorted_front[i-1].metrics[m]
-                sorted_front[i].distance += dist / (obj_max - obj_min)
-            # If all candidates have the same value, their distances are 0
-            else:
-                sorted_front[i].distance += 0
+        front.sort(key=lambda candidate: candidate.metrics[m])
+        # Standard NSGA-II Crowding Distance calculation
+        obj_min = front[0].metrics[m]
+        obj_max = front[-1].metrics[m]
+        front[0].distance = float('inf')
+        front[-1].distance = float('inf')
+        if obj_max != obj_min:
+            for i in range(1, len(front) - 1):
+                front[i].distance += (front[i+1].metrics[m] - front[i-1].metrics[m]) / (obj_max - obj_min)
 
 
 def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:

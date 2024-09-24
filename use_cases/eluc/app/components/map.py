@@ -1,9 +1,8 @@
 """
 This file is a component that handles the map where the user can select context and its associated callbacks.
 """
-from dash import Input, State, Output
-from dash import dcc
-from dash import html
+from dash import Input, State, Output, dcc, html
+import dash_bootstrap_components as dbc
 import numpy as np
 import pandas as pd
 import plotly.express as px
@@ -47,45 +46,61 @@ class MapComponent:
         """
         Div that allows the user to select context inputs manually instead of from the map.
         """
-        select_style = {'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         context_div = html.Div(
-            style={'display': 'grid',
-                   'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto',
-                   'position': 'absolute', 'bottom': '0'},
             children=[
-                html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
-                dcc.Dropdown(
-                    id="loc-dropdown",
-                    options=list(self.countries_df["names"]),
-                    value=list(self.countries_df["names"])[143],
-                    style={'grid-column': '2', 'grid-row': '1', **select_style}
+                dbc.Row(
+                    children=[
+                        dbc.Col(html.P("Region")),
+                        dbc.Col(
+                            dcc.Dropdown(
+                                id="loc-dropdown",
+                                options=list(self.countries_df["names"]),
+                                value=list(self.countries_df["names"])[143]
+                            )
+                        )
+                    ]
                 ),
-                html.P("Lat", style={'grid-column': '1', 'grid-row': '2', 'padding-right': '10px'}),
-                dcc.Dropdown(
-                    id='lat-dropdown',
-                    options=self.lat_list,
-                    placeholder="Select a latitude",
-                    value=51.625,
-                    style={'grid-column': '2', 'grid-row': '2', **select_style}
+                dbc.Row(
+                    children=[
+                        dbc.Col(html.P("Latitude")),
+                        dbc.Col(
+                            dcc.Dropdown(
+                                id="lat-dropdown",
+                                options=[{"label": lat, "value": lat} for lat in self.lat_list],
+                                value=51.625,
+                            )
+                        )
+                    ]
                 ),
-                html.P("Lon", style={'grid-column': '1', 'grid-row': '3', 'padding-right': '10px'}),
-                dcc.Dropdown(
-                    id='lon-dropdown',
-                    options=self.lon_list,
-                    placeholder="Select a longitude",
-                    value=-3.375,
-                    style={'grid-column': '2', 'grid-row': '3', **select_style}
+                dbc.Row(
+                    children=[
+                        dbc.Col(html.P("Longitude")),
+                        dbc.Col(
+                            dcc.Dropdown(
+                                id="lon-dropdown",
+                                options=[{"label": lon, "value": lon} for lon in self.lon_list],
+                                value=-3.375,
+                            )
+                        )
+                    ]
                 ),
-                html.P("Year ", style={'grid-column': '1', 'grid-row': '4', 'margin-right': '10px'}),
-                html.Div([
-                    dcc.Input(
-                        id="year-input",
-                        type="number",
-                        value=2021,
-                        debounce=True
-                    ),
-                    dcc.Tooltip(f"Year must be between {self.min_time} and {self.max_time}."),
-                ], style={'grid-column': '2', 'grid-row': '4', **select_style}),
+                dbc.Row(
+                    children=[
+                        dbc.Col(html.P("Year")),
+                        dbc.Col(
+                            html.Div([
+                                dcc.Input(
+                                    id="year-input",
+                                    type="number",
+                                    value=2021,
+                                    debounce=True
+                                ),
+                                dcc.Tooltip(f"Year must be between {self.min_time} and {self.max_time}.")
+                            ])
+                            
+                        )
+                    ]
+                )
             ]
         )
         return context_div

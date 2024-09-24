@@ -67,45 +67,146 @@ app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'
 app.css.append_css({'external_url': 'https://codepen.io/chriddyp/pen/brPBPO.css'})
 
 app.layout = html.Div([
-    dcc.Markdown('''
-# Land Use Optimization
-This site is for demonstration purposes only.
+#     dcc.Markdown('''
+# # Land Use Optimization
+# This site is for demonstration purposes only.
 
-For a given context cell representing a portion of the earth,
-identified by its latitude and longitude coordinates, and a given year:
-* What changes can we make to the land usage
-* In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC,
- in tons of carbon per hectare)
+# For a given context cell representing a portion of the earth,
+# identified by its latitude and longitude coordinates, and a given year:
+# * What changes can we make to the land usage
+# * In order to minimize the resulting estimated CO2 emissions? (Emissions from Land Use Change, ELUC,
+#  in tons of carbon per hectare)
 
-'''),
-    dcc.Markdown('''## Context'''),
-    html.Div([
-        dcc.Graph(id="map", figure=map_component.get_map_fig(), style={"grid-column": "1"}),
-        html.Div([map_component.get_context_div()], style={"grid-column": "2"}),
-        html.Div([legend_component.get_legend_div()], style={"grid-column": "3"})
-    ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
-    dcc.Markdown('''## Actions'''),
-    html.Div([
-        html.Div([prescription_component.get_presc_select_div()], style={"grid-column": "1"}),
-        html.Div([chart_component.get_chart_select_div()],
-                 style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
-    ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
-    html.Div([
-        html.Div(lock_component.get_checklist_div(), style={"grid-column": "1", "height": "100%"}),
-        html.Div(sliders_component.get_sliders_div(), style={'grid-column': '2'}),
-        dcc.Graph(id='context-fig',
-                  figure=chart_component.create_treemap(type_context=True),
-                  style={'grid-column': '3'}),
-        dcc.Graph(id='presc-fig',
-                  figure=chart_component.create_treemap(type_context=False),
-                  style={'grid-clumn': '4'})
-    ], style={'display': 'grid', 'grid-template-columns': '4.5% 40% 1fr 1fr', "width": "100%"}),
-    # The above line can't be set to auto because the lines will overflow!
-    html.Div([
-        sliders_component.get_frozen_div(),
-        html.Button("Sum to 100%", id='sum-button', n_clicks=0),
-        html.Div(id='sum-warning')
-    ]),
+# '''),
+#     dcc.Markdown('''## Context'''),
+#     html.Div([
+#         dcc.Graph(id="map", figure=map_component.get_map_fig(), style={"grid-column": "1"}),
+#         html.Div([map_component.get_context_div()], style={"grid-column": "2"}),
+#         html.Div([legend_component.get_legend_div()], style={"grid-column": "3"})
+#     ], style={"display": "grid", "grid-template-columns": "auto 1fr auto", 'position': 'relative'}),
+    html.Div(
+        children=[
+            dbc.Row(
+                html.H2("Land Use Optimization", className="display-4 w-50 mx-auto text-center mb-3")
+            ),
+            dbc.Row(
+                html.P("This site is for demonstration purposes only. For a given context cell representing a portion \
+                       of the earth, identified by its latitude and longitude coordinates, and a given year: \
+                       what changes can we make to the land usage in order to minimize the resulting estimated CO2 \
+                       emissions? (Emissions from Land Use Change, ELUC, in tonnes of carbon per hectare)",
+                       className="lead w-50 mx-auto text-center")
+            ),
+            dbc.Row(
+                style={"height": "80vh"}
+            ),
+            dbc.Row(
+                html.P("Get Started:", className="w-50 text-center mx-auto text-white h4")
+            ),
+            dbc.Row(
+                html.I(className="bi bi-arrow-up w-50 text-center mx-auto text-white h1")
+            ),
+            dbc.Row(
+                style={"height": "5vh"}
+            )
+        ]
+    ),
+    html.Div(
+        className="p-3 bg-white rounded-5 mx-auto w-75 mb-3",
+        children=[
+            dbc.Container(
+                fluid=True,
+                className="py-3 d-flex flex-column h-100 align-items-center",
+                children=[
+                    html.H2("Context", className="text-center mb-5"),
+                    dbc.Row(
+                        className="w-100",
+                        children=[
+                            dbc.Row(
+                                children=[
+                                    dbc.Col(dcc.Graph(id="map", figure=map_component.get_map_fig())),
+                                    dbc.Col(map_component.get_context_div())
+                                ]
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    ),
+    html.Div(
+        className="p-3 bg-white rounded-5 mx-auto w-75 mb-3",
+        children=[
+            dbc.Container(
+                fluid=True,
+                className="py-3 d-flex flex-column h-100 align-items-center",
+                children=[
+                    html.H2("Actions", className="text-center mb-5"),
+                    dbc.Row(
+                        className="w-100",
+                        children=[
+                            dbc.Row(
+                                children=[
+                                    dbc.Col(prescription_component.get_presc_select_div()),
+                                    dbc.Col(chart_component.get_chart_select_div())
+                                ]
+                            )
+                        ]
+                    ),
+                    dbc.Row(
+                        className="w-100",
+                        children=[
+                            dbc.Col(lock_component.get_checklist_div(), className="h-100"),
+                            dbc.Col(sliders_component.get_sliders_div(), className="h-100"),
+                            dbc.Col(dcc.Graph(id='context-fig', figure=chart_component.create_treemap(type_context=True))),
+                            dbc.Col(dcc.Graph(id='presc-fig', figure=chart_component.create_treemap(type_context=False)))
+                        ]
+                    ),
+                    dbc.Row(
+                        children=[
+                            dbc.Col(
+                                sliders_component.get_frozen_div(),
+                                width=6
+                            )
+                        ]
+                    ),
+                    dbc.Row(
+                        className="w-100",
+                        children=[
+                            dbc.Col(
+                                children=[
+                                    html.Button("Sum to 100%", id='sum-button', n_clicks=0),
+                                    html.Div(id='sum-warning')
+                                ],
+                                width=6
+                            )
+                        ]
+                    )
+                ]
+            )
+        ]
+    ),
+    # dcc.Markdown('''## Actions'''),
+    # html.Div([
+    #     html.Div([prescription_component.get_presc_select_div()], style={"grid-column": "1"}),
+    #     html.Div([chart_component.get_chart_select_div()],
+    #              style={"grid-column": "2", "margin-top": "-10px", "margin-left": "10px"}),
+    # ], style={"display": "grid", "grid-template-columns": "45% 15%"}),
+    # html.Div([
+    #     html.Div(lock_component.get_checklist_div(), style={"grid-column": "1", "height": "100%"}),
+    #     html.Div(sliders_component.get_sliders_div(), style={'grid-column': '2'}),
+    #     dcc.Graph(id='context-fig',
+    #               figure=chart_component.create_treemap(type_context=True),
+    #               style={'grid-column': '3'}),
+    #     dcc.Graph(id='presc-fig',
+    #               figure=chart_component.create_treemap(type_context=False),
+    #               style={'grid-clumn': '4'})
+    # ], style={'display': 'grid', 'grid-template-columns': '4.5% 40% 1fr 1fr', "width": "100%"}),
+    # # The above line can't be set to auto because the lines will overflow!
+    # html.Div([
+    #     sliders_component.get_frozen_div(),
+    #     html.Button("Sum to 100%", id='sum-button', n_clicks=0),
+    #     html.Div(id='sum-warning')
+    # ]),
     dcc.Markdown('''## Outcomes'''),
     prediction_component.get_predict_div(),
     dcc.Markdown('''## Trivia'''),
@@ -115,4 +216,4 @@ identified by its latitude and longitude coordinates, and a given year:
 ], style={'padding-left': '10px'},)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=False, threaded=False)
+    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=True, threaded=False)

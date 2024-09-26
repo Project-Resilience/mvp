@@ -32,7 +32,6 @@ class ContextComponent():
         div = html.Div(
             className="mb-5 mx-5",
             children=[
-                html.H2("Land Use Optimization", className="text-center w-100 mb-5 mt-5"),
                 dbc.Row(
                     children=[
                         dbc.Col(

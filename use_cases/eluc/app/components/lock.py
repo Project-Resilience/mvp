@@ -30,6 +30,6 @@ class LockComponent:
         """
         check_options = self.create_check_options(constants.RECO_COLS)
         checklist_div = html.Div([
-            dcc.Checklist(check_options, id="locks", inputStyle={"margin-bottom": "30px"})
+            dcc.Checklist(check_options, id="locks", inputStyle={"margin-bottom": "25px"})
         ])
         return checklist_div

@@ -25,25 +25,20 @@ class SlidersComponent:
         Gets updated by the prescriptor.
         """
         sliders_div = html.Div([
-            html.Div([
-                html.Div([
+            html.Div(
+                className="mt-1",
+                children=[
                     dcc.Slider(
                         min=0,
                         max=1,
                         step=app_constants.SLIDER_PRECISION,
                         value=0,
                         marks=None,
-                        tooltip={"placement": "bottom", "always_visible": False},
+                        tooltip={"placement": "bottom", "always_visible": True},
                         id={"type": "presc-slider", "index": f"{col}"}
                     )
-                ], style={"grid-column": "1", "width": "100%", "margin-top": "8px"}),
-                dcc.Input(
-                    value="0%",
-                    type="text",
-                    disabled=True,
-                    id={"type": "slider-value", "index": f"{col}"},
-                    style={"grid-column": "2", "text-align": "right", "margin-top": "-5px"}),
-            ], style={"display": "grid", "grid-template-columns": "1fr 15%"}) for col in constants.RECO_COLS]
+                ]
+            ) for col in constants.RECO_COLS]
         )
         return sliders_div
 
@@ -82,9 +77,9 @@ class SlidersComponent:
             :param year: Selected year.
             :return: Frozen values, slider values, and slider max.
             """
-            context = self.df.loc[year, lat, lon]
+            context = self.df.loc[[year], [lat], [lon]]
 
-            chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
+            chart_data = utils.add_nonland(context[constants.LAND_USE_COLS]).iloc[0]
 
             frozen_cols = app_constants.NO_CHANGE_COLS + ["nonland"]
             frozen = chart_data[frozen_cols].tolist()
@@ -96,22 +91,6 @@ class SlidersComponent:
             maxes = [max_val for _ in range(len(constants.RECO_COLS))]
 
             return frozen, reset, maxes
-
-    def register_show_slider_value_callback(self, app):
-        """
-        Registers the callback that shows the slider values next to the sliders.
-        """
-        @app.callback(
-            Output({"type": "slider-value", "index": MATCH}, "value"),
-            Input({"type": "presc-slider", "index": MATCH}, "value")
-        )
-        def show_slider_value(slider):
-            """
-            Displays slider values next to sliders.
-            :param sliders: Slider values.
-            :return: Slider values.
-            """
-            return f"{slider * 100:.2f}%"
 
     def register_sum_to_one_callback(self, app):
         """

@@ -1,12 +1,13 @@
-from dash import Dash, html, dcc
+from dash import Dash, html
 import dash_bootstrap_components as dbc
 import pandas as pd
 
 import app.constants as app_constants
 from app.newcomponents.context import ContextComponent
 from app.newcomponents.filter import FilterComponent
+from app.newcomponents.dms import DMSComponent
+from app.components.references import ReferencesComponent
 from app.utils import EvolutionHandler
-from data import constants
 
 
 app = Dash(__name__,
@@ -21,11 +22,21 @@ evolution_handler = EvolutionHandler()
 
 context_component = ContextComponent(app_df, evolution_handler)
 filter_component = FilterComponent(evolution_handler)
+dms_component = DMSComponent(app_df, evolution_handler)
+references_component = ReferencesComponent()
 
 context_component.register_callbacks(app)
 filter_component.register_callbacks(app)
+dms_component.register_callbacks(app)
 
-app.layout = html.Div([context_component.get_div(), filter_component.get_div()])
+app.layout = html.Div(
+    children=[
+        context_component.get_div(),
+        filter_component.get_div(),
+        dms_component.get_div(),
+        references_component.get_references_div()
+    ]
+)
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=True, threaded=False)
+    app.run_server(host='0.0.0.0', debug=False, port=4057, use_reloader=True, threaded=True)

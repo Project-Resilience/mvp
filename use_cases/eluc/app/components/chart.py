@@ -37,12 +37,13 @@ class ChartComponent:
         """
         @app.callback(
             Output("context-fig", "figure"),
-            Input("chart-select", "value"),
+            # Input("chart-select", "value"),
             Input("year-input", "value"),
             Input("lat-dropdown", "value"),
             Input("lon-dropdown", "value")
         )
-        def update_context_chart(chart_type, year, lat, lon):
+        # def update_context_chart(chart_type, year, lat, lon):
+        def update_context_chart(year, lat, lon):
             """
             Updates context chart when context selection is updated or chart type is changed.
             :param chart_type: String input from chart select dropdown.
@@ -51,15 +52,15 @@ class ChartComponent:
             :param lon: Selected context lon.
             :return: New figure type selected by chart_type with data context.
             """
-            context = self.df.loc[year, lat, lon]
-            chart_data = utils.add_nonland(context[constants.LAND_USE_COLS])
+            context = self.df.loc[[year], [lat], [lon]]
+            chart_data = utils.add_nonland(context[constants.LAND_USE_COLS]).iloc[0]
 
-            assert chart_type in ("Treemap", "Pie Chart")
+            # assert chart_type in ("Treemap", "Pie Chart")
 
-            if chart_type == "Treemap":
-                return self.create_treemap(chart_data, type_context=True, year=year)
+            # if chart_type == "Treemap":
+            return self.create_treemap(chart_data, type_context=True, year=year)
 
-            return self.create_pie(chart_data, type_context=True, year=year)
+            # return self.create_pie(chart_data.iloc[0], type_context=True, year=year)
 
     def register_update_presc_chart_callback(self, app):
         """
@@ -67,14 +68,15 @@ class ChartComponent:
         """
         @app.callback(
             Output("presc-fig", "figure"),
-            Input("chart-select", "value"),
-            Input({"type": "presc-slider", "index": ALL}, "value"),
+            Output("alert", "is_open"),
+            Input("update-button", "n_clicks"),
+            [State({"type": "diff-slider", "index": ALL}, "value")],
             State("year-input", "value"),
             State("lat-dropdown", "value"),
             State("lon-dropdown", "value"),
-            prevent_initial_call=True
         )
-        def update_presc_chart(chart_type, sliders, year, lat, lon):
+        # def update_presc_chart(chart_type, sliders, year, lat, lon):
+        def update_presc_chart(n_clicks, sliders, year, lat, lon):
             """
             Updates prescription chart from sliders according to chart type.
             :param chart_type: String input from chart select dropdown.
@@ -84,12 +86,20 @@ class ChartComponent:
             :param lon: Selected context lon.
             :return: New chart of type chart_type using presc data.
             """
-            # If we have no prescription just return an empty chart
-            if all(slider == 0 for slider in sliders):
-                return self.create_treemap(pd.Series([], dtype=float), type_context=False, year=year)
 
-            presc = pd.Series(sliders, index=constants.RECO_COLS)
+            # If we have no prescription just show the context chart
+            bad_sliders = sum(sliders) < -0.01 or sum(sliders) > 0.01
+            if all(slider == 0 for slider in sliders) or bad_sliders:
+                context = self.df.loc[[year], [lat], [lon]]
+                chart_data = utils.add_nonland(context[constants.LAND_USE_COLS]).iloc[0]
+                return self.create_treemap(pd.Series(chart_data, dtype=float),
+                                           type_context=False,
+                                           year=year), bad_sliders
+
+            diff = pd.Series(sliders, index=constants.RECO_COLS)
             context = self.df.loc[year, lat, lon]
+
+            presc = context[constants.RECO_COLS] + diff
 
             chart_data = context[constants.LAND_USE_COLS].copy()
             chart_data[constants.RECO_COLS] = presc[constants.RECO_COLS]
@@ -99,11 +109,11 @@ class ChartComponent:
             nonland = nonland if nonland > 0 else 0
             chart_data["nonland"] = nonland
 
-            if chart_type == "Treemap":
-                return self.create_treemap(chart_data, type_context=False, year=year)
-            if chart_type == "Pie Chart":
-                return self.create_pie(chart_data, type_context=False, year=year)
-            raise ValueError(f"Invalid chart type: {chart_type}")
+            # if chart_type == "Treemap":
+            return self.create_treemap(chart_data, type_context=False, year=year), bad_sliders
+            # if chart_type == "Pie Chart":
+                # return self.create_pie(chart_data, type_context=False, year=year)
+            # raise ValueError(f"Invalid chart type: {chart_type}")
 
     def _create_hovertext(self, labels: list, parents: list, values: list, title: str) -> list:
         """
@@ -138,7 +148,7 @@ class ChartComponent:
         :param type_context: If the title should be context or prescribed
         :return: Treemap figure
         """
-        title = f"Context in {year}" if type_context else f"Prescribed for {year+1}"
+        title = "Before" if type_context else "After"
 
         tree_params = {
             "branchvalues": "total",

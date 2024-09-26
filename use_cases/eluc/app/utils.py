@@ -43,7 +43,7 @@ class EvolutionHandler:
         # Load prescriptors
         self.prescriptor_manager = self.load_prescriptors()
 
-    def load_prescriptors(self) -> tuple[list[str], PrescriptorManager]:
+    def load_prescriptors(self) -> PrescriptorManager:
         """
         Loads in prescriptors from disk, downloads from HuggingFace first if needed.
         TODO: Currently hard-coded to load specific prescriptors from pareto path.
@@ -70,8 +70,6 @@ class EvolutionHandler:
         prescriptor_manager = PrescriptorManager(prescriptors, predictors)
 
         return prescriptor_manager
-    
-    
 
     def prescribe_all(self, context_df: pd.DataFrame):
         """
@@ -109,3 +107,9 @@ class EvolutionHandler:
         reco_df["cand_id"] = context_actions_df["cand_id"]
         
         return reco_df
+    
+    def predict_metrics(self, context_actions_df: pd.DataFrame):
+        """
+        Predicts metrics from context actions
+        """
+        return self.prescriptor_manager.predict_metrics(context_actions_df)

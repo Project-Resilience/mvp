@@ -99,7 +99,7 @@ class FilterComponent:
                             children=[
                                 dbc.Col(
                                     children=[
-                                        html.B("2. Filter by what outcomes you want"),
+                                        html.B("2. Filter by desired outcomes."),
                                         html.Div(
                                             className="d-flex flex-row",
                                             children=[

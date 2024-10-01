@@ -5,18 +5,12 @@ import pandas as pd
 
 
 from app.components.chart import ChartComponent
-from app.components.lock import LockComponent
-from app.components.prediction import PredictionComponent
-from app.components.sliders import SlidersComponent
 from app.utils import EvolutionHandler
 from data import constants
 
 class DMSComponent():
     def __init__(self, app_df: pd.DataFrame, handler: EvolutionHandler):
         self.chart_component = ChartComponent(app_df)
-        self.lock_component = LockComponent()
-        self.prediction_component = PredictionComponent(app_df)
-        self.sliders_component = SlidersComponent(app_df)
 
         self.app_df = app_df
         self.handler = handler
@@ -61,7 +55,7 @@ class DMSComponent():
                     children=[
                         dbc.Col(
                             children=[
-                                html.B("3. Select a policy to see the prescribed actions and play around with them."),
+                                html.B("3. Select a policy to see the prescribed actions customize them."),
                                 dcc.Dropdown(
                                     id="presc-dropdown",
                                     options=[],
@@ -121,9 +115,6 @@ class DMSComponent():
         return context_actions_df
 
     def register_callbacks(self, app):
-        self.sliders_component.register_set_frozen_reset_sliders_callback(app)
-        self.sliders_component.register_sum_to_one_callback(app)
-
         self.chart_component.register_update_context_chart_callback(app)
         self.chart_component.register_update_presc_chart_callback(app)
 

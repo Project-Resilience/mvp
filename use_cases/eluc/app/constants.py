@@ -29,20 +29,3 @@ SECONDARY = ['secdf', 'secdn']
 FIELDS = ['pastr', 'range']
 
 CHART_TYPES = ["Treemap", "Pie Chart"]
-
-PREDICTOR_PATH = Path("predictors/trained_models")
-PRESCRIPTOR_PATH = Path("prescriptors/trained_models")
-
-# Pareto front
-PARETO_CSV_PATH = Path("app/data/pareto.csv")
-
-DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change
-
-DESC_TEXT = "mb-5 w-75 text-center"
-
-JUMBOTRON = "p-3 bg-white rounded-5 mx-auto w-75 mb-3"
-
-CONTAINER = "py-3 d-flex flex-column h-100 align-items-center"
-
-HEADER = "text-center mb-5"
-

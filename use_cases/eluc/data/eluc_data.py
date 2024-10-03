@@ -14,6 +14,7 @@ from data import constants
 from data.conversion import construct_countries_df
 from data.eluc_encoder import ELUCEncoder
 
+
 class ELUCData():
     """
     Wrapper for pandas dataframe that separates the data into train and test sets based on the time column.
@@ -86,7 +87,7 @@ class ELUCData():
             raw = raw.merge(eluc)
 
             # Shift actions back a year
-            raw_diffs = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per',
+            raw_diffs = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per',
                          'pastr', 'primf', 'primn', 'range',
                          'secdf', 'secdn', 'urban']
             raw_diffs = [f"{col}_diff" for col in raw_diffs]

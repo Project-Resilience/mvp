@@ -6,6 +6,7 @@ import pandas as pd
 import app.constants as app_constants
 from data import constants
 
+
 def add_nonland(data: pd.Series) -> pd.Series:
     """
     Adds a nonland column that is the difference between 1 and

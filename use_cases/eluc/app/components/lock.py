@@ -6,6 +6,7 @@ from dash import html
 
 from data import constants
 
+
 class LockComponent:
     """
     Component that creates lock div based on reco columns.
@@ -20,7 +21,7 @@ class LockComponent:
         for val in values:
             options.append(
                 {"label": [html.I(className="bi bi-lock"), html.Span(val)],
-                "value": val})
+                 "value": val})
         return options
 
     def get_checklist_div(self):

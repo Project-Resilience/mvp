@@ -8,13 +8,15 @@ from dash import dcc
 from dash import html
 import pandas as pd
 
+from prsdk.persistence.persistors.hf_persistor import HuggingFacePersistor
+from prsdk.persistence.serializers.neural_network_serializer import NeuralNetSerializer
+from prsdk.persistence.serializers.sklearn_serializer import SKLearnSerializer
+from prsdk.predictors.predictor import Predictor
+
 from app import constants as app_constants
 from data import constants
-from persistence.persistors.hf_persistor import HuggingFacePersistor
-from persistence.serializers.neural_network_serializer import NeuralNetSerializer
-from persistence.serializers.sklearn_serializer import SKLearnSerializer
-from predictors.predictor import Predictor
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
+
 
 class PredictionComponent:
     """
@@ -41,11 +43,11 @@ class PredictionComponent:
         rf_path = "danyoung/eluc-global-rf"
         rf_local_dir = app_constants.PREDICTOR_PATH / rf_path.replace("/", "--")
         global_nn = nn_persistor.from_pretrained(nn_path,
-                                                    local_dir=nn_local_dir)
+                                                 local_dir=nn_local_dir)
         global_linreg = sklearn_persistor.from_pretrained(linreg_path,
-                                                                local_dir=linreg_local_dir)
+                                                          local_dir=linreg_local_dir)
         global_rf = sklearn_persistor.from_pretrained(rf_path,
-                                                        local_dir=rf_local_dir)
+                                                      local_dir=rf_local_dir)
 
         predictors["Global Neural Network"] = global_nn
         predictors["Global Linear Regression"] = global_linreg
@@ -177,5 +179,5 @@ class PredictionComponent:
         diff = diff.rename({col: f"{col}_diff" for col in diff.index})
         context_actions = diff.combine_first(context[constants.CAO_MAPPING["context"]])
         context_actions_df = pd.DataFrame([context_actions])
-        context_actions_df[constants.NO_CHANGE_COLS] = 0 # TODO: I'm not entirely sure why this line is necessary
+        context_actions_df[constants.NO_CHANGE_COLS] = 0  # TODO: I'm not entirely sure why this line is necessary
         return context_actions_df

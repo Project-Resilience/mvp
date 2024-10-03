@@ -10,11 +10,14 @@ import pandas as pd
 from tqdm import tqdm
 from sklearn.metrics import mean_absolute_error
 
+from prsdk.predictors.neural_network.neural_net_predictor import NeuralNetPredictor
+from prsdk.predictors.sklearn_predictors.linear_regression_predictor import LinearRegressionPredictor
+from prsdk.predictors.sklearn_predictors.random_forest_predictor import RandomForestPredictor
+
 from data.eluc_data import ELUCData
 from data import constants
 from data.conversion import construct_countries_df
-from predictors.neural_network.neural_net_predictor import NeuralNetPredictor
-from predictors.sklearn.sklearn_predictor import RandomForestPredictor, LinearRegressionPredictor
+
 
 def train_and_test(n: int,
                    model_constructor,
@@ -78,6 +81,7 @@ def train_and_test(n: int,
     results_df = pd.DataFrame(results)
     results_df.to_csv(save_path)
 
+
 def main():
     """
     Main function call that performs significance tests.
@@ -117,13 +121,14 @@ def main():
         override_start_year = None if model_name != "random_forest" else 1982
         print(model_name)
         train_and_test(30,
-                    model_constructor,
-                    config,
-                    dataset.train_df,
-                    dataset.test_df,
-                    train_regions,
-                    significance_path / f"{model_name}_eval.csv",
-                    override_start_year=override_start_year)
+                       model_constructor,
+                       config,
+                       dataset.train_df,
+                       dataset.test_df,
+                       train_regions,
+                       significance_path / f"{model_name}_eval.csv",
+                       override_start_year=override_start_year)
+
 
 if __name__ == "__main__":
     main()

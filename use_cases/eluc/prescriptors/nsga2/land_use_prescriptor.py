@@ -6,19 +6,20 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 
+from prsdk.data.torch_data import TorchDataset
+from prsdk.prescriptors.prescriptor import Prescriptor
+
 from data import constants
 from data.eluc_data import ELUCEncoder
-from data.torch_data import TorchDataset
 from prescriptors.nsga2.candidate import Candidate
-from prescriptors.prescriptor import Prescriptor
+
 
 class LandUsePrescriptor(Prescriptor):
     """
     Prescriptor object that wraps around a single candidate that was trained via.
     evolution using NSGA-II.
     """
-    def __init__(self, candidate: Candidate, encoder: ELUCEncoder, batch_size: int=4096):
-        super().__init__(constants.CAO_MAPPING["context"], constants.CAO_MAPPING["actions"])
+    def __init__(self, candidate: Candidate, encoder: ELUCEncoder, batch_size: int = 4096):
         self.candidate = candidate
         self.encoder = encoder
         self.batch_size = batch_size
@@ -30,10 +31,10 @@ class LandUsePrescriptor(Prescriptor):
         the land diffs.
         """
         reco_df = pd.DataFrame(reco_tensor.cpu().numpy(), index=context_df.index, columns=constants.RECO_COLS)
-        reco_df = reco_df.clip(0, None) # ReLU
-        reco_df[reco_df.sum(axis=1) == 0] = 1 # Rows of all 0s are set to 1s
-        reco_df = reco_df.div(reco_df.sum(axis=1), axis=0) # Normalize to sum to 1
-        reco_df = reco_df.mul(context_df[constants.RECO_COLS].sum(axis=1), axis=0) # Rescale to match original sum
+        reco_df = reco_df.clip(0, None)  # ReLU
+        reco_df[reco_df.sum(axis=1) == 0] = 1  # Rows of all 0s are set to 1s
+        reco_df = reco_df.div(reco_df.sum(axis=1), axis=0)  # Normalize to sum to 1
+        reco_df = reco_df.mul(context_df[constants.RECO_COLS].sum(axis=1), axis=0)  # Rescale to match original sum
         return reco_df
 
     def _reco_to_context_actions(self, reco_df: pd.DataFrame, context_df: pd.DataFrame) -> pd.DataFrame:
@@ -45,9 +46,8 @@ class LandUsePrescriptor(Prescriptor):
         presc_actions_df = reco_df - context_df[constants.RECO_COLS]
         presc_actions_df = presc_actions_df.rename(constants.RECO_MAP, axis=1)
         presc_actions_df[constants.NO_CHANGE_COLS] = 0
-        context_actions_df = pd.concat([context_df[self.context],
-                                            presc_actions_df[self.actions]],
-                                            axis=1)
+        context_actions_df = pd.concat([context_df[constants.CAO_MAPPING["context"]],
+                                        presc_actions_df[constants.CAO_MAPPING["actions"]]], axis=1)
         return context_actions_df
 
     def prescribe(self, context_df) -> pd.DataFrame:

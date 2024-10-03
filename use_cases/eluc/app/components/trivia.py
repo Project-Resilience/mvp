@@ -7,6 +7,7 @@ import pandas as pd
 
 from app import constants as app_constants
 
+
 class TriviaComponent():
     """
     Component in charge of generating the trivia div as well as updating it after prediction is made.
@@ -28,7 +29,7 @@ class TriviaComponent():
                     className="child",
                     style=inline_block
                 ),
-                html.P(id="total-em", style={"font-weight": "bold"}|inline_block)
+                html.P(id="total-em", style={"font-weight": "bold"} | inline_block)
             ]),
             html.Div(className="parent", children=[
                 html.I(className="bi bi-airplane", style=inline_block),
@@ -37,7 +38,7 @@ class TriviaComponent():
                     className="child",
                     style=inline_block
                 ),
-                html.P(f"{app_constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+                html.P(f"{app_constants.CO2_JFK_GVA} tonnes CO2", style={"font-weight": "bold"} | inline_block)
             ]),
             html.Div(className="parent", children=[
                 html.I(className="bi bi-airplane", style=inline_block),
@@ -46,7 +47,7 @@ class TriviaComponent():
                     className="child",
                     style=inline_block
                 ),
-                html.P(id="tickets", style={"font-weight": "bold"}|inline_block)
+                html.P(id="tickets", style={"font-weight": "bold"} | inline_block)
             ]),
             html.Div(className="parent", children=[
                 html.I(className="bi bi-person", style=inline_block),
@@ -55,7 +56,7 @@ class TriviaComponent():
                     className="child",
                     style=inline_block
                 ),
-                html.P(f"{app_constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"}|inline_block)
+                html.P(f"{app_constants.CO2_PERSON} tonnes CO2", style={"font-weight": "bold"} | inline_block)
             ]),
             html.Div(className="parent", children=[
                 html.I(className="bi bi-person", style=inline_block),
@@ -64,7 +65,7 @@ class TriviaComponent():
                     className="child",
                     style=inline_block
                 ),
-                html.P(id="people", style={"font-weight": "bold"}|inline_block)
+                html.P(id="people", style={"font-weight": "bold"} | inline_block)
             ]),
             html.P(
                 "(Sources: https://flightfree.org/flight-emissions-calculator \
@@ -104,5 +105,5 @@ class TriviaComponent():
             eluc = float(eluc_str)
             total_reduction = eluc * area * app_constants.TC_TO_TCO2
             return f"{-1 * total_reduction:,.2f} tonnes CO2", \
-                    f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
-                        f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"
+                   f"{-1 * total_reduction // app_constants.CO2_JFK_GVA:,.0f} tickets", \
+                   f"{-1 * total_reduction // app_constants.CO2_PERSON:,.0f} people"

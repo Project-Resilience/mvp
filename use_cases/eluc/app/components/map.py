@@ -12,6 +12,7 @@ import regionmask
 
 from app import constants as app_constants
 
+
 class MapComponent:
     """
     Component handling the map. Keeps track of the latitudes and longitudes a user can select as well as the countries.
@@ -49,8 +50,8 @@ class MapComponent:
         select_style = {'width': '75%', 'justify-self': 'left', 'margin-top': '-3px'}
         context_div = html.Div(
             style={'display': 'grid',
-                'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto',
-                'position': 'absolute', 'bottom': '0'},
+                   'grid-template-columns': 'auto 1fr', 'grid-template-rows': 'auto auto auto auto',
+                   'position': 'absolute', 'bottom': '0'},
             children=[
                 html.P("Region", style={'grid-column': '1', 'grid-row': '1', 'padding-right': '10px'}),
                 dcc.Dropdown(
@@ -164,7 +165,7 @@ class MapComponent:
 
             return self.create_map(data, 10, idx)
 
-    def create_map(self, df: pd.DataFrame, zoom=10, color_idx = None) -> go.Figure:
+    def create_map(self, df: pd.DataFrame, zoom=10, color_idx=None) -> go.Figure:
         """
         Creates map figure with data centered and zoomed in with appropriate point marked.
         :param df: DataFrame of data to plot. This dataframe has its index reset.

@@ -3,6 +3,7 @@ Utilities for NSGA-II implementation.
 """
 from prescriptors.nsga2.candidate import Candidate
 
+
 # pylint: disable=invalid-name
 def fast_non_dominated_sort(candidates: list):
     """
@@ -57,6 +58,7 @@ def fast_non_dominated_sort(candidates: list):
 
     return candidate_fronts, rank
 
+
 def calculate_crowding_distance(front):
     """
     Set crowding distance of each candidate in front.
@@ -78,14 +80,18 @@ def calculate_crowding_distance(front):
             else:
                 sorted_front[i].distance += 0
 
+
 def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:
     """
     Determine if one individual dominates another.
+    One individual dominates another if it's doing better in at least one objective
+    and better than or equal to in all the rest.
+    Metrics are always minimized: lower is better.
     """
     better = False
     for obj1, obj2 in zip(candidate1.metrics, candidate2.metrics):
-        if obj1 < obj2:
-            return False
         if obj1 > obj2:
+            return False
+        if obj1 < obj2:
             better = True
     return better

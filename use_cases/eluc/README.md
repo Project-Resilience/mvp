@@ -141,6 +141,8 @@ the percentage of land that was changed. In other words decision makers have to:
 
 *Note: Before running anything make sure to set your python path environment variable with: `export PYTHONPATH=$PWD` while in the eluc directory.*
 
+Additionaly, the Project Resilience SDK is required to use the MVP. Currently it is not hosted on PyPi so it must be installed manually. To do so, clone the [Project Resilience SDK](https://github.com/Project-Resilience/sdk) and run pip install . in its root directory.
+
 ### Predictions
 
 Given **context** and **actions** -> predict **outcomes**  

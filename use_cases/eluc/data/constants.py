@@ -9,10 +9,10 @@ UPDATE_FILE_PATH = "data/BLUE_LUH2-GCB2022_ELUC-committed_gridded_net_1850-2021.
 CODES_PATH = "data/codes.csv"
 
 # Different variations of land-use change columns
-LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per',
+LAND_USE_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per',
                  'pastr', 'primf', 'primn',
                  'range', 'secdf', 'secdn', 'urban']
-CROP_COLS = ['c3ann', 'c3nfx', 'c3per','c4ann', 'c4per']
+CROP_COLS = ['c3ann', 'c3nfx', 'c3per', 'c4ann', 'c4per']
 LAND_USE_COLS = ["crop"] + [col for col in LAND_USE_COLS if col not in CROP_COLS]
 DIFF_LAND_USE_COLS = [f"{col}_diff" for col in LAND_USE_COLS]
 COLS_MAP = dict(zip(LAND_USE_COLS, DIFF_LAND_USE_COLS))
@@ -38,5 +38,5 @@ COUNTRY_DICT = {"EU": EU_COUNTRIES, "SA": SA_COUNTRIES, "US": US_COUNTRIES, "ALL
 
 # Context-action-outcome mapping for prescription.
 CAO_MAPPING = {'context': LAND_USE_COLS + NONLAND_FEATURES,
-               'actions': DIFF_LAND_USE_COLS, 
+               'actions': DIFF_LAND_USE_COLS,
                'outcomes': ["ELUC", "change"]}

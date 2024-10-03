@@ -1,0 +1,31 @@
+{
+    "models": [
+        {
+            "type": "local",
+            "name": "TemplatePredictor",
+            "classpath": "predictors/custom/template/template_predictor.py",
+            "filepath": "predictors/custom/template/model.pt"
+        },
+        {
+            "type": "hf",
+            "name": "NeuralNetSerializer",
+            "classpath": "persistence/serializers/neural_network_serializer.py",
+            "url": "danyoung/eluc-global-nn",
+            "filepath": "predictors/trained_models/danyoung--eluc-global-nn"
+        },
+        {
+            "type": "hf",
+            "name": "SKLearnSerializer",
+            "url": "danyoung/eluc-global-linreg",
+            "classpath": "persistence/serializers/sklearn_serializer.py",
+            "filepath": "predictors/trained_models/danyoung--eluc-global-linreg"
+        },
+        {
+            "type": "hf",
+            "name": "SKLearnSerializer",
+            "url": "danyoung/eluc-global-rf",
+            "classpath": "persistence/serializers/sklearn_serializer.py",
+            "filepath": "predictors/trained_models/danyoung--eluc-global-rf"
+        }
+    ]
+}

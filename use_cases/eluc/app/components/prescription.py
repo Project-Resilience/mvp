@@ -9,11 +9,13 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.graph_objects as go
 
+from prsdk.persistence.persistors.hf_persistor import HuggingFacePersistor
+
 from app import constants as app_constants
 from data import constants
-from persistence.persistors.hf_persistor import HuggingFacePersistor
 from persistence.serializers.prescriptor_serializer import PrescriptorSerializer
 from prescriptors.prescriptor_manager import PrescriptorManager
+
 
 class PrescriptionComponent():
     """
@@ -59,10 +61,10 @@ class PrescriptionComponent():
             html.P("Minimize change", style={"grid-column": "1"}),
             html.Div([
                 dcc.Slider(id='presc-select',
-                        min=0, max=len(self.prescriptor_list)-1, step=1,
-                        value=app_constants.DEFAULT_PRESCRIPTOR_IDX,
-                        included=False,
-                        marks={i : "" for i in range(len(self.prescriptor_list))})
+                           min=0, max=len(self.prescriptor_list)-1, step=1,
+                           value=app_constants.DEFAULT_PRESCRIPTOR_IDX,
+                           included=False,
+                           marks={i: "" for i in range(len(self.prescriptor_list))})
             ], style={"grid-column": "2", "width": "100%", "margin-top": "8px"}),
             html.P("Minimize ELUC", style={"grid-column": "3", "padding-right": "10px"}),
             html.Button("Prescribe", id='presc-button', n_clicks=0, style={"grid-column": "4", **margin_style}),
@@ -168,10 +170,9 @@ class PrescriptionComponent():
                         })
         # Name axes and hide legend
         fig.update_layout(xaxis_title={"text": "Change (%)"},
-                        yaxis_title={"text": 'ELUC (tC/ha)'},
-                        showlegend=False,
-                        title="Prescriptors",
-                        )
+                          yaxis_title={"text": 'ELUC (tC/ha)'},
+                          showlegend=False,
+                          title="Prescriptors")
         fig.update_traces(hovertemplate="Average Change: %{x} <span>&#37;</span>"
                                         "<br>"
                                         " Average ELUC: %{y} tC/ha<extra></extra>")

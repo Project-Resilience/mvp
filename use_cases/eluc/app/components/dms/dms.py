@@ -1,14 +1,21 @@
-
+"""
+New DMS component to allow the user to play with the prescription they have selected.
+"""
 from dash import html, dcc, Output, State, Input, ALL
 import dash_bootstrap_components as dbc
 import pandas as pd
 
 
-from app.components.chart import ChartComponent
+from app.components.dms.chart import ChartComponent
 from app.utils import EvolutionHandler
 from data import constants
 
+
 class DMSComponent():
+    """
+    Displays a prescriptor select that sets pre-set diff sliders, then allows the user to adjust them and get
+    predictions. Also shows the charts with the context and prescription.
+    """
     def __init__(self, app_df: pd.DataFrame, handler: EvolutionHandler):
         self.chart_component = ChartComponent(app_df)
 
@@ -48,6 +55,9 @@ class DMSComponent():
         return div
 
     def get_div(self):
+        """
+        Gets the entire DMS div to display in the app.
+        """
         return html.Div(
             className="mx-5 mb-5",
             children=[
@@ -62,7 +72,8 @@ class DMSComponent():
                                     placeholder="Select a candidate",
                                     className="mb-3"
                                 ),
-                                self.create_default_diff_sliders(),
+                                html.Div(id="diff-sliders",
+                                         children=self.create_default_diff_sliders()),
                                 html.Div([
                                     html.Label("Allocated Land"),
                                     dbc.Progress(
@@ -115,6 +126,9 @@ class DMSComponent():
         return context_actions_df
 
     def register_callbacks(self, app):
+        """
+        Registers callbacks for context and presc charts as well as the DMS page.
+        """
         self.chart_component.register_update_context_chart_callback(app)
         self.chart_component.register_update_presc_chart_callback(app)
 
@@ -126,18 +140,26 @@ class DMSComponent():
             prevent_initial_call=True
         )
         def update_presc_sliders(results_json: dict[str: list], cand_id: str) -> list:
+            """
+            Updates diff slider ranges and values when a candidate is selected.
+            The min possible value is -1 * the value since we can only remove however much is there. The max is 1 as we
+            can set it to 100%.
+            """
             results_df = pd.DataFrame(results_json)
             selected = results_df[results_df["cand_id"] == cand_id]
             slider_vals = selected[constants.DIFF_RECO_COLS].iloc[0].tolist()
             min_vals = selected[constants.RECO_COLS].iloc[0].tolist()
             min_vals = [-1 * min_val for min_val in min_vals]
             return slider_vals, min_vals
-        
+
         @app.callback(
             Output("pbar", "children"),
             [Input({"type": "diff-slider", "index": ALL}, "value")]
         )
         def update_pbar(sliders) -> int:
+            """
+            Updates the progress bar by however much land we have allocated.
+            """
             total = 1 + sum(sliders)
             # TODO: This is a bit of a hack due to rounding errors.
             if total < 1.01 and total > 0.99:
@@ -148,10 +170,10 @@ class DMSComponent():
                 return dbc.Progress(value=100, label=f"{int(total*100)}%", max=600, color="success", bar=True)
             else:
                 return [
-                    dbc.Progress(value=100, label=f"100%", max=600, color="success", bar=True),
+                    dbc.Progress(value=100, label="100%", max=600, color="success", bar=True),
                     dbc.Progress(value=(total-1)*100, label=f"{int((total-1)*100)}%", max=600, color="danger", bar=True)
                 ]
-        
+
         @app.callback(
             Output("eluc", "children"),
             Output("eluc", "color"),
@@ -164,7 +186,10 @@ class DMSComponent():
             [State({"type": "diff-slider", "index": ALL}, "value")],
             prevent_initial_call=True
         )
-        def update_policy(n_clicks: int, year: int, lat: float, lon: float, sliders: list[float]) -> list:
+        def predict(n_clicks: int, year: int, lat: float, lon: float, sliders: list[float]) -> list:
+            """
+            When we click 'apply policy' we update the ELUC and change values based on our predictors.
+            """
             context = self.app_df.loc[year, lat, lon]
             actions = pd.Series(sliders, index=constants.DIFF_RECO_COLS)
             context_actions_df = self.context_presc_to_df(context, actions)

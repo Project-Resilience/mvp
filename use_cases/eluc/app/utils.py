@@ -10,13 +10,13 @@ import torch
 from prsdk.persistence.serializers.neural_network_serializer import NeuralNetSerializer
 from prsdk.persistence.persistors.hf_persistor import HuggingFacePersistor
 
-import app.constants as app_constants
 from data import constants
 from data.eluc_encoder import ELUCEncoder
 from prescriptors.prescriptor_manager import PrescriptorManager
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
+
 
 def add_nonland(context_actions_df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -36,6 +36,7 @@ class EvolutionHandler:
     def __init__(self):
         self.prescriptor_path = Path("app/results/prescriptors")
         self.prescriptor_list = [model_path.stem for model_path in self.prescriptor_path.glob("*.pt")]
+
         def sort_cand_id(cand_id: str):
             return (int(cand_id.split("_")[0]), int(cand_id.split("_")[1]))
         self.prescriptor_list = sorted(self.prescriptor_list, key=sort_cand_id)
@@ -105,9 +106,9 @@ class EvolutionHandler:
 
         reco_df = context_actions_df[constants.RECO_COLS].copy() + reco_diff_df
         reco_df["cand_id"] = context_actions_df["cand_id"]
-        
+
         return reco_df
-    
+
     def predict_metrics(self, context_actions_df: pd.DataFrame):
         """
         Predicts metrics from context actions

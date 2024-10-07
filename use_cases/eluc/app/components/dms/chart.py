@@ -37,7 +37,6 @@ class ChartComponent:
         """
         @app.callback(
             Output("context-fig", "figure"),
-            # Input("chart-select", "value"),
             Input("year-input", "value"),
             Input("lat-dropdown", "value"),
             Input("lon-dropdown", "value")
@@ -46,28 +45,22 @@ class ChartComponent:
         def update_context_chart(year, lat, lon):
             """
             Updates context chart when context selection is updated or chart type is changed.
-            :param chart_type: String input from chart select dropdown.
             :param year: Selected context year.
             :param lat: Selected context lat.
             :param lon: Selected context lon.
-            :return: New figure type selected by chart_type with data context.
+            :return: New figure with data context.
             """
             context = self.df.loc[[year], [lat], [lon]]
             chart_data = utils.add_nonland(context[constants.LAND_USE_COLS]).iloc[0]
 
-            # assert chart_type in ("Treemap", "Pie Chart")
-
-            # if chart_type == "Treemap":
             return self.create_treemap(chart_data, type_context=True, year=year)
-
-            # return self.create_pie(chart_data.iloc[0], type_context=True, year=year)
 
     def register_update_presc_chart_callback(self, app):
         """
         Callback that updates prescription chart when prescription sliders are updated or chart type is changed.
         """
         @app.callback(
-            Output("presc-fig", "figure"),
+            Output("presc-fig", "figure", allow_duplicate=True),
             Output("alert", "is_open"),
             Input("update-button", "n_clicks"),
             [State({"type": "diff-slider", "index": ALL}, "value")],
@@ -79,12 +72,12 @@ class ChartComponent:
         def update_presc_chart(n_clicks, sliders, year, lat, lon):
             """
             Updates prescription chart from sliders according to chart type.
-            :param chart_type: String input from chart select dropdown.
+            :param n_clicks: Number of times update button has been clicked.
             :param sliders: Prescribed slider values.
             :param year: Selected context year (also for title of chart).
             :param lat: Selected context lat.
             :param lon: Selected context lon.
-            :return: New chart of type chart_type using presc data.
+            :return: New chart using presc data.
             """
 
             # If we have no prescription just show the context chart
@@ -109,11 +102,19 @@ class ChartComponent:
             nonland = nonland if nonland > 0 else 0
             chart_data["nonland"] = nonland
 
-            # if chart_type == "Treemap":
             return self.create_treemap(chart_data, type_context=False, year=year), bad_sliders
-            # if chart_type == "Pie Chart":
-                # return self.create_pie(chart_data, type_context=False, year=year)
-            # raise ValueError(f"Invalid chart type: {chart_type}")
+
+        @app.callback(
+            Output("presc-fig", "figure", allow_duplicate=True),
+            Input("year-input", "value"),
+            Input("lat-dropdown", "value"),
+            Input("lon-dropdown", "value")
+        )
+        def reset_presc_chart(year, lat, lon):
+            """
+            If the user changes the context, reset the prescription chart to nothing.
+            """
+            return self.create_treemap(pd.Series(dtype=float), type_context=False, year=year)
 
     def _create_hovertext(self, labels: list, parents: list, values: list, title: str) -> list:
         """

@@ -97,7 +97,6 @@ class MapComponent:
                                 ),
                                 dcc.Tooltip(f"Year must be between {self.min_time} and {self.max_time}.")
                             ])
-                            
                         )
                     ]
                 )

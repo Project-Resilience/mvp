@@ -1,21 +1,30 @@
-
-from dash import html, dcc, Output, Input, State
+"""
+Context component class for selecting context.
+"""
+from dash import html, dcc, Output, Input
 import dash_bootstrap_components as dbc
 import pandas as pd
 import regionmask
 
-from app.components.map import MapComponent
-from app.utils import add_nonland, EvolutionHandler
+from app.components.context.map import MapComponent
+from app.utils import EvolutionHandler
 from data import constants
 
+
 class ContextComponent():
+    """
+    Component containing map as well as dropdowns and input fields for picking a more specific context.
+    """
     def __init__(self, app_df: pd.DataFrame, handler: EvolutionHandler):
         self.map_component = MapComponent(app_df)
         self.app_df = app_df
-        self.handler = EvolutionHandler()
+        self.handler = handler
         self.countries_df = regionmask.defined_regions.natural_earth_v5_0_0.countries_110.to_dataframe()
 
     def create_label_and_value(self, label: str, value: html.Div) -> html.Div:
+        """
+        Standard dash function that pairs a label with any arbitrary value Div.
+        """
         div = html.Div(
             className="d-flex flex-row",
             children=[
@@ -29,6 +38,9 @@ class ContextComponent():
         return div
 
     def get_div(self):
+        """
+        Returns the entire context div to display in the app.
+        """
         div = html.Div(
             className="mb-5 mx-5",
             children=[
@@ -88,8 +100,11 @@ class ContextComponent():
             ]
         )
         return div
-    
+
     def register_callbacks(self, app):
+        """
+        Registers callbacks to make app interactive. Registers old map callbacks as well as new one to run prescription.
+        """
         self.map_component.register_click_map_callback(app)
         self.map_component.register_select_country_callback(app)
         self.map_component.register_update_map_callback(app)
@@ -101,10 +116,12 @@ class ContextComponent():
             Input("lon-dropdown", "value")
         )
         def run_prescription(year: int, lat: float, lon: float) -> dict[str: list]:
+            """
+            Runs prescription for the selected context on all prescriptors. Returns the results as a json to a store.
+            """
             condition = (self.app_df["time"] == year) & (self.app_df["lat"] == lat) & (self.app_df["lon"] == lon)
             context_df = self.app_df[condition]
             context_df = context_df[constants.CAO_MAPPING["context"]].iloc[0:1]
             results_df = self.handler.prescribe_all(context_df)
             results_json = results_df.to_dict(orient="records")
-            print(f"Updating store with {len(results_df)} prescriptions.")
             return results_json

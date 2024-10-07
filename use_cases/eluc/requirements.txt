@@ -8,7 +8,7 @@ dask==2023.6.1
 datasets==2.16.1
 flake8==7.1.0
 Flask==2.2.5
-geopandas==0.13.2
+geopandas==0.14.4
 geopy==2.3.0
 gunicorn==21.2.0
 huggingface-hub==0.20.3
@@ -20,7 +20,7 @@ pandas==1.5.3
 plotly==5.14.1
 protobuf==3.20.3
 -e git+https://github.com/Project-Resilience/sdk.git@c0e5300e56f5fce2f6cf55c328c83e7055e541be#egg=prsdk
-pylint==2.17.4
+pylint==3.3.1
 regionmask==0.10.0
 scikit-learn==1.2.2
 scipy==1.10.1

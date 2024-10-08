@@ -1,8 +1,7 @@
 """
 This file is a component that handles the map where the user can select context and its associated callbacks.
 """
-from dash import Input, State, Output, dcc, html
-import dash_bootstrap_components as dbc
+from dash import Input, State, Output
 import numpy as np
 import pandas as pd
 import plotly.express as px

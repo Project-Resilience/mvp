@@ -42,68 +42,6 @@ class MapComponent:
         """
         return self.map_fig
 
-    def get_context_div(self):
-        """
-        Div that allows the user to select context inputs manually instead of from the map.
-        """
-        context_div = html.Div(
-            children=[
-                dbc.Row(
-                    children=[
-                        dbc.Col(html.P("Region")),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id="loc-dropdown",
-                                options=list(self.countries_df["names"]),
-                                value=list(self.countries_df["names"])[143]
-                            )
-                        )
-                    ]
-                ),
-                dbc.Row(
-                    children=[
-                        dbc.Col(html.P("Latitude")),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id="lat-dropdown",
-                                options=[{"label": lat, "value": lat} for lat in self.lat_list],
-                                value=51.625,
-                            )
-                        )
-                    ]
-                ),
-                dbc.Row(
-                    children=[
-                        dbc.Col(html.P("Longitude")),
-                        dbc.Col(
-                            dcc.Dropdown(
-                                id="lon-dropdown",
-                                options=[{"label": lon, "value": lon} for lon in self.lon_list],
-                                value=-3.375,
-                            )
-                        )
-                    ]
-                ),
-                dbc.Row(
-                    children=[
-                        dbc.Col(html.P("Year")),
-                        dbc.Col(
-                            html.Div([
-                                dcc.Input(
-                                    id="year-input",
-                                    type="number",
-                                    value=2021,
-                                    debounce=True
-                                ),
-                                dcc.Tooltip(f"Year must be between {self.min_time} and {self.max_time}.")
-                            ])
-                        )
-                    ]
-                )
-            ]
-        )
-        return context_div
-
     def register_select_country_callback(self, app):
         """
         Callback in charge of changing the selected country and relocating the map to a valid lat/lon.

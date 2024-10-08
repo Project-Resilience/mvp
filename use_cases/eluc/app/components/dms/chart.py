@@ -21,6 +21,7 @@ class ChartComponent:
 
     def get_chart_select_div(self):
         """
+        TODO: We can re-add this back in later.
         Div that allows the user to select between treemap and pie chart.
         """
         chart_select_div = dcc.Dropdown(

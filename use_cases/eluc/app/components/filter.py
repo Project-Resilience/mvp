@@ -187,11 +187,9 @@ class FilterComponent:
                 outputs[1].append(max_val_rounded)
                 outputs[2].append([min_val_rounded, max_val_rounded])
                 if outcome == "change":
-                    print("Change")
                     outputs[3].append({min_val_rounded: f"{int(100*min_val_rounded)}",
                                        max_val_rounded: f"{int(100*max_val_rounded)}"})
                 else:
-                    print(outcome)
                     outputs[3].append({min_val_rounded: f"{min_val_rounded:.2f}",
                                        max_val_rounded: f"{max_val_rounded:.2f}"})
             return outputs

@@ -66,9 +66,9 @@ class FilterComponent:
     def create_outcome_sliders(self):
         """
         Creates initial outcome sliders and lines them up with their labels.
-        TODO: We need to stop hard-coding their names and adjustments.
-        TODO: Add a tooltip to the sliders to show their units.
+        # TODO: Un-hardcode the units
         """
+        units = ["tC/ha", "%"]
         sliders = []
         for outcome in constants.CAO_MAPPING["outcomes"]:
             slider = dcc.RangeSlider(
@@ -76,23 +76,28 @@ class FilterComponent:
                 min=0,
                 max=1,
                 value=[0, 1],
-                marks={0: f"{0:.2f}", 1: f"{1:.2f}"},
-                tooltip={"placement": "bottom", "always_visible": True},
+                marks={0: "0", 1: "100"},
+                tooltip={
+                    "placement": "bottom",
+                    "always_visible": True,
+                    "transform": "percentSlider"
+                },
                 allowCross=False,
                 disabled=False
             )
             sliders.append(slider)
 
         # w-25 and flex-grow-1 ensures they line up
+        
         div = html.Div(
             children=[
                 html.Div(
                     className="d-flex flex-row w-100",
                     children=[
-                        html.Label(outcome, className="w-25"),
+                        html.Label(f"{outcome} ({unit})", className="w-25"),
                         html.Div(slider, className="flex-grow-1")
                     ]
-                ) for outcome, slider in zip(constants.CAO_MAPPING["outcomes"], sliders)
+                ) for outcome, slider, unit in zip(constants.CAO_MAPPING["outcomes"], sliders, units)
             ]
         )
         return div
@@ -179,8 +184,8 @@ class FilterComponent:
                 outputs[0].append(min_val_rounded)
                 outputs[1].append(max_val_rounded)
                 outputs[2].append([min_val_rounded, max_val_rounded])
-                outputs[3].append({min_val_rounded: f"{min_val_rounded:.2f}",
-                                   max_val_rounded: f"{max_val_rounded:.2f}"})
+                outputs[3].append({min_val_rounded: f"{int(100*min_val_rounded)}",
+                                   max_val_rounded: f"{int(100*max_val_rounded)}"})
             return outputs
 
         @app.callback(
@@ -210,7 +215,7 @@ class FilterComponent:
                 return [[elucs.min(), low_eluc], [changes.min(), changes.max()]]
 
             elif trigger_idx == "medium":
-                return [[low_eluc, high_eluc], [low_change, high_change]]
+                return [[elucs.min(), high_eluc], [low_change, high_change]]
 
             else:
                 return [[elucs.min(), elucs.max()], [changes.min(), low_change]]

@@ -90,7 +90,7 @@ class DMSComponent():
                                 ], className="mb-3 d-flex flex-row"),
                                 dbc.Button(
                                     id="eluc",
-                                    children="Predicted ELUC: 00.00",
+                                    children="Predicted ELUC: 00.00 tC/ha",
                                     color="warning",
                                     active=True,
                                     outline=True
@@ -211,4 +211,4 @@ class DMSComponent():
             else:
                 change_color = "warning"
 
-            return f"Predicted ELUC: {eluc:.2f}", eluc_color, f"Land Changed: {(change*100):.2f}%", change_color
+            return f"Predicted ELUC: {eluc:.2f} tC/ha", eluc_color, f"Land Changed: {(change*100):.2f}%", change_color

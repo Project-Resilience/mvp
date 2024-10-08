@@ -88,7 +88,6 @@ class FilterComponent:
             sliders.append(slider)
 
         # w-25 and flex-grow-1 ensures they line up
-        
         div = html.Div(
             children=[
                 html.Div(

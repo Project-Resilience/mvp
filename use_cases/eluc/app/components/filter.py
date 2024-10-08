@@ -71,17 +71,20 @@ class FilterComponent:
         units = ["tC/ha", "%"]
         sliders = []
         for outcome in constants.CAO_MAPPING["outcomes"]:
+            tooltip = {
+                "placement": "bottom",
+                "always_visible": True
+            }
+            if outcome == "change":
+                tooltip["transform"] = "percentSlider"
+
             slider = dcc.RangeSlider(
                 id={"type": "filter-slider", "index": outcome},
                 min=0,
                 max=1,
                 value=[0, 1],
                 marks={0: "0", 1: "100"},
-                tooltip={
-                    "placement": "bottom",
-                    "always_visible": True,
-                    "transform": "percentSlider"
-                },
+                tooltip=tooltip,
                 allowCross=False,
                 disabled=False
             )
@@ -183,8 +186,12 @@ class FilterComponent:
                 outputs[0].append(min_val_rounded)
                 outputs[1].append(max_val_rounded)
                 outputs[2].append([min_val_rounded, max_val_rounded])
-                outputs[3].append({min_val_rounded: f"{int(100*min_val_rounded)}",
-                                   max_val_rounded: f"{int(100*max_val_rounded)}"})
+                if outcome == "change":
+                    outputs[3].append({min_val_rounded: f"{int(100*min_val_rounded)}",
+                                       max_val_rounded: f"{int(100*max_val_rounded)}"})
+                else:
+                    outputs[3].append({min_val_rounded: f"{min_val_rounded:.2f}",
+                                       max_val_rounded: f"{max_val_rounded:.2f}"})
             return outputs
 
         @app.callback(

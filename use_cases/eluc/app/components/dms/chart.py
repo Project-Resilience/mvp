@@ -42,7 +42,6 @@ class ChartComponent:
             Input("lat-dropdown", "value"),
             Input("lon-dropdown", "value")
         )
-        # def update_context_chart(chart_type, year, lat, lon):
         def update_context_chart(year, lat, lon):
             """
             Updates context chart when context selection is updated or chart type is changed.
@@ -69,7 +68,6 @@ class ChartComponent:
             State("lat-dropdown", "value"),
             State("lon-dropdown", "value"),
         )
-        # def update_presc_chart(chart_type, sliders, year, lat, lon):
         def update_presc_chart(n_clicks, sliders, year, lat, lon):
             """
             Updates prescription chart from sliders according to chart type.

@@ -46,8 +46,8 @@ class EvolutionHandler:
 
     def load_prescriptors(self) -> PrescriptorManager:
         """
-        Loads in prescriptors from disk, downloads from HuggingFace first if needed.
-        TODO: Currently hard-coded to load specific prescriptors from pareto path.
+        Loads in prescriptors from a hard-coded location on disk.
+        Loads predictor from HuggingFace if needed.
         :return: dict of prescriptor name -> prescriptor object.
         """
         with open("app/results/fields.json", "r", encoding="utf-8") as f:

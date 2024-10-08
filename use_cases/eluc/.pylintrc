@@ -5,8 +5,6 @@ recursive=y
 
 fail-under=9.7
 
-jobs=0
-
 max-line-length=120
 
 suggestion-mode=yes

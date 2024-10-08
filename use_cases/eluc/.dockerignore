@@ -6,6 +6,6 @@ __pycache__
 .DS_Store
 
 .ipynb_checkpoints/
-demo.ipynb
-data/
-predictors/
+experiments/
+predictors/trained_models/
+prescriptors/trained_models/

@@ -198,7 +198,17 @@ TODO: see task #49
 
 A user interface for decision makers is available here: https://landuse.evolution.ml/
 
-See [demo/README.md](demo/README.md)
+To run the app, first download the preprocessed dataset from [HuggingFace](https://huggingface.co/datasets/projectresilience/land-use-app-data) using ```python -m app.process_data```.
+
+Then run the app using ```python -m app.app```.
+
+In order to build and run a docker image containing the app, first build with 
+
+```docker build -t landusedemo .```
+
+and then run with
+
+```docker run -p 8080:4057 --name landuse-demo-container landusedemo```.
 
 ## Testing
 
@@ -206,7 +216,7 @@ To run unit tests, use the following command: ```python -m unittest```.
 
 TODO: see task #79
 
-To run pylint, use the following command: ```pylint ./*```
+To run pylint, use the following command: ```pylint .```
 
 ## References
 

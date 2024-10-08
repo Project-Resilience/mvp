@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy source files over
 COPY . .
 
-# Python setup script - downloads data and processes it
+# Download data
 RUN python -m app.process_data
 
 # Expose Flask (Dash) port

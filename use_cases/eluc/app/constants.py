@@ -29,11 +29,3 @@ SECONDARY = ['secdf', 'secdn']
 FIELDS = ['pastr', 'range']
 
 CHART_TYPES = ["Treemap", "Pie Chart"]
-
-PREDICTOR_PATH = Path("predictors/trained_models")
-PRESCRIPTOR_PATH = Path("prescriptors/trained_models")
-
-# Pareto front
-PARETO_CSV_PATH = Path("app/data/pareto.csv")
-
-DEFAULT_PRESCRIPTOR_IDX = 1  # By default we select the second prescriptor that minimizes change

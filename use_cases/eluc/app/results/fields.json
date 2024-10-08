@@ -1,0 +1,266 @@
+{
+    "crop": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.07339908426193414,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.16265934528504822,
+        "sum": 2860188.724853294,
+        "valued": "CONTINUOUS"
+    },
+    "pastr": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.028186925004809644,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.08361703321142014,
+        "sum": 1098377.8053597955,
+        "valued": "CONTINUOUS"
+    },
+    "primf": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.23964893649955774,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.38454716715833803,
+        "sum": 9338552.285652943,
+        "valued": "CONTINUOUS"
+    },
+    "primn": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.3245340850945395,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.38925208060535765,
+        "sum": 12646325.773022957,
+        "valued": "CONTINUOUS"
+    },
+    "range": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.11292289001268818,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.22403471381928963,
+        "sum": 4400337.9611595785,
+        "valued": "CONTINUOUS"
+    },
+    "secdf": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.07401922280621336,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.19821889843267998,
+        "sum": 2884354.057296198,
+        "valued": "CONTINUOUS"
+    },
+    "secdn": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.07384171667401307,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.18563917129316915,
+        "sum": 2877437.0631263554,
+        "valued": "CONTINUOUS"
+    },
+    "urban": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.001470729165265312,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.015505845972764908,
+        "sum": 57310.83729591335,
+        "valued": "CONTINUOUS"
+    },
+    "cell_area": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 54771.65765631698,
+        "range": [
+            8915.4794921875,
+            77276.703125
+        ],
+        "std_dev": 18437.729518379776,
+        "sum": 2134321963896.3154,
+        "valued": "CONTINUOUS"
+    },
+    "lat": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 32.83876557109509,
+        "range": [
+            -55.375,
+            83.375
+        ],
+        "std_dev": 31.918249782327756,
+        "sum": 1279649030.625,
+        "valued": "CONTINUOUS"
+    },
+    "lon": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 17.70074937509038,
+        "range": [
+            -179.875,
+            179.875
+        ],
+        "std_dev": 84.70808649468215,
+        "sum": 689756340.875,
+        "valued": "CONTINUOUS"
+    },
+    "time": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 1931.0,
+        "range": [
+            1851.0,
+            2011.0
+        ],
+        "std_dev": 46.47580075082749,
+        "sum": 75246503185.0,
+        "valued": "CONTINUOUS"
+    },
+    "crop_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.0003485473230576186,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.0034983136404717753,
+        "sum": 13582.064865136364,
+        "valued": "CONTINUOUS"
+    },
+    "pastr_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.00018371047761648197,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.003419368559625308,
+        "sum": 7158.76283743474,
+        "valued": "CONTINUOUS"
+    },
+    "primf_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": -0.0007770527431400816,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.003282573884994763,
+        "sum": -30279.90767043145,
+        "valued": "CONTINUOUS"
+    },
+    "primn_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": -0.0011011488395217908,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.004067413763296919,
+        "sum": -42909.16605915872,
+        "valued": "CONTINUOUS"
+    },
+    "range_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.0006181910520406444,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.00732248146861642,
+        "sum": 24089.443276185837,
+        "valued": "CONTINUOUS"
+    },
+    "secdf_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.0005058135084154264,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.0035648070826364395,
+        "sum": 19710.356174001765,
+        "valued": "CONTINUOUS"
+    },
+    "secdn_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.0001974093167611805,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.0061548025396158685,
+        "sum": 7692.574201149064,
+        "valued": "CONTINUOUS"
+    },
+    "urban_diff": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 2.4529912601915283e-05,
+        "range": [
+            -1,
+            1
+        ],
+        "std_dev": 0.0004476823913989698,
+        "sum": 955.872680853335,
+        "valued": "CONTINUOUS"
+    },
+    "ELUC": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.08137410088681887,
+        "range": [
+            -88.90611267089844,
+            116.95401763916016
+        ],
+        "std_dev": 0.5105799800687278,
+        "sum": 3170956.261810734,
+        "valued": "CONTINUOUS"
+    },
+    "change": {
+        "data_type": "FLOAT",
+        "has_nan": false,
+        "mean": 0.5,
+        "range": [
+            0,
+            1
+        ],
+        "std_dev": 0.1,
+        "sum": 19483817,
+        "valued": "CONTINUOUS"
+    }
+}

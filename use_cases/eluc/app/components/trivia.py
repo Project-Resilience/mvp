@@ -1,4 +1,5 @@
 """
+TODO: We may bring this back into the app at some point.
 Trivia component for the ELUC app showing how much carbon emissions are reduce in real-world terms.
 """
 from dash import Input, State, Output

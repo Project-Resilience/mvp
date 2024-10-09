@@ -1,10 +1,7 @@
 FROM python:3.10-slim
 
 # Define environment variables
-ENV APPS_HOME=/usr/local/cognizant \
-    ELUC_APP_HOME=/usr/local/cognizant/eluc \
-    GDAL_VERSION=3.7.1 \
-    PYTHONPATH=/usr/local/cognizant/eluc
+ENV GDAL_VERSION=3.7.1
 
 # Debian basics and cleaning up in one RUN statement to reduce image size
 RUN apt-get update -y && \
@@ -12,7 +9,7 @@ RUN apt-get update -y && \
     rm -rf /var/lib/apt/lists/* 
 
 # Set work directory
-WORKDIR ${ELUC_APP_HOME}
+WORKDIR /eluc
 
 # Dependencies
 COPY requirements.txt .

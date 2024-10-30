@@ -81,10 +81,28 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds)
 
+def seed_no_crop_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
+    """
+    Creates a seed that attempts to prescribe no change to crops while still maximizing forest.
+    """
+    # Create max change labels
+    max_change_recos = df[constants.RECO_COLS].copy()
+    no_crop_recos = [col for col in constants.RECO_COLS if "crop" not in col]
+    reco_use = max_change_recos[no_crop_recos].sum(axis=1)
+    max_change_recos[no_crop_recos] = 0
+    max_change_recos["secdf"] = reco_use
+
+    encoded_context_np = encoded_df[constants.CAO_MAPPING["context"]].to_numpy()
+    max_change_recos_np = max_change_recos[constants.RECO_COLS].to_numpy()
+    ds = TorchDataset(encoded_context_np, max_change_recos_np)
+
+    seed_dir.mkdir(parents=True, exist_ok=True)
+    supervised_backprop(seed_dir / "no_crop_change.pt", ds)
 
 if __name__ == "__main__":
     dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(10000)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    seed_no_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)
-    seed_max_change(Path("prescriptors/nsga2/seeds/test"), train_df, encoded_train_df)
+    seed_no_change(Path("prescriptors/nsga2/seeds/eds"), train_df, encoded_train_df)
+    seed_max_change(Path("prescriptors/nsga2/seeds/eds"), train_df, encoded_train_df)
+    seed_no_crop_change(Path("prescriptors/nsga2/seeds/eds"), train_df, encoded_train_df)

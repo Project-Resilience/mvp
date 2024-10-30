@@ -93,5 +93,6 @@ class Candidate(torch.nn.Module):
         metrics = self.metrics if self.metrics else [float("inf"), float("inf")]
         cand_state["ELUC"] = metrics[0]
         cand_state["change"] = metrics[1]
+        cand_state["cropchange"] = metrics[2]
 
         return cand_state

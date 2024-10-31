@@ -81,6 +81,7 @@ def seed_max_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "max_change.pt", ds)
 
+
 def seed_no_crop_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFrame):
     """
     Creates a seed that attempts to prescribe no change to crops while still maximizing forest.
@@ -98,6 +99,7 @@ def seed_no_crop_change(seed_dir: Path, df: pd.DataFrame, encoded_df: pd.DataFra
 
     seed_dir.mkdir(parents=True, exist_ok=True)
     supervised_backprop(seed_dir / "no_crop_change.pt", ds)
+
 
 if __name__ == "__main__":
     dataset = ELUCData.from_hf()

@@ -72,13 +72,10 @@ def calculate_crowding_distance(front):
         obj_max = sorted_front[-1].metrics[m]
         sorted_front[0].distance = float('inf')
         sorted_front[-1].distance = float('inf')
-        for i in range(1, len(sorted_front) - 1):
-            if obj_max != obj_min:
+        if obj_max != obj_min:
+            for i in range(1, len(sorted_front) - 1):
                 dist = sorted_front[i+1].metrics[m] - sorted_front[i-1].metrics[m]
                 sorted_front[i].distance += dist / (obj_max - obj_min)
-            # If all candidates have the same value, their distances are 0
-            else:
-                sorted_front[i].distance += 0
 
 
 def dominates(candidate1: Candidate, candidate2: Candidate) -> bool:

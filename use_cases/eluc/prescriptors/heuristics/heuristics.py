@@ -87,12 +87,65 @@ class PerfectHeuristic(HeuristicPrescriptor):
         Separate the best column according to the coefficients to add to.
         """
         super().__init__(pct)
-        assert len(coefs) == len(constants.RECO_COLS)
+        assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
         # Keep these so we can save them later
-        self.coefs = coefs
+        self.coefs = [coef for coef in coefs]
         # Sort columns by coefficient
-        reco_cols = list(constants.RECO_COLS)
-        zipped = zip(reco_cols, coefs)
+        self.reco_cols = [col for col in constants.RECO_COLS]
+        zipped = zip(self.reco_cols, self.coefs)
+        sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
+        self.reco_cols, _ = zip(*sorted_zip)
+        self.reco_cols = list(self.reco_cols)
+
+        # Take best column and remove from reco cols
+        self.best_col = self.reco_cols[-1]
+        self.reco_cols.pop()
+
+    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Perfect prescription algorithm:
+            1. Subtract up to scaled change starting from worst column.
+            2. Add to best column however much was removed.
+        It is done in a vectorized way to massively speed up computation.
+        """
+        adjusted = context_df.copy()
+
+        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
+        adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
+
+        for col in self.reco_cols:
+            change = adjusted[[col, "amt_change"]].min(axis=1)
+            adjusted[col] -= change
+            adjusted["amt_change"] -= change
+
+        adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
+        adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
+        return adjusted
+
+
+class NoCropHeuristic(HeuristicPrescriptor):
+    """
+    The same as the perfect heuristic but we do not allow crop to be changed.
+    """
+    def __init__(self, pct: float, coefs: list[float]):
+        """
+        We save and sort the columns by highest coefficient i.e. most emissions.
+        Separate the best column according to the coefficients to add to.
+        Remove the crop column from reco cols.
+        """
+        super().__init__(pct)
+        assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
+        # Keep these so we can save them later
+        self.coefs = [coef for coef in coefs]
+        # Sort columns by coefficient
+        self.reco_cols = [col for col in constants.RECO_COLS]
+
+        # Remove the crop column
+        self.coefs.remove(coefs[self.reco_cols.index("crop")])
+        self.reco_cols.remove("crop")
+
+        zipped = zip(self.reco_cols, self.coefs)
         sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
         self.reco_cols, _ = zip(*sorted_zip)
         self.reco_cols = list(self.reco_cols)

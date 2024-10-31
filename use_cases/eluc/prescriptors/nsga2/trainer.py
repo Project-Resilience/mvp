@@ -167,9 +167,10 @@ class TorchTrainer():
         gen_results_df = pd.DataFrame(gen_results)
         gen_results_df.to_csv(save_path / f"{gen}.csv", index=False)
 
-        # Save rank 1 candidate state dicts
+        # Save rank 1 candidate state dicts from this generation
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
-        pareto_candidates = [candidate for candidate in candidates if candidate.rank == 1]
+        this_gen_candidates = [candidate for candidate in candidates if candidate.cand_id.startswith(f"{gen}")]
+        pareto_candidates = [candidate for candidate in this_gen_candidates if candidate.rank == 1]
         for candidate in pareto_candidates:
             torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.cand_id}.pt")
 

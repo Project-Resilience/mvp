@@ -21,7 +21,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         self.pct = pct
 
     @abstractmethod
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Abstract method that takes a percentage threshold of land change and a
         context dataframe and returns a dataframe of recommendations based on the heuristic.
@@ -32,7 +32,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         """
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
         """
-        reco_df = self._reco_heuristic(self.pct, context_df)
+        reco_df = self.reco_heuristic(context_df)
         prescribed_actions_df = reco_df[constants.RECO_COLS] - context_df[constants.RECO_COLS]
 
         # Rename the columns to match what the predictor expects
@@ -53,14 +53,14 @@ class EvenHeuristic(HeuristicPrescriptor):
         self.best_col = best_col
         self.presc_cols = [col for col in constants.RECO_COLS if col != best_col]
 
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame):
+    def reco_heuristic(self, context_df: pd.DataFrame):
         """
         Takes evenly from all columns and adds to best col.
         Removes land_use * (total_change / changeable_land) so we remove proportionally
         rather than truly evenly.
         """
         adjusted = context_df.copy()
-        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["row_sum"] = adjusted[self.presc_cols].sum(axis=1)
         to_change = adjusted["row_sum"] > 0
         adjusted["max_change"] = adjusted[["scaled_change", "row_sum"]].min(axis=1)
@@ -101,7 +101,7 @@ class PerfectHeuristic(HeuristicPrescriptor):
         self.best_col = self.reco_cols[-1]
         self.reco_cols.pop()
 
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Perfect prescription algorithm:
             1. Subtract up to scaled change starting from worst column.
@@ -110,7 +110,7 @@ class PerfectHeuristic(HeuristicPrescriptor):
         """
         adjusted = context_df.copy()
 
-        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
         adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
 
@@ -154,7 +154,7 @@ class NoCropHeuristic(HeuristicPrescriptor):
         self.best_col = self.reco_cols[-1]
         self.reco_cols.pop()
 
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Perfect prescription algorithm:
             1. Subtract up to scaled change starting from worst column.
@@ -163,7 +163,7 @@ class NoCropHeuristic(HeuristicPrescriptor):
         """
         adjusted = context_df.copy()
 
-        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
         adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
 

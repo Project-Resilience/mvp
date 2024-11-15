@@ -43,7 +43,7 @@ class Candidate(torch.nn.Module):
         self.parents = parents
 
     @classmethod
-    def from_crossover(cls, parent1, parent2, p_mutation: float, cand_id: str) -> "Candidate":
+    def from_crossover(cls, parent1, parent2, p_mutation: float, mutation_factor: float, cand_id: str) -> "Candidate":
         """
         Crossover two parents to create a child.
         Take a random 50/50 choice of either parent's weights
@@ -59,7 +59,7 @@ class Candidate(torch.nn.Module):
         for child_param, parent1_param, parent2_param in params:
             mask = torch.rand(size=child_param.data.shape) < 0.5
             child_param.data = torch.where(mask, parent1_param.data, parent2_param.data)
-        child.mutate(p_mutation)
+        child.mutate(p_mutation, mutation_factor)
         return child
 
     def forward(self, X: torch.Tensor) -> torch.Tensor:
@@ -69,16 +69,23 @@ class Candidate(torch.nn.Module):
         out = self.model(X)
         return out
 
-    def mutate(self, p_mutation: float):
-        """
-        Randomly mutates each weight with probability p_mutation with gaussian noise mu=0, sigma=0.1
-        """
-        for layer in self.model:
-            if isinstance(layer, torch.nn.Linear):
-                mask = torch.rand(size=layer.weight.shape) < p_mutation
-                layer.weight.data += mask * torch.randn(size=layer.weight.shape) * 0.1
-                mask = torch.rand(size=layer.bias.shape) < p_mutation
-                layer.bias.data += mask * torch.randn(size=layer.bias.shape) * 0.1
+    # def mutate(self, p_mutation: float):
+    #     """
+    #     Randomly mutates each weight with probability p_mutation with gaussian noise mu=0, sigma=0.1
+    #     """
+    #     for layer in self.model:
+    #         if isinstance(layer, torch.nn.Linear):
+    #             mask = torch.rand(size=layer.weight.shape) < p_mutation
+    #             layer.weight.data += mask * torch.randn(size=layer.weight.shape) * 0.1
+    #             mask = torch.rand(size=layer.bias.shape) < p_mutation
+    #             layer.bias.data += mask * torch.randn(size=layer.bias.shape) * 0.1
+
+    def mutate(self, p_mutation: float, mutation_factor: float):
+        with torch.no_grad():
+            for param in self.model.parameters():
+                mutate_mask = torch.rand(param.shape, device=param.device) < p_mutation
+                noise = torch.normal(0, mutation_factor, param[mutate_mask].shape, device=param.device, dtype=param.dtype)
+                param[mutate_mask] += noise * param[mutate_mask]
 
     def record_state(self) -> dict:
         """
@@ -93,6 +100,6 @@ class Candidate(torch.nn.Module):
         metrics = self.metrics if self.metrics else [float("inf"), float("inf")]
         cand_state["ELUC"] = metrics[0]
         cand_state["change"] = metrics[1]
-        cand_state["cropchange"] = metrics[2]
+        # cand_state["cropchange"] = metrics[2]
 
         return cand_state

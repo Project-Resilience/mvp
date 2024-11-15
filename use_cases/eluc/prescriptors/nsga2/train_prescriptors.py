@@ -33,8 +33,9 @@ if __name__ == "__main__":
     nnp_serializer = NeuralNetSerializer()
     nnp = nnp_serializer.load(Path(config["predictor_path"]))
     pct_change = PercentChangePredictor()
-    crop_change = CropChangePredictor()
-    predictors = {"ELUC": nnp, "change": pct_change, "cropchange": crop_change}
+    # crop_change = CropChangePredictor()
+    # predictors = {"ELUC": nnp, "change": pct_change, "cropchange": crop_change}
+    predictors = {"ELUC": nnp, "change": pct_change}
 
     print("Initializing prescription...")
     if "seed_dir" in config["evolution_params"].keys():

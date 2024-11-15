@@ -29,6 +29,7 @@ class TorchTrainer():
                  pop_size: int,
                  n_generations: int,
                  p_mutation: float,
+                 mutation_factor: float,
                  eval_df: pd.DataFrame,
                  encoder: ELUCEncoder,
                  predictors: dict[str, Predictor],
@@ -41,6 +42,7 @@ class TorchTrainer():
         self.pop_size = pop_size
         self.n_generations = n_generations
         self.p_mutation = p_mutation
+        self.mutation_factor = mutation_factor
         self.seed_dir = seed_dir
 
         # Evaluation params
@@ -67,8 +69,8 @@ class TorchTrainer():
             context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
             outcomes_df = prescriptor_manager.predict_metrics(context_actions_df)
             candidate.metrics = (outcomes_df["ELUC"].mean(),
-                                 outcomes_df["change"].mean(),
-                                 outcomes_df["cropchange"].mean())
+                                 outcomes_df["change"].mean())
+                                 #outcomes_df["cropchange"].mean())
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """
@@ -108,7 +110,7 @@ class TorchTrainer():
         children = []
         for i in range(pop_size):
             parent1, parent2 = self._tournament_selection(sorted_parents)
-            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, f"{gen}_{i}")
+            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, self.mutation_factor, f"{gen}_{i}")
             children.append(child)
         return children
 
@@ -145,7 +147,7 @@ class TorchTrainer():
             parents = self._select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
-            results.append(self._record_candidate_avgs(gen+1, parents))
+            results.append(self._record_candidate_avgs(gen, parents))
             self._record_gen_results(gen, parents, save_path)
 
             # If we aren't on the last generation, make a new population
@@ -169,10 +171,11 @@ class TorchTrainer():
 
         # Save rank 1 candidate state dicts from this generation
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
-        this_gen_candidates = [candidate for candidate in candidates if candidate.cand_id.startswith(f"{gen}")]
-        pareto_candidates = [candidate for candidate in this_gen_candidates if candidate.rank == 1]
-        for candidate in pareto_candidates:
-            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.cand_id}.pt")
+        for candidate in candidates:
+            if candidate.rank == 1 and candidate.cand_id.startswith(f"{gen}_"):
+                cand_path = save_path / f"{candidate.cand_id.split("_")[0]}" / f"{candidate.cand_id}.pt"
+                if not cand_path.exists():
+                    torch.save(candidate.state_dict(), cand_path)
 
     def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """

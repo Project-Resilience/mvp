@@ -37,6 +37,7 @@ def supervised_backprop(epochs: int, save_path: Path, ds: TorchDataset):
     for _ in pbar:
         seed.train()
         for X, Y in train_dl:
+            X, Y = X.float(), Y.float()
             optimizer.zero_grad()
             reco_tensor = seed(X)
             loss = loss_fn(reco_tensor, Y)
@@ -48,6 +49,7 @@ def supervised_backprop(epochs: int, save_path: Path, ds: TorchDataset):
         n = 0
         with torch.no_grad():
             for X, Y in val_dl:
+                X, Y = X.float(), Y.float()
                 reco_tensor = seed(X)
                 loss = loss_fn(reco_tensor, Y)
                 total_loss += loss.item() * len(X)
@@ -165,15 +167,15 @@ def seed_base():
     """
     Base seeds for the original experiment
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/base")
+    seed_dir = Path("prescriptors/nsga2/seeds/eds")
     dataset = ELUCData.from_hf()
-    train_df = dataset.train_df.sample(10000, random_state=42)
+    train_df = dataset.train_df.sample(frac=0.1, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    epochs = 300
+    epochs = 15
 
     seed_no_change(epochs, seed_dir, train_df, encoded_train_df)
     seed_max_change(epochs, seed_dir, train_df, encoded_train_df)
 
 
 if __name__ == "__main__":
-    seed_rhea()
+    seed_base()

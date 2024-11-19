@@ -152,7 +152,7 @@ class TorchTrainer():
 
             # If we aren't on the last generation, make a new population
             if gen < self.n_generations:
-                offspring = self._make_new_pop(parents, self.pop_size, gen)
+                offspring = self._make_new_pop(parents, self.pop_size, gen+1)
 
         results_df = pd.DataFrame(results)
         results_df.to_csv(save_path / "results.csv", index=False)
@@ -172,8 +172,8 @@ class TorchTrainer():
         # Save rank 1 candidate state dicts from this generation
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
         for candidate in candidates:
-            if candidate.rank == 1 and candidate.cand_id.startswith(f"{gen}_"):
-                cand_path = save_path / f"{candidate.cand_id.split("_")[0]}" / f"{candidate.cand_id}.pt"
+            if candidate.rank == 1:
+                cand_path = save_path / f"{candidate.cand_id.split('_')[0]}" / f"{candidate.cand_id}.pt"
                 if not cand_path.exists():
                     torch.save(candidate.state_dict(), cand_path)
 

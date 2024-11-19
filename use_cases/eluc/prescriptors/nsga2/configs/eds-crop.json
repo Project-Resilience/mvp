@@ -4,13 +4,12 @@
         "pop_size": 100,
         "n_generations": 100,
         "p_mutation": 0.2,
-        "mutation_factor": 0.1,
         "candidate_params": {
             "in_size": 12,
             "hidden_size": 16,
             "out_size": 5
         },
-        "seed_dir": "prescriptors/nsga2/seeds/eds"
+        "seed_dir": "prescriptors/nsga2/seeds/eds-crop"
     },
-    "save_path": "prescriptors/nsga2/training_runs/eds"
+    "save_path": "prescriptors/nsga2/training_runs/eds-crop"
 }

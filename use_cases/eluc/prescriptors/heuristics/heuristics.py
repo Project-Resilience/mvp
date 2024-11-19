@@ -21,7 +21,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         self.pct = pct
 
     @abstractmethod
-    def reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Abstract method that takes a percentage threshold of land change and a
         context dataframe and returns a dataframe of recommendations based on the heuristic.

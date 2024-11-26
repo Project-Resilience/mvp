@@ -10,7 +10,7 @@ from prsdk.data.torch_data import TorchDataset
 from prsdk.prescriptors.prescriptor import Prescriptor
 
 from data import constants
-from data.eluc_data import ELUCEncoder
+from data.eluc_encoder import ELUCEncoder
 from prescriptors.nsga2.candidate import Candidate
 
 

@@ -10,7 +10,8 @@
             "hidden_size": 16,
             "out_size": 5
         },
-        "seed_dir": "prescriptors/nsga2/seeds/eds-rhea"
+        "seed_dir": "prescriptors/nsga2/seeds/rhea/eds-rhea"
     },
-    "save_path": "prescriptors/nsga2/training_runs/eds-rhea"
+    "save_path": "prescriptors/nsga2/training_runs/rhea/eds-rhea",
+    "seed_type": "rhea"
 }

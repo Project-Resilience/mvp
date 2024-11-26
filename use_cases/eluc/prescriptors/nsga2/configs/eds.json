@@ -10,7 +10,8 @@
             "hidden_size": 16,
             "out_size": 5
         },
-        "seed_dir": "prescriptors/nsga2/seeds/eds"
+        "seed_dir": "prescriptors/nsga2/seeds/eds/eds"
     },
-    "save_path": "prescriptors/nsga2/training_runs/eds"
+    "save_path": "prescriptors/nsga2/training_runs/eds/eds",
+    "seed_type": "base"
 }

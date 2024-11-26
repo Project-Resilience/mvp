@@ -9,11 +9,12 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 
 from prsdk.data.torch_data import TorchDataset
+from prsdk.persistence.persistors.hf_persistor import HuggingFacePersistor
 from prsdk.persistence.serializers.sklearn_serializer import SKLearnSerializer
 from prsdk.predictors.sklearn_predictors.linear_regression_predictor import LinearRegressionPredictor
 
 from data import constants
-from data.eluc_data import ELUCData
+from data.min_eluc_data import MinimalELUCData
 from prescriptors.heuristics.heuristics import PerfectHeuristic
 from prescriptors.nsga2.candidate import Candidate
 
@@ -29,7 +30,6 @@ def supervised_backprop(epochs: int, save_path: Path, ds: TorchDataset):
     seed = Candidate(in_size=len(constants.CAO_MAPPING["context"]),
                      hidden_size=16,
                      out_size=len(constants.RECO_COLS))
-    # optimizer = torch.optim.Adam(seed.model.parameters(), lr=0.001)
     optimizer = torch.optim.AdamW(seed.model.parameters())
     loss_fn = torch.nn.MSELoss()
 
@@ -121,19 +121,19 @@ def seed_perfect(epochs: int, seed_dir: Path, df: pd.DataFrame, encoded_df: pd.D
     supervised_backprop(epochs, seed_dir / f"perfect-{pct_name}.pt", ds)
 
 
-def seed_rhea():
+def seed_rhea(seed_dir, epochs=15):
     """
     Seeds for the RHEA experiment. Requires the linreg to be trained.
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds-rhea")
-    dataset = ELUCData.from_hf()
+    dataset = MinimalELUCData.from_hf()
     train_df = dataset.train_df.sample(frac=0.1, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    epochs = 15
 
     # Set up for heuristic
     serializer = SKLearnSerializer()
-    linreg = serializer.load("predictors/trained_models/danyoung--eluc-global-linreg")
+    persistor = HuggingFacePersistor(serializer)
+    linreg = persistor.from_pretrained("danyoung/eluc-global-linreg",
+                                       local_dir="predictors/trained_models/danyoung--eluc-global-linreg")
     coefs = linreg.model.coef_
     coef_dict = dict(zip(constants.LAND_USE_COLS, coefs))
     reco_coefs = []
@@ -148,34 +148,27 @@ def seed_rhea():
         seed_perfect(epochs, seed_dir, train_df, encoded_train_df, heuristic)
 
 
-def seed_no_crop():
+def seed_no_crop(seed_dir, epochs=15):
     """
     Seeds for the no crop experiment
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds")
-    dataset = ELUCData.from_hf()
+    dataset = MinimalELUCData.from_hf()
     train_df = dataset.train_df.sample(10000, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    epochs = 300
 
     seed_no_change(epochs, seed_dir, train_df, encoded_train_df)
     seed_max_change(epochs, seed_dir, train_df, encoded_train_df)
     seed_no_crop_change(epochs, seed_dir, train_df, encoded_train_df)
 
 
-def seed_base():
+def seed_base(seed_dir, epochs=15):
     """
     Base seeds for the original experiment
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds")
-    dataset = ELUCData.from_hf()
+    
+    dataset = MinimalELUCData.from_hf()
     train_df = dataset.train_df.sample(frac=0.1, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
-    epochs = 15
 
     seed_no_change(epochs, seed_dir, train_df, encoded_train_df)
     seed_max_change(epochs, seed_dir, train_df, encoded_train_df)
-
-
-if __name__ == "__main__":
-    seed_base()

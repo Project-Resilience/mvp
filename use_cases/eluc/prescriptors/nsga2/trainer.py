@@ -14,7 +14,7 @@ from prsdk.data.torch_data import TorchDataset
 from prsdk.predictors.predictor import Predictor
 
 from data import constants
-from data.eluc_data import ELUCEncoder
+from data.eluc_encoder import ELUCEncoder
 from prescriptors.nsga2 import nsga2_utils
 from prescriptors.nsga2.candidate import Candidate
 from prescriptors.nsga2.land_use_prescriptor import LandUsePrescriptor

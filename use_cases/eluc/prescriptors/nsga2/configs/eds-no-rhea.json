@@ -11,5 +11,5 @@
             "out_size": 5
         }
     },
-    "save_path": "prescriptors/nsga2/training_runs/eds-no-rhea"
+    "save_path": "prescriptors/nsga2/training_runs/noseed/eds-no-rhea"
 }

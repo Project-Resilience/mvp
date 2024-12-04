@@ -22,7 +22,7 @@ def load_candidate(results_dir: Path, cand_id: str, cand_params: dict[str, int],
         gen += 1
     cand_path = results_dir / str(gen) / f"{cand_id}.pt"
     cand = Candidate(**cand_params, device="mps", cand_id=cand_id)
-    cand.load_state_dict(torch.load(cand_path))
+    cand.load_state_dict(torch.load(cand_path, map_location="cpu"))
     return cand
 
 

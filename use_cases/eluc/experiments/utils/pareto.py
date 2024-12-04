@@ -21,14 +21,22 @@ def get_gens_df(results_dir: Path, gens: list[int], pareto=False):
 
 
 def get_overall_pareto_df(final_gen: int, results_dir: Path, outcomes: list[str]):
-    pareto_list = []
-    
+    """
+    Gets the overall pareto front for a given experiment.
+    """  
     all_pareto_df = get_gens_df(results_dir, list(range(1, final_gen + 1)), pareto=True)
     all_pareto_df = all_pareto_df.drop_duplicates(subset=["id"])
+    return filter_pareto(all_pareto_df, outcomes)
 
-    for _, add in all_pareto_df.iterrows():
+
+def filter_pareto(candidates_df: pd.DataFrame, outcomes: list[str]):
+    """
+    Takes a DF of candidates and filters out the non-pareto candidates.
+    """
+    pareto_list = []
+    for _, add in candidates_df.iterrows():
         pareto = True
-        for _, compare in all_pareto_df.iterrows():
+        for _, compare in candidates_df.iterrows():
             dominated = False
             for outcome in outcomes:
                 if add[outcome] < compare[outcome]:

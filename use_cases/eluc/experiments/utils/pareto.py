@@ -51,3 +51,4 @@ def filter_pareto(candidates_df: pd.DataFrame, outcomes: list[str]):
             pareto_list.append(add)
 
     return pd.DataFrame(pareto_list)
+

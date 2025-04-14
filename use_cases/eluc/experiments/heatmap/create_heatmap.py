@@ -67,7 +67,8 @@ def main():
 
     fig.supxlabel("To")
     fig.supylabel("From")
-    fig.colorbar(axes[0].collections[0], ax=axes, orientation='vertical', label="ELUC (tC/ha)")
+    cbar = fig.colorbar(axes[0].collections[0], ax=axes, orientation='vertical')
+    cbar.set_label(label="ELUC (tC/ha)", rotation=270, labelpad=15)
 
     plt.savefig(os.path.join(FIGURE_DIR, "heatmap-fig.png"), dpi=300)
 

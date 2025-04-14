@@ -9,7 +9,7 @@ made to reduce CO2 emissions?
 
 It is possible to learn from historical decisions made by decision makers all around the world if they can be compared.
 
-Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://nn.cs.utexas.edu/?miikkulainen:arxiv23) which won the *Best Pathway to Impact* award. The recorded talk can be found [here](https://www.climatechange.ai/papers/neurips2023/94).
+Work from this project was published in [NeurIPS 2023 Workshop: Tackling Climate Change with Machine Learning](https://www.climatechange.ai/events/neurips2023) as a paper: [Discovering Effective Policies for Land-Use Planning](https://nn.cs.utexas.edu/?miikkulainen:arxiv23) which won the *Best Pathway to Impact* award. The recorded talk can be found [here](https://www.climatechange.ai/papers/neurips2023/94). See the Experiments section for details on how to replicate the results in the paper.
 
 ## Data
 
@@ -184,6 +184,20 @@ Code to train prescriptor models can be found in the [prescriptors](prescriptors
 - [Torch Prescriptor](prescriptors/nsga2/torch_prescriptor.py) which is an open-source method that implements the NSGA-II algorithm in PyTorch.
 
 To train a prescriptor, use the [train_prescriptors.py](prescriptors/nsga2/train_prescriptors.py) script. A predictor model needs to be trained beforehand. A template config to be used in prescriptor training can be found in the [configs](prescriptors/nsga2/configs/test.json) folder. Seeds can also be trained to allow the prescriptor to find candidates along the edge of the pareto-front. These can be trained using [train_seeds.py](prescriptors/nsga2/train_seeds.py).
+
+## Experiments
+Experiments run to analyze the models for the paper can be found in the [experiments](experiments) directory. Rough [predictor](experiments/predictor_experiments.ipynb) and [prescriptor](experiments/prescriptor_experiments.ipynb) experiments can be found as well as more polished notebooks such as [crop.ipynb](experiments/crop.ipynb) which are used to generate figures for the paper.
+
+Ultimately, to overall replicate the paper, the following steps should be taken:
+1. Train the predictor models using [train_predictors.py](predictors/train_predictors.py)
+
+2. Run predictor significance using [predictor_experiments.ipynb](experiments/predictor_experiments.ipynb)
+
+3. Train seed prescriptor models with [train_seeds.py](prescriptors/nsga2/train_seeds.py)
+
+4. Run evolution to train prescriptor models with [train_prescriptors.py](prescriptors/nsga2/train_prescriptors.py)
+
+5. Run prescriptor analysis using notebooks in [experiments](experiments) such as [crop.ipynb](experiments/crop.ipynb)
 
 ## Robojudge
 

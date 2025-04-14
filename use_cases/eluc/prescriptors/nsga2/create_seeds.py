@@ -1,6 +1,7 @@
 """
 Generates PyTorch seeds for the NSGA-II prescriptor.
 """
+from argparse import ArgumentParser
 from pathlib import Path
 
 import pandas as pd
@@ -10,7 +11,6 @@ from tqdm import tqdm
 
 from prsdk.data.torch_data import TorchDataset
 from prsdk.persistence.serializers.sklearn_serializer import SKLearnSerializer
-from prsdk.predictors.sklearn_predictors.linear_regression_predictor import LinearRegressionPredictor
 
 from data import constants
 from data.eluc_data import ELUCData
@@ -29,7 +29,6 @@ def supervised_backprop(epochs: int, save_path: Path, ds: TorchDataset):
     seed = Candidate(in_size=len(constants.CAO_MAPPING["context"]),
                      hidden_size=16,
                      out_size=len(constants.RECO_COLS))
-    # optimizer = torch.optim.Adam(seed.model.parameters(), lr=0.001)
     optimizer = torch.optim.AdamW(seed.model.parameters())
     loss_fn = torch.nn.MSELoss()
 
@@ -121,11 +120,11 @@ def seed_perfect(epochs: int, seed_dir: Path, df: pd.DataFrame, encoded_df: pd.D
     supervised_backprop(epochs, seed_dir / f"perfect-{pct_name}.pt", ds)
 
 
-def seed_rhea():
+def seed_rhea(seed_dir: str):
     """
     Seeds for the RHEA experiment. Requires the linreg to be trained.
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds-rhea")
+    rhea_seed_dir = Path(seed_dir) if seed_dir else Path("prescriptors/nsga2/seeds/eds-rhea")
     dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(frac=0.1, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
@@ -145,37 +144,53 @@ def seed_rhea():
     # Train a seed for each pct value
     for pct in pcts:
         heuristic = PerfectHeuristic(pct, reco_coefs)
-        seed_perfect(epochs, seed_dir, train_df, encoded_train_df, heuristic)
+        seed_perfect(epochs, rhea_seed_dir, train_df, encoded_train_df, heuristic)
 
 
-def seed_no_crop():
+def seed_no_crop(seed_dir: str):
     """
     Seeds for the no crop experiment
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds")
+    no_crop_seed_dir = Path(seed_dir) if seed_dir else Path("prescriptors/nsga2/seeds/eds-crop")
     dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(10000, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
     epochs = 300
 
-    seed_no_change(epochs, seed_dir, train_df, encoded_train_df)
-    seed_max_change(epochs, seed_dir, train_df, encoded_train_df)
-    seed_no_crop_change(epochs, seed_dir, train_df, encoded_train_df)
+    seed_no_change(epochs, no_crop_seed_dir, train_df, encoded_train_df)
+    seed_max_change(epochs, no_crop_seed_dir, train_df, encoded_train_df)
+    seed_no_crop_change(epochs, no_crop_seed_dir, train_df, encoded_train_df)
 
 
-def seed_base():
+def seed_base(seed_dir: str):
     """
     Base seeds for the original experiment
     """
-    seed_dir = Path("prescriptors/nsga2/seeds/eds")
+    base_seed_dir = Path(seed_dir) if seed_dir else Path("prescriptors/nsga2/seeds/eds")
     dataset = ELUCData.from_hf()
     train_df = dataset.train_df.sample(frac=0.1, random_state=42)
     encoded_train_df = dataset.get_encoded_train().loc[train_df.index]
     epochs = 15
 
-    seed_no_change(epochs, seed_dir, train_df, encoded_train_df)
-    seed_max_change(epochs, seed_dir, train_df, encoded_train_df)
+    seed_no_change(epochs, base_seed_dir, train_df, encoded_train_df)
+    seed_max_change(epochs, base_seed_dir, train_df, encoded_train_df)
 
 
 if __name__ == "__main__":
-    seed_base()
+    parser = ArgumentParser()
+    parser.add_argument("--type", type=str)
+    parser.add_argument("--seed_dir", type=str, default=None)
+    args = parser.parse_args()
+
+    if args.type == "rhea":
+        seed_rhea(args.seed_dir)
+    elif args.type == "no_crop":
+        seed_no_crop(args.seed_dir)
+    elif args.type == "base":
+        seed_base(args.seed_dir)
+    elif args.type == "all":
+        seed_rhea(None)
+        seed_no_crop(None)
+        seed_base(None)
+    else:
+        raise ValueError(f"Unknown seed type {args.type}. Must be one of: rhea, no_crop, base, all")

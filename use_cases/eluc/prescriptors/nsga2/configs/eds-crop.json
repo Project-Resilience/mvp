@@ -11,5 +11,6 @@
         },
         "seed_dir": "prescriptors/nsga2/seeds/eds-crop"
     },
-    "save_path": "prescriptors/nsga2/training_runs/eds-crop"
+    "save_path": "prescriptors/nsga2/training_runs/eds-crop",
+    "crop": true
 }

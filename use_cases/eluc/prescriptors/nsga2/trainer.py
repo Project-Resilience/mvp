@@ -68,9 +68,8 @@ class TorchTrainer():
             prescriptor = LandUsePrescriptor(candidate, self.encoder, self.batch_size)
             context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
             outcomes_df = prescriptor_manager.predict_metrics(context_actions_df)
-            candidate.metrics = (outcomes_df["ELUC"].mean(),
-                                 outcomes_df["change"].mean())
-                                 #outcomes_df["cropchange"].mean())
+            candidate.metrics = [outcomes_df[outcome].mean() for outcome in outcomes_df.columns]
+            candidate.metrics = tuple(candidate.metrics)
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """
@@ -181,6 +180,7 @@ class TorchTrainer():
         """
         Gets the average eluc and change for a population of candidates.
         """
-        avg_eluc = np.mean([c.metrics[0] for c in candidates])
-        avg_change = np.mean([c.metrics[1] for c in candidates])
-        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
+        avgs = {"gen": gen}
+        for i, outcome in enumerate(self.predictors.keys()):
+            avgs[outcome] = np.mean([c.metrics[i] for c in candidates])
+        return avgs

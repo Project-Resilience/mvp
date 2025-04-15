@@ -1,3 +1,6 @@
+"""
+Utils used to generate Pareto fronts for experiments.
+"""
 from pathlib import Path
 
 import pandas as pd
@@ -23,7 +26,7 @@ def get_gens_df(results_dir: Path, gens: list[int], pareto=False):
 def get_overall_pareto_df(final_gen: int, results_dir: Path, outcomes: list[str]):
     """
     Gets the overall pareto front for a given experiment.
-    """  
+    """
     all_pareto_df = get_gens_df(results_dir, list(range(1, final_gen + 1)), pareto=True)
     all_pareto_df = all_pareto_df.drop_duplicates(subset=["id"])
     return filter_pareto(all_pareto_df, outcomes)
@@ -51,4 +54,3 @@ def filter_pareto(candidates_df: pd.DataFrame, outcomes: list[str]):
             pareto_list.append(add)
 
     return pd.DataFrame(pareto_list)
-

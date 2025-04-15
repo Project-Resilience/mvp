@@ -200,7 +200,7 @@ class FilterComponent:
             State("results-store", "data"),
             prevent_inital_call=True
         )
-        def select_preset(n_clicks, results_json):
+        def select_preset(_, results_json):
             """
             Selects a preset for the filter sliders from the 3 presets.
             """
@@ -220,11 +220,10 @@ class FilterComponent:
             if trigger_idx == "low-eluc":
                 return [[elucs.min(), low_eluc], [changes.min(), changes.max()]]
 
-            elif trigger_idx == "medium":
+            if trigger_idx == "medium":
                 return [[elucs.min(), high_eluc], [low_change, high_change]]
 
-            else:
-                return [[elucs.min(), elucs.max()], [changes.min(), low_change]]
+            return [[elucs.min(), elucs.max()], [changes.min(), low_change]]
 
         @app.callback(
             Output("prescriptions", "figure"),

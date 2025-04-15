@@ -76,4 +76,3 @@ def generate_rf_heatmap_data():
 
     # 6. Save to disk.
     np.save("experiments/heatmap/rf_heatmap_data.npy", heatmap_values)
-

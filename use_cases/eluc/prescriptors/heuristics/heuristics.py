@@ -89,9 +89,9 @@ class PerfectHeuristic(HeuristicPrescriptor):
         super().__init__(pct)
         assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
         # Keep these so we can save them later
-        self.coefs = [coef for coef in coefs]
+        self.coefs = list(coefs)
         # Sort columns by coefficient
-        self.reco_cols = [col for col in constants.RECO_COLS]
+        self.reco_cols = list(constants.RECO_COLS)
         zipped = zip(self.reco_cols, self.coefs)
         sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
         self.reco_cols, _ = zip(*sorted_zip)
@@ -137,9 +137,9 @@ class NoCropHeuristic(HeuristicPrescriptor):
         super().__init__(pct)
         assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
         # Keep these so we can save them later
-        self.coefs = [coef for coef in coefs]
+        self.coefs = list(coefs)
         # Sort columns by coefficient
-        self.reco_cols = [col for col in constants.RECO_COLS]
+        self.reco_cols = list(constants.RECO_COLS)
 
         # Remove the crop column
         self.coefs.remove(coefs[self.reco_cols.index("crop")])

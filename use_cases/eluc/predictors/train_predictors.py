@@ -21,6 +21,7 @@ def train_nn(save_path: str, dataset: ELUCData):
     Trains the neural network model.
     """
     save_path = Path(save_path) if save_path else Path("predictors/neural_network/trained_models/no_overlap_nn")
+    save_path.mkdir(parents=True, exist_ok=True)
 
     nn_config = {
         "features": constants.NN_FEATS,
@@ -49,6 +50,7 @@ def train_linreg(save_path: str, dataset: ELUCData):
     Trains the simple linear regression model.
     """
     save_path = Path(save_path) if save_path else Path("predictors/sklearn/trained_models/no_overlap_linreg")
+    save_path.mkdir(parents=True, exist_ok=True)
 
     linreg_config = {
         "features": constants.DIFF_LAND_USE_COLS,
@@ -69,6 +71,7 @@ def train_rf(save_path: str, dataset: ELUCData):
     Trains the random forest. NOTE: This creates a massive model
     """
     save_path = Path(save_path) if save_path else Path("predictors/sklearn/trained_models/no_overlap_rf")
+    save_path.mkdir(parents=True, exist_ok=True)
 
     forest_config = {
         "features": constants.NN_FEATS,
@@ -101,19 +104,22 @@ def load_all():
     """
     Loads all 3 models from HuggingFace.
     """
+    save_path = Path("predictors/trained_models")
+    save_path.mkdir(parents=True, exist_ok=True)
+
     nn_serializer = NeuralNetSerializer()
     nn_persistor = HuggingFacePersistor(nn_serializer)
 
     nn_path = "danyoung/eluc-global-nn"
-    nn_persistor.from_pretrained(nn_path, local_dir=nn_path.replace("/", "--"))
+    nn_persistor.from_pretrained(nn_path, local_dir=save_path / nn_path.replace("/", "--"))
 
     sklearn_serializer = SKLearnSerializer()
     sklearn_persistor = HuggingFacePersistor(sklearn_serializer)
 
-    linreg_path = "dnayoung/eluc-global-linreg"
+    linreg_path = "danyoung/eluc-global-linreg"
     rf_path = "danyoung/eluc-global-rf"
-    sklearn_persistor.from_pretrained(linreg_path, local_dir=linreg_path.replace("/", "--"))
-    sklearn_persistor.from_pretrained(rf_path, local_dir=rf_path.replace("/", "--"))
+    sklearn_persistor.from_pretrained(linreg_path, local_dir=save_path / linreg_path.replace("/", "--"))
+    sklearn_persistor.from_pretrained(rf_path, local_dir=save_path / rf_path.replace("/", "--"))
 
 
 if __name__ == "__main__":

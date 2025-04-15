@@ -189,13 +189,13 @@ To train a prescriptor, use the [train_prescriptors.py](prescriptors/nsga2/train
 Experiments run to analyze the models for the paper can be found in the [experiments](experiments) directory. Rough [predictor](experiments/predictor_experiments.ipynb) and [prescriptor](experiments/prescriptor_experiments.ipynb) experiments can be found as well as more polished notebooks such as [crop.ipynb](experiments/crop.ipynb) which are used to generate figures for the paper.
 
 Ultimately, to overall replicate the paper, the following steps should be taken:
-1. Train the predictor models using [train_predictors.py](predictors/train_predictors.py)
+1. Train the predictor models using [train_predictors.py](predictors/train_predictors.py): `python -m predictors.train_predictors`
 
 2. Run predictor significance using [predictor_experiments.ipynb](experiments/predictor_experiments.ipynb)
 
-3. Train seed prescriptor models with [train_seeds.py](prescriptors/nsga2/train_seeds.py)
+3. Train seed prescriptor models with [create_seeds.py](prescriptors/nsga2/create_seeds.py): `python -m prescriptors.nsga2.create_seeds --type all`
 
-4. Run evolution to train prescriptor models with [train_prescriptors.py](prescriptors/nsga2/train_prescriptors.py)
+4. Run evolution to train prescriptor models with [train_prescriptors.py](prescriptors/nsga2/train_prescriptors.py): `python -m prescriptors.nsga2.train_prescriptors --config prescriptors/nsga2/configs/eds.json`
 
 5. Run prescriptor analysis using notebooks in [experiments](experiments) such as [crop.ipynb](experiments/crop.ipynb)
 

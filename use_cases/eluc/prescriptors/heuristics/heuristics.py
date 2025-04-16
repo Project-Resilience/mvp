@@ -21,7 +21,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         self.pct = pct
 
     @abstractmethod
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Abstract method that takes a percentage threshold of land change and a
         context dataframe and returns a dataframe of recommendations based on the heuristic.
@@ -32,7 +32,7 @@ class HeuristicPrescriptor(Prescriptor, ABC):
         """
         Implementation of prescribe_land_use using a heuristic. Calls the implementation of _reco_heuristic.
         """
-        reco_df = self._reco_heuristic(self.pct, context_df)
+        reco_df = self.reco_heuristic(context_df)
         prescribed_actions_df = reco_df[constants.RECO_COLS] - context_df[constants.RECO_COLS]
 
         # Rename the columns to match what the predictor expects
@@ -53,14 +53,14 @@ class EvenHeuristic(HeuristicPrescriptor):
         self.best_col = best_col
         self.presc_cols = [col for col in constants.RECO_COLS if col != best_col]
 
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame):
+    def reco_heuristic(self, context_df: pd.DataFrame):
         """
         Takes evenly from all columns and adds to best col.
         Removes land_use * (total_change / changeable_land) so we remove proportionally
         rather than truly evenly.
         """
         adjusted = context_df.copy()
-        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["row_sum"] = adjusted[self.presc_cols].sum(axis=1)
         to_change = adjusted["row_sum"] > 0
         adjusted["max_change"] = adjusted[["scaled_change", "row_sum"]].min(axis=1)
@@ -87,12 +87,12 @@ class PerfectHeuristic(HeuristicPrescriptor):
         Separate the best column according to the coefficients to add to.
         """
         super().__init__(pct)
-        assert len(coefs) == len(constants.RECO_COLS)
+        assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
         # Keep these so we can save them later
-        self.coefs = coefs
+        self.coefs = list(coefs)
         # Sort columns by coefficient
-        reco_cols = list(constants.RECO_COLS)
-        zipped = zip(reco_cols, coefs)
+        self.reco_cols = list(constants.RECO_COLS)
+        zipped = zip(self.reco_cols, self.coefs)
         sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
         self.reco_cols, _ = zip(*sorted_zip)
         self.reco_cols = list(self.reco_cols)
@@ -101,7 +101,7 @@ class PerfectHeuristic(HeuristicPrescriptor):
         self.best_col = self.reco_cols[-1]
         self.reco_cols.pop()
 
-    def _reco_heuristic(self, pct: float, context_df: pd.DataFrame) -> pd.DataFrame:
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
         """
         Perfect prescription algorithm:
             1. Subtract up to scaled change starting from worst column.
@@ -110,7 +110,60 @@ class PerfectHeuristic(HeuristicPrescriptor):
         """
         adjusted = context_df.copy()
 
-        adjusted["scaled_change"] = pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
+        adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
+        adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
+
+        for col in self.reco_cols:
+            change = adjusted[[col, "amt_change"]].min(axis=1)
+            adjusted[col] -= change
+            adjusted["amt_change"] -= change
+
+        adjusted[self.best_col] += adjusted[["scaled_change", "presc_sum"]].min(axis=1)
+        adjusted = adjusted.drop(["scaled_change", "presc_sum", "amt_change"], axis=1)
+        return adjusted
+
+
+class NoCropHeuristic(HeuristicPrescriptor):
+    """
+    The same as the perfect heuristic but we do not allow crop to be changed.
+    """
+    def __init__(self, pct: float, coefs: list[float]):
+        """
+        We save and sort the columns by highest coefficient i.e. most emissions.
+        Separate the best column according to the coefficients to add to.
+        Remove the crop column from reco cols.
+        """
+        super().__init__(pct)
+        assert len(coefs) == len(constants.RECO_COLS), f"Expected {len(constants.RECO_COLS)} coefs, got {len(coefs)}"
+        # Keep these so we can save them later
+        self.coefs = list(coefs)
+        # Sort columns by coefficient
+        self.reco_cols = list(constants.RECO_COLS)
+
+        # Remove the crop column
+        self.coefs.remove(coefs[self.reco_cols.index("crop")])
+        self.reco_cols.remove("crop")
+
+        zipped = zip(self.reco_cols, self.coefs)
+        sorted_zip = sorted(zipped, key=lambda x: x[1], reverse=True)
+        self.reco_cols, _ = zip(*sorted_zip)
+        self.reco_cols = list(self.reco_cols)
+
+        # Take best column and remove from reco cols
+        self.best_col = self.reco_cols[-1]
+        self.reco_cols.pop()
+
+    def reco_heuristic(self, context_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Perfect prescription algorithm:
+            1. Subtract up to scaled change starting from worst column.
+            2. Add to best column however much was removed.
+        It is done in a vectorized way to massively speed up computation.
+        """
+        adjusted = context_df.copy()
+
+        adjusted["scaled_change"] = self.pct * adjusted[constants.LAND_USE_COLS].sum(axis=1)
         adjusted["presc_sum"] = adjusted[self.reco_cols].sum(axis=1)
         adjusted["amt_change"] = adjusted[["scaled_change", "presc_sum"]].min(axis=1)
 

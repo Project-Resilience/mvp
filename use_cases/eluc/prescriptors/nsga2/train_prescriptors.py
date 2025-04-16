@@ -13,6 +13,7 @@ from data.eluc_data import ELUCData
 from data.eluc_encoder import ELUCEncoder
 from prescriptors.nsga2.trainer import TorchTrainer
 from predictors.percent_change.percent_change_predictor import PercentChangePredictor
+from predictors.percent_change.crop_change_predictor import CropChangePredictor
 
 
 if __name__ == "__main__":
@@ -33,6 +34,10 @@ if __name__ == "__main__":
     nnp = nnp_serializer.load(Path(config["predictor_path"]))
     pct_change = PercentChangePredictor()
     predictors = {"ELUC": nnp, "change": pct_change}
+    # Add crop change predictor if specified in the config
+    if "crop" in config and config["crop"]:
+        crop_change = CropChangePredictor()
+        predictors["cropchange"] = crop_change
 
     print("Initializing prescription...")
     if "seed_dir" in config["evolution_params"].keys():

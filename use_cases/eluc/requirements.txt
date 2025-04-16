@@ -1,26 +1,15 @@
+# Overall/experiment dependencies
 arrow==1.2.3
-dash==2.10.2
-dash-bootstrap-components==1.4.1
-dash-core-components==2.0.0
-dash-html-components==2.0.0
-dash-table==5.0.0
-dask==2023.6.1
 datasets==2.16.1
-flake8==7.1.0
-Flask==2.2.5
 geopandas==0.14.4
-geopy==2.3.0
-gunicorn==21.2.0
 huggingface-hub==0.20.3
 joblib==1.2.0
 jupyter==1.0.0
 matplotlib==3.7.1
 numpy==1.23.5
 pandas==1.5.3
-plotly==5.14.1
 protobuf==3.20.3
--e git+https://github.com/Project-Resilience/sdk.git@c0e5300e56f5fce2f6cf55c328c83e7055e541be#egg=prsdk
-pylint==3.3.1
+git+https://github.com/Project-Resilience/sdk.git@c0e5300e56f5fce2f6cf55c328c83e7055e541be#egg=prsdk
 regionmask==0.10.0
 scikit-learn==1.2.2
 scipy==1.10.1
@@ -29,4 +18,22 @@ tensorboard==2.13.0
 torch==2.3.1
 tqdm==4.65.0
 transformers==4.31.0
+
+# App dependencies
+dash==2.10.2
+dash-bootstrap-components==1.4.1
+dash-core-components==2.0.0
+dash-html-components==2.0.0
+dash-table==5.0.0
+dask==2023.6.1
+Flask==2.2.5
+gunicorn==21.2.0
+plotly==5.14.1
+
+# Linting dependencies
+flake8==7.1.0
+pylint==3.3.1
+
+# Full data processing
+geopy==2.3.0
 xarray==2023.6.0

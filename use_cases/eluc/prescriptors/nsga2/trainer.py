@@ -29,6 +29,7 @@ class TorchTrainer():
                  pop_size: int,
                  n_generations: int,
                  p_mutation: float,
+                 mutation_factor: float,
                  eval_df: pd.DataFrame,
                  encoder: ELUCEncoder,
                  predictors: dict[str, Predictor],
@@ -41,6 +42,7 @@ class TorchTrainer():
         self.pop_size = pop_size
         self.n_generations = n_generations
         self.p_mutation = p_mutation
+        self.mutation_factor = mutation_factor
         self.seed_dir = seed_dir
 
         # Evaluation params
@@ -66,7 +68,8 @@ class TorchTrainer():
             prescriptor = LandUsePrescriptor(candidate, self.encoder, self.batch_size)
             context_actions_df = prescriptor.torch_prescribe(self.context_df, self.encoded_context_dl)
             outcomes_df = prescriptor_manager.predict_metrics(context_actions_df)
-            candidate.metrics = (outcomes_df["ELUC"].mean(), outcomes_df["change"].mean())
+            candidate.metrics = [outcomes_df[outcome].mean() for outcome in outcomes_df.columns]
+            candidate.metrics = tuple(candidate.metrics)
 
     def _select_parents(self, candidates: list[Candidate], n_parents: int) -> list[Candidate]:
         """
@@ -106,7 +109,7 @@ class TorchTrainer():
         children = []
         for i in range(pop_size):
             parent1, parent2 = self._tournament_selection(sorted_parents)
-            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, f"{gen}_{i}")
+            child = Candidate.from_crossover(parent1, parent2, self.p_mutation, self.mutation_factor, f"{gen}_{i}")
             children.append(child)
         return children
 
@@ -143,12 +146,12 @@ class TorchTrainer():
             parents = self._select_parents(candidates, self.pop_size)
 
             # Record the performance of the most successful candidates
-            results.append(self._record_candidate_avgs(gen+1, parents))
+            results.append(self._record_candidate_avgs(gen, parents))
             self._record_gen_results(gen, parents, save_path)
 
             # If we aren't on the last generation, make a new population
             if gen < self.n_generations:
-                offspring = self._make_new_pop(parents, self.pop_size, gen)
+                offspring = self._make_new_pop(parents, self.pop_size, gen+1)
 
         results_df = pd.DataFrame(results)
         results_df.to_csv(save_path / "results.csv", index=False)
@@ -165,16 +168,19 @@ class TorchTrainer():
         gen_results_df = pd.DataFrame(gen_results)
         gen_results_df.to_csv(save_path / f"{gen}.csv", index=False)
 
-        # Save rank 1 candidate state dicts
+        # Save rank 1 candidate state dicts from this generation
         (save_path / f"{gen}").mkdir(parents=True, exist_ok=True)
-        pareto_candidates = [candidate for candidate in candidates if candidate.rank == 1]
-        for candidate in pareto_candidates:
-            torch.save(candidate.state_dict(), save_path / f"{gen}" / f"{candidate.cand_id}.pt")
+        for candidate in candidates:
+            if candidate.rank == 1:
+                cand_path = save_path / f"{candidate.cand_id.split('_')[0]}" / f"{candidate.cand_id}.pt"
+                if not cand_path.exists():
+                    torch.save(candidate.state_dict(), cand_path)
 
     def _record_candidate_avgs(self, gen: int, candidates: list[Candidate]) -> dict:
         """
         Gets the average eluc and change for a population of candidates.
         """
-        avg_eluc = np.mean([c.metrics[0] for c in candidates])
-        avg_change = np.mean([c.metrics[1] for c in candidates])
-        return {"gen": gen, "eluc": avg_eluc, "change": avg_change}
+        avgs = {"gen": gen}
+        for i, outcome in enumerate(self.predictors.keys()):
+            avgs[outcome] = np.mean([c.metrics[i] for c in candidates])
+        return avgs

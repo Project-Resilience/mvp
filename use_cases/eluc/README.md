@@ -205,7 +205,7 @@ Note: set the python path environment variable to the eluc directory first using
 
 1. Train the predictor models using [train_predictors.py](predictors/train_predictors.py): `python -m predictors.train_predictors`
 
-2. Run predictor significance using [predictor_experiments.ipynb](experiments/predictor_experiments.ipynb)
+2. Run predictor significance using [predictor_significance.py](experiments/predictor_significance.py): `python -m experiments.predictor_significance`
 
 3. Train seed prescriptor models with [create_seeds.py](prescriptors/nsga2/create_seeds.py): `python -m prescriptors.nsga2.create_seeds --type all`
 
